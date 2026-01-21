@@ -3,19 +3,23 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0a0a0a">
-    <title>THE ARCHIVE // Infinite Radio</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ARCHIVE WALKMAN</title>
     <style>
         :root {
-            --bg: #050505;
-            --panel: #0a0a0f;
-            --border: #1a1a2a;
+            --bg: #0a0a0a;
+            --panel: #111;
+            --border: #222;
             --accent: #ff6b35;
             --accent2: #00ff88;
-            --accent3: #8855ff;
-            --text: #e0e0e0;
-            --dim: #555;
+            --text: #e8e8e8;
+            --dim: #666;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         * {
@@ -24,108 +28,78 @@
             padding: 0;
         }
 
+        html,
         body {
+            height: 100%;
+            overflow: hidden;
             background: var(--bg);
             color: var(--text);
             font-family: 'SF Mono', 'Monaco', monospace;
-            min-height: 100vh;
-            overflow-x: hidden;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 16px;
-            min-height: 100vh;
+        .app {
+            height: 100%;
             display: flex;
             flex-direction: column;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
         }
 
-        header {
-            text-align: center;
-            padding: 20px 0;
+        /* HEADER - minimal */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
             border-bottom: 1px solid var(--border);
+            background: #080808;
         }
 
-        h1 {
-            font-size: 18px;
-            font-weight: 300;
-            letter-spacing: 6px;
+        .brand {
+            font-size: 11px;
+            font-weight: bold;
             color: var(--accent);
+            letter-spacing: 2px;
         }
 
-        .subtitle {
-            font-size: 9px;
-            color: var(--dim);
-            letter-spacing: 3px;
-            margin-top: 4px;
+        .mode-pills {
+            display: flex;
+            gap: 4px;
         }
 
-        /* NOW PLAYING */
-        .now-playing {
+        .pill {
+            padding: 4px 8px;
+            font-size: 8px;
+            border-radius: 10px;
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 16px 0;
-        }
-
-        .np-label {
-            font-size: 9px;
             color: var(--dim);
-            letter-spacing: 2px;
-            margin-bottom: 8px;
+            cursor: pointer;
         }
 
-        .np-artist {
-            font-size: 14px;
-            color: var(--accent);
-            font-weight: bold;
+        .pill.on {
+            background: var(--accent2);
+            color: #000;
+            border-color: var(--accent2);
         }
 
-        .np-track {
-            font-size: 12px;
-            color: var(--text);
-            margin-top: 4px;
+        /* VIDEO - Fixed aspect, always visible */
+        .video-section {
+            flex-shrink: 0;
+            background: #000;
+            position: relative;
         }
 
-        .np-meta {
-            display: flex;
-            gap: 16px;
-            margin-top: 12px;
-            font-size: 10px;
-            color: var(--dim);
-        }
-
-        .np-category {
-            padding: 4px 10px;
-            background: rgba(255, 107, 53, 0.1);
-            border: 1px solid var(--accent);
-            border-radius: 12px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .np-sonic {
-            font-style: italic;
-            color: var(--accent2);
-            margin-top: 8px;
-            font-size: 10px;
-        }
-
-        /* VIDEO CONTAINER */
-        .video-container {
+        .video-wrap {
             position: relative;
             width: 100%;
-            padding-bottom: 56.25%;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            margin: 16px 0;
+            padding-bottom: 40%;
         }
 
-        .video-container iframe {
+        .video-wrap iframe {
             position: absolute;
             top: 0;
             left: 0;
@@ -134,62 +108,139 @@
             border: none;
         }
 
-        /* CONTROLS */
+        /* NOW PLAYING - Dense */
+        .now-playing {
+            padding: 10px 12px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .np-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .np-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .np-artist {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-track {
+            font-size: 10px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .tag.cat {
+            background: rgba(255, 107, 53, 0.2);
+            color: var(--accent);
+        }
+
+        .tag.sonic {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent2);
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tag.year {
+            color: var(--dim);
+            border: 1px solid var(--border);
+        }
+
+        /* CONTROLS - Compact transport */
         .controls {
             display: flex;
-            gap: 12px;
-            margin: 16px 0;
+            gap: 6px;
+            padding: 10px 12px;
+            background: #080808;
+            border-bottom: 1px solid var(--border);
         }
 
-        .btn {
+        .ctrl {
             flex: 1;
-            padding: 16px;
+            padding: 12px 8px;
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text);
             font-family: inherit;
-            font-size: 11px;
-            letter-spacing: 2px;
+            font-size: 10px;
             cursor: pointer;
-            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
 
-        .btn:active {
+        .ctrl:active {
             transform: scale(0.95);
         }
 
-        .btn.primary {
+        .ctrl.primary {
             background: var(--accent);
             color: #000;
             border-color: var(--accent);
         }
 
-        .btn.active {
+        .ctrl.on {
+            background: var(--accent2);
+            color: #000;
             border-color: var(--accent2);
-            color: var(--accent2);
         }
 
-        /* CATEGORY FILTER */
-        .category-bar {
+        /* CATEGORY BAR - Scrollable */
+        .cat-bar {
             display: flex;
-            gap: 8px;
+            gap: 4px;
+            padding: 8px 12px;
             overflow-x: auto;
-            padding: 12px 0;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
             -webkit-overflow-scrolling: touch;
+        }
+
+        .cat-bar::-webkit-scrollbar {
+            display: none;
         }
 
         .cat-chip {
             flex-shrink: 0;
-            padding: 8px 16px;
-            background: #111;
+            padding: 5px 10px;
+            font-size: 9px;
+            background: #1a1a1a;
             border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 10px;
+            border-radius: 12px;
             color: var(--dim);
             cursor: pointer;
             letter-spacing: 1px;
-            text-transform: uppercase;
         }
 
         .cat-chip.active {
@@ -198,428 +249,301 @@
             border-color: var(--accent);
         }
 
-        /* QUEUE */
-        .queue-section {
+        .cat-chip span {
+            opacity: 0.6;
+            margin-left: 2px;
+        }
+
+        /* TRACK LIST - Scrollable main area */
+        .track-list {
             flex: 1;
             overflow-y: auto;
-            margin-top: 16px;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .queue-header {
-            font-size: 10px;
-            color: var(--dim);
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-        }
-
-        .queue-item {
+        .track {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
-        .queue-item:hover {
-            border-color: var(--accent);
+        .track:active {
+            background: rgba(255, 107, 53, 0.1);
         }
 
-        .queue-item.playing {
-            border-color: var(--accent2);
-            background: rgba(0, 255, 136, 0.05);
+        .track.playing {
+            background: rgba(0, 255, 136, 0.08);
+            border-left: 2px solid var(--accent2);
         }
 
-        .queue-num {
-            font-size: 12px;
-            color: var(--dim);
-            width: 24px;
-        }
-
-        .queue-info {
-            flex: 1;
-        }
-
-        .queue-artist {
-            font-size: 11px;
-            color: var(--accent);
-        }
-
-        .queue-track {
-            font-size: 10px;
-            color: var(--text);
-        }
-
-        .queue-cat {
+        .t-num {
+            width: 20px;
             font-size: 9px;
             color: var(--dim);
-            padding: 2px 8px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
+            text-align: center;
         }
 
-        /* STATS */
-        .stats {
+        .t-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .t-artist {
+            font-size: 10px;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-title {
+            font-size: 9px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-meta {
+            font-size: 8px;
+            color: var(--dim);
+            text-align: right;
+        }
+
+        .t-cat {
+            display: block;
+            text-transform: uppercase;
+        }
+
+        /* FOOTER STATS */
+        .footer {
             display: flex;
-            justify-content: center;
-            gap: 24px;
-            padding: 16px;
+            justify-content: space-around;
+            padding: 8px 12px;
+            background: #080808;
             border-top: 1px solid var(--border);
-            margin-top: auto;
+            font-size: 9px;
         }
 
         .stat {
             text-align: center;
         }
 
-        .stat-value {
-            font-size: 18px;
+        .stat-val {
             color: var(--accent);
             font-weight: bold;
         }
 
-        .stat-label {
-            font-size: 9px;
+        .stat-lbl {
             color: var(--dim);
+            font-size: 7px;
             letter-spacing: 1px;
-        }
-
-        /* HIDE SCROLLBAR */
-        .category-bar::-webkit-scrollbar,
-        .queue-section::-webkit-scrollbar {
-            display: none;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>THE ARCHIVE</h1>
-            <div class="subtitle">INFINITE RADIO • SPEECHES & GROOVES</div>
-        </header>
-
-        <div class="now-playing">
-            <div class="np-label">NOW PLAYING</div>
-            <div class="np-artist" id="np-artist">Loading...</div>
-            <div class="np-track" id="np-track">--</div>
-            <div class="np-meta">
-                <span class="np-category" id="np-category">--</span>
-                <span id="np-year">--</span>
+    <div class="app">
+        <div class="header">
+            <span class="brand">ARCHIVE WALKMAN</span>
+            <div class="mode-pills">
+                <div class="pill on" id="p-auto">AUTO</div>
+                <div class="pill" id="p-shuf">SHUF</div>
+                <div class="pill" id="p-loop">LOOP</div>
             </div>
-            <div class="np-sonic" id="np-sonic">--</div>
         </div>
 
-        <div class="video-container">
-            <div id="player"></div>
+        <div class="video-section">
+            <div class="video-wrap">
+                <div id="player"></div>
+            </div>
+        </div>
+
+        <div class="now-playing">
+            <div class="np-row">
+                <div class="np-main">
+                    <div class="np-artist" id="np-artist">Select a track</div>
+                    <div class="np-track" id="np-track">--</div>
+                </div>
+            </div>
+            <div class="np-tags">
+                <span class="tag cat" id="np-cat">--</span>
+                <span class="tag year" id="np-year">--</span>
+                <span class="tag sonic" id="np-sonic">--</span>
+            </div>
         </div>
 
         <div class="controls">
-            <button class="btn" id="btn-prev">◀ PREV</button>
-            <button class="btn primary" id="btn-next">NEXT ▶</button>
-            <button class="btn" id="btn-shuffle">SHUFFLE</button>
+            <button class="ctrl" id="btn-prev">◀◀</button>
+            <button class="ctrl primary" id="btn-next">▶▶ NEXT</button>
+            <button class="ctrl" id="btn-rand">RND</button>
         </div>
 
-        <div class="category-bar" id="categories">
-            <div class="cat-chip active" data-cat="all">ALL</div>
-            <div class="cat-chip" data-cat="speech">SPEECH</div>
-            <div class="cat-chip" data-cat="funk">FUNK</div>
-            <div class="cat-chip" data-cat="disco">DISCO</div>
-            <div class="cat-chip" data-cat="hiphop">HIP-HOP</div>
-            <div class="cat-chip" data-cat="electronic">ELECTRONIC</div>
-            <div class="cat-chip" data-cat="jazz">JAZZ</div>
-            <div class="cat-chip" data-cat="rock">ROCK</div>
-            <div class="cat-chip" data-cat="world">WORLD</div>
-        </div>
+        <div class="cat-bar" id="cats"></div>
 
-        <div class="queue-section" id="queue">
-            <div class="queue-header">UP NEXT</div>
-        </div>
+        <div class="track-list" id="list"></div>
 
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-value" id="stat-total">0</div>
-                <div class="stat-label">TRACKS</div>
+        <div class="footer">
+            <div class="stat"><span class="stat-val" id="s-total">0</span><br><span class="stat-lbl">TOTAL</span></div>
+            <div class="stat"><span class="stat-val" id="s-show">0</span><br><span class="stat-lbl">SHOWING</span></div>
+            <div class="stat"><span class="stat-val" id="s-played">0</span><br><span class="stat-lbl">PLAYED</span>
             </div>
-            <div class="stat">
-                <div class="stat-value" id="stat-played">0</div>
-                <div class="stat-label">PLAYED</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value" id="stat-category">--</div>
-                <div class="stat-label">MODE</div>
-            </div>
+            <div class="stat"><span class="stat-val" id="s-idx">0</span><br><span class="stat-lbl">INDEX</span></div>
         </div>
     </div>
 
     <script>
-        // =================================================================
-        // THE ARCHIVE - YouTube URLs with Sonic Characteristics
-        // =================================================================
-        const ARCHIVE = [
-            // SPEECHES - Civil Rights
-            { artist: "Martin Luther King Jr.", track: "I Have a Dream", category: "speech", year: 1963, url: "https://www.youtube.com/watch?v=6dKimoybmEo", sonic: "Melodic, rising cadence" },
-            { artist: "Malcolm X", track: "By Any Means Necessary", category: "speech", year: 1964, url: "https://www.youtube.com/watch?v=DUxRvsQqh60", sonic: "Sharp transients, aggressive" },
-            { artist: "Stokely Carmichael", track: "Black Power", category: "speech", year: 1966, url: "https://www.youtube.com/watch?v=2lAm2QhFq1o", sonic: "Call-and-response, chanting" },
-            { artist: "Angela Davis", track: "Freedom is a Constant Struggle", category: "speech", year: 1972, url: "https://www.youtube.com/watch?v=5u1aHpEtWyA", sonic: "Academic, precise, authoritative" },
-            { artist: "Huey P. Newton", track: "Revolutionary Suicide Interview", category: "speech", year: 1970, url: "https://www.youtube.com/watch?v=pS9dsJs_wRo", sonic: "Philosophical, calm intensity" },
-            { artist: "Assata Shakur", track: "To My People", category: "speech", year: 1973, url: "https://www.youtube.com/watch?v=KsZpGEReM2E", sonic: "Lo-fi, revolutionary mantra" },
-            { artist: "Charlie Chaplin", track: "The Great Dictator Speech", category: "speech", year: 1940, url: "https://www.youtube.com/watch?v=k0CzXi9e66M", sonic: "Theatrical, emotional crescendo" },
-            { artist: "Winston Churchill", track: "We Shall Fight on the Beaches", category: "speech", year: 1940, url: "https://www.youtube.com/watch?v=D3E6OyHdzTk", sonic: "Ostinato, bass-heavy" },
-            { artist: "FDR", track: "Fear Itself", category: "speech", year: 1933, url: "https://www.youtube.com/watch?v=rIKMbma6_dc", sonic: "Patrician, reassuring" },
-            { artist: "JFK", track: "Ask Not", category: "speech", year: 1961, url: "https://www.youtube.com/shorts/L8l11q_MNRY", sonic: "Iconic, reverb-heavy" },
-            { artist: "Barack Obama", track: "Yes We Can", category: "speech", year: 2008, url: "https://www.youtube.com/watch?v=mi8N5gDVpeg", sonic: "Rhythmic, call-and-response" },
-            { artist: "Muhammad Ali", track: "I Will Win", category: "speech", year: 1964, url: "https://www.youtube.com/watch?v=5ro71_ffCK8", sonic: "Rhythmic, poetic, confident" },
-            { artist: "Carl Sagan", track: "Pale Blue Dot", category: "speech", year: 1994, url: "https://www.youtube.com/watch?v=c3rU2Vu7pa8", sonic: "Philosophical, cosmic" },
-            { artist: "Alan Watts", track: "The Dream of Life", category: "speech", year: 1972, url: "https://www.youtube.com/watch?v=omxnKRZ6Pyg", sonic: "British accent, soothing" },
-            { artist: "Terence McKenna", track: "Why Culture Is Not Your Friend", category: "speech", year: 1999, url: "https://www.youtube.com/watch?v=lBDPM2JpoCM", sonic: "Radical, nasal, distinct" },
-            { artist: "Gil Scott-Heron", track: "The Revolution Will Not Be Televised", category: "speech", year: 1971, url: "https://www.youtube.com/watch?v=mbv9y00twuI", sonic: "Spoken word/Jazz fusion" },
-            { artist: "James Baldwin", track: "Notes of a Native Son", category: "speech", year: 1965, url: "https://www.youtube.com/watch?v=1TeTFRoXKqs", sonic: "Intellectual discourse" },
-            { artist: "Amiri Baraka", track: "Somebody Blew Up America", category: "speech", year: 2002, url: "https://www.youtube.com/watch?v=RmacIBYslr0", sonic: "Jazz poetry, rhythmic" },
-
-            // FUNK
-            { artist: "James Brown", track: "Get Up Offa That Thing", category: "funk", year: 1976, url: "https://www.youtube.com/watch?v=ZEh9QAmy3lg", sonic: "High energy drums/shouts" },
-            { artist: "James Brown", track: "The Payback", category: "funk", year: 1973, url: "https://www.youtube.com/watch?v=D7ks03zsg1o", sonic: "Sparse, reverb-heavy drums" },
-            { artist: "Sly & The Family Stone", track: "Thank You", category: "funk", year: 1969, url: "https://www.youtube.com/watch?v=09bSoxFgaRI", sonic: "Slap bass technique" },
-            { artist: "Parliament", track: "Flash Light", category: "funk", year: 1977, url: "https://www.youtube.com/watch?v=slntNpaqCoE", sonic: "Synth bass blueprint" },
-            { artist: "Funkadelic", track: "One Nation Under A Groove", category: "funk", year: 1978, url: "https://www.youtube.com/watch?v=nmjUvgdzimo", sonic: "Group vocals, guitar rhythm" },
-            { artist: "Earth, Wind & Fire", track: "September", category: "funk", year: 1978, url: "https://www.youtube.com/watch?v=2xN76Ool_1o", sonic: "Melodic hooks, horns" },
-            { artist: "Kool & The Gang", track: "Get Down On It", category: "funk", year: 1981, url: "https://www.youtube.com/watch?v=dRK-xsV2d8A", sonic: "Disco/Funk crossover beat" },
-            { artist: "The Meters", track: "Cissy Strut", category: "funk", year: 1969, url: "https://www.youtube.com/watch?v=0s-AWl2wzMs", sonic: "New Orleans funk syncopation" },
-            { artist: "Curtis Mayfield", track: "Move On Up", category: "funk", year: 1970, url: "https://www.youtube.com/watch?v=zPEaydx_E8Y", sonic: "Horns, driving percussion" },
-            { artist: "Stevie Wonder", track: "Superstition", category: "funk", year: 1972, url: "https://www.youtube.com/watch?v=7_tmeHCO1IM", sonic: "Clavinet riff" },
-            { artist: "Stevie Wonder", track: "Higher Ground", category: "funk", year: 1973, url: "https://www.youtube.com/watch?v=KJlkquCslYU", sonic: "Moog bass, shuffle beat" },
-            { artist: "Marvin Gaye", track: "What's Going On", category: "funk", year: 1971, url: "https://www.youtube.com/watch?v=u2XoqyVfc8g", sonic: "Layered vocals, saxophone" },
-            { artist: "Marvin Gaye", track: "Got To Give It Up", category: "funk", year: 1977, url: "https://www.youtube.com/watch?v=MgosSnJQCUI", sonic: "Party ambience, percussion" },
-            { artist: "Al Green", track: "Love and Happiness", category: "funk", year: 1972, url: "https://www.youtube.com/watch?v=wzA-IGQhNiA", sonic: "Organ intro, slow groove" },
-            { artist: "Isaac Hayes", track: "Theme From Shaft", category: "funk", year: 1971, url: "https://www.youtube.com/watch?v=kfdW4687b_w", sonic: "Wah-wah guitar, cinematic" },
-            { artist: "Barry White", track: "Can't Get Enough Of Your Love", category: "funk", year: 1974, url: "https://www.youtube.com/watch?v=CfdUzlD1fOE", sonic: "Deep bass voice, orchestral" },
-            { artist: "Bill Withers", track: "Lovely Day", category: "funk", year: 1977, url: "https://www.youtube.com/watch?v=IABFp_C8qWw", sonic: "Sustained note, sunny vibe" },
-            { artist: "Bill Withers", track: "Ain't No Sunshine", category: "funk", year: 1971, url: "https://www.youtube.com/watch?v=lR2sp9tmKmY", sonic: "Melancholic loop" },
-            { artist: "Aretha Franklin", track: "Respect", category: "funk", year: 1967, url: "https://www.youtube.com/watch?v=QS4UZrylKoA", sonic: "Powerful vocals, spelling hook" },
-
-            // DISCO
-            { artist: "Donna Summer", track: "I Feel Love", category: "disco", year: 1977, url: "https://www.youtube.com/watch?v=u1RqhFGUV9Q", sonic: "Arpeggiated synth sequencer" },
-            { artist: "Chic", track: "Good Times", category: "disco", year: 1979, url: "https://www.youtube.com/watch?v=RLTDpewIpfw", sonic: "Definitive disco bassline" },
-            { artist: "Sister Sledge", track: "Lost In Music", category: "disco", year: 1979, url: "https://www.youtube.com/watch?v=mwVXJvcY45I", sonic: "Nile Rodgers guitar work" },
-            { artist: "Bee Gees", track: "Stayin' Alive", category: "disco", year: 1977, url: "https://www.youtube.com/watch?v=zVZyGRPpl0w", sonic: "Falsetto vocals, steady loop" },
-            { artist: "Diana Ross", track: "I'm Coming Out", category: "disco", year: 1980, url: "https://www.youtube.com/watch?v=Ms6gz5hpXBE", sonic: "Upbeat, triumphant loop" },
-            { artist: "Michael Jackson", track: "Wanna Be Startin' Somethin'", category: "disco", year: 1982, url: "https://www.youtube.com/watch?v=DsJlttdkybk", sonic: "Complex percussion, chants" },
-
-            // POP
-            { artist: "Prince", track: "Kiss", category: "pop", year: 1986, url: "https://www.youtube.com/watch?v=rH9CZuuKpSg", sonic: "Minimalist funk guitar" },
-            { artist: "Prince", track: "1999", category: "pop", year: 1982, url: "https://www.youtube.com/watch?v=weUhBGA8mxo", sonic: "Synth pop/Funk fusion" },
-            { artist: "Prince", track: "When Doves Cry", category: "pop", year: 1984, url: "https://www.youtube.com/watch?v=dZ1pMu2NT0Q", sonic: "Bass-less funk production" },
-
-            // HIP-HOP
-            { artist: "Grandmaster Flash", track: "The Message", category: "hiphop", year: 1982, url: "https://www.youtube.com/watch?v=MLpv_HtEaks", sonic: "Synth-led social commentary" },
-            { artist: "Sugarhill Gang", track: "Rapper's Delight", category: "hiphop", year: 1979, url: "https://www.youtube.com/watch?v=MyMta4RIrlg", sonic: "Interpolation of Good Times" },
-            { artist: "Run-DMC", track: "It's Like That", category: "hiphop", year: 1983, url: "https://www.youtube.com/watch?v=4KTN6RgfYg8", sonic: "Drum machine minimalism" },
-            { artist: "Eric B. & Rakim", track: "Paid In Full", category: "hiphop", year: 1987, url: "https://www.youtube.com/watch?v=LnVHrcRnlZw", sonic: "Ashley's Roachclip break" },
-            { artist: "Eric B. & Rakim", track: "Paid In Full (Coldcut Remix)", category: "hiphop", year: 1987, url: "https://www.youtube.com/watch?v=OckoiLzXHe8", sonic: "Seven Minutes of Madness" },
-            { artist: "Public Enemy", track: "Fight The Power", category: "hiphop", year: 1989, url: "https://www.youtube.com/watch?v=jRJKjiCtVco", sonic: "Dense sample layering" },
-            { artist: "A Tribe Called Quest", track: "Can I Kick It?", category: "hiphop", year: 1990, url: "https://www.youtube.com/watch?v=M-wpu3avo1Y", sonic: "Walk on the Wild Side sample" },
-            { artist: "De La Soul", track: "Me Myself and I", category: "hiphop", year: 1989, url: "https://www.youtube.com/watch?v=NerII_Zgd5I", sonic: "P-Funk sample" },
-            { artist: "Nas", track: "N.Y. State of Mind", category: "hiphop", year: 1994, url: "https://www.youtube.com/watch?v=LnaWZvXoG-k", sonic: "Preemo production style" },
-            { artist: "Wu-Tang Clan", track: "C.R.E.A.M.", category: "hiphop", year: 1993, url: "https://www.youtube.com/watch?v=ecRs1sWZIL4", sonic: "Lo-fi soul sampling (Charmels)" },
-            { artist: "Dr. Dre", track: "Still D.R.E.", category: "hiphop", year: 1999, url: "https://www.youtube.com/watch?v=F7wxubr1_zg", sonic: "Clean piano interpolation" },
-            { artist: "OutKast", track: "Hey Ya!", category: "hiphop", year: 2003, url: "https://www.youtube.com/watch?v=ubk1skSE9OA", sonic: "Pop/Rap crossover" },
-            { artist: "OutKast", track: "B.O.B.", category: "hiphop", year: 2000, url: "https://www.youtube.com/watch?v=swTna2QJMXA", sonic: "Drum 'n' Bass influence in Rap" },
-            { artist: "Kanye West", track: "Through The Wire", category: "hiphop", year: 2003, url: "https://www.youtube.com/watch?v=_WnkTrEp9c8", sonic: "Chipmunk Soul definition" },
-            { artist: "Kendrick Lamar", track: "HUMBLE.", category: "hiphop", year: 2017, url: "https://www.youtube.com/watch?v=ov4WobPqoSA", sonic: "Modern piano minimalism" },
-            { artist: "Missy Elliott", track: "Get Ur Freak On", category: "hiphop", year: 2001, url: "https://www.youtube.com/watch?v=36lThf6sdio", sonic: "Bhangra rhythm usage" },
-            { artist: "Rihanna", track: "Umbrella", category: "hiphop", year: 2007, url: "https://www.youtube.com/watch?v=5io69gNOTPk", sonic: "GarageBand drum loop" },
-            { artist: "Beyoncé", track: "Crazy In Love", category: "hiphop", year: 2003, url: "https://www.youtube.com/watch?v=T6xbOPSUe8M", sonic: "Chi-Lites horn sample" },
-
-            // ELECTRONIC
-            { artist: "New Order", track: "Blue Monday", category: "electronic", year: 1983, url: "https://www.youtube.com/watch?v=TsgLhkjY4q0", sonic: "Best-selling 12\" single" },
-            { artist: "Depeche Mode", track: "Personal Jesus", category: "electronic", year: 1989, url: "https://www.youtube.com/watch?v=rSb_KYzIgUs", sonic: "Blues/Synth fusion" },
-            { artist: "Pet Shop Boys", track: "West End Girls", category: "electronic", year: 1985, url: "https://www.youtube.com/watch?v=pq6Ac0v-aCo", sonic: "Synth-pop defining track" },
-            { artist: "Daft Punk", track: "Around The World", category: "electronic", year: 1997, url: "https://www.youtube.com/watch?v=Jb6gcoR266U", sonic: "Filter house blueprint" },
-            { artist: "Daft Punk", track: "Da Funk", category: "electronic", year: 1995, url: "https://www.youtube.com/watch?v=PwILkY9gRrc", sonic: "G-Funk/Acid House fusion" },
-            { artist: "The Chemical Brothers", track: "Block Rockin' Beats", category: "electronic", year: 1997, url: "https://www.youtube.com/watch?v=0kMfTYPzSnI", sonic: "Big Beat genre definition" },
-
-            // JAZZ
-            { artist: "Herbie Hancock", track: "Rockit", category: "jazz", year: 1983, url: "https://www.youtube.com/watch?v=GHhD4PD75zY", sonic: "Scratch classic" },
-            { artist: "Herbie Hancock", track: "Chameleon", category: "jazz", year: 1973, url: "https://www.youtube.com/watch?v=UbkqE4fpvdI", sonic: "Jazz-funk fusion" },
-            { artist: "Miles Davis", track: "So What", category: "jazz", year: 1959, url: "https://www.youtube.com/watch?v=zqNTltOGh5c", sonic: "Modal jazz" },
-            { artist: "Dave Brubeck", track: "Take Five", category: "jazz", year: 1959, url: "https://www.youtube.com/watch?v=vmDDOFXSgAs", sonic: "5/4 time signature" },
-            { artist: "Nina Simone", track: "Feeling Good", category: "jazz", year: 1965, url: "https://www.youtube.com/watch?v=D5Y11hwjMNs", sonic: "Empowerment anthem" },
-            { artist: "Nina Simone", track: "Sinnerman", category: "jazz", year: 1965, url: "https://www.youtube.com/watch?v=QH3Fx41Jpl4", sonic: "10-min epic" },
-
-            // ROCK
-            { artist: "The Beatles", track: "Come Together", category: "rock", year: 1969, url: "https://www.youtube.com/watch?v=45cYwDMibGo", sonic: "That bassline" },
-            { artist: "Led Zeppelin", track: "When the Levee Breaks", category: "rock", year: 1971, url: "https://www.youtube.com/watch?v=WbrjRKB586s", sonic: "Bonham drums sample" },
-            { artist: "Queen", track: "Another One Bites the Dust", category: "rock", year: 1980, url: "https://www.youtube.com/watch?v=rY0WxgSXdEE", sonic: "Chic-inspired bass" },
-            { artist: "Talking Heads", track: "Once in a Lifetime", category: "rock", year: 1980, url: "https://www.youtube.com/watch?v=5IsSpAOD6K8", sonic: "Afrobeat new wave" },
-
-            // WORLD
-            { artist: "Fela Kuti", track: "Zombie", category: "world", year: 1976, url: "https://www.youtube.com/watch?v=iyV9qB-Hp5c", sonic: "Afrobeat anthem" },
-            { artist: "Fela Kuti", track: "Water No Get Enemy", category: "world", year: 1975, url: "https://www.youtube.com/watch?v=IQBC5URoF0s", sonic: "Extended groove" },
-            { artist: "Miriam Makeba", track: "Pata Pata", category: "world", year: 1967, url: "https://www.youtube.com/watch?v=lNeP3hrm__k", sonic: "South African pop" },
-            { artist: "Manu Dibango", track: "Soul Makossa", category: "world", year: 1972, url: "https://www.youtube.com/watch?v=ks3y_UdRXEs", sonic: "Sampled by MJ" }
+        const A = [
+            { a: "Martin Luther King Jr.", t: "I Have a Dream", c: "speech", y: 1963, u: "https://www.youtube.com/watch?v=6dKimoybmEo", s: "Melodic, rising cadence" },
+            { a: "Malcolm X", t: "By Any Means Necessary", c: "speech", y: 1964, u: "https://www.youtube.com/watch?v=p-sJl95s1E8", s: "Staccato, percussive" },
+            { a: "Stokely Carmichael", t: "Black Power", c: "speech", y: 1966, u: "https://www.youtube.com/watch?v=2lAm2QhFq1o", s: "Call-and-response" },
+            { a: "Angela Davis", t: "Freedom is a Constant Struggle", c: "speech", y: 1972, u: "https://www.youtube.com/watch?v=5u1aHpEtWyA", s: "Academic, precise" },
+            { a: "Huey P. Newton", t: "Revolutionary Suicide", c: "speech", y: 1973, u: "https://www.youtube.com/watch?v=pS9dsJs_wRo", s: "Philosophical" },
+            { a: "Assata Shakur", t: "To My People", c: "speech", y: 1973, u: "https://www.youtube.com/watch?v=KsZpGEReM2E", s: "Revolutionary mantra" },
+            { a: "Charlie Chaplin", t: "The Great Dictator", c: "speech", y: 1940, u: "https://www.youtube.com/watch?v=k0CzXi9e66M", s: "Theatrical crescendo" },
+            { a: "Winston Churchill", t: "We Shall Fight", c: "speech", y: 1940, u: "https://www.youtube.com/watch?v=D3E6OyHdzTk", s: "Ostinato, bass-heavy" },
+            { a: "FDR", t: "Fear Itself", c: "speech", y: 1933, u: "https://www.youtube.com/watch?v=rIKMbma6_dc", s: "Patrician" },
+            { a: "Barack Obama", t: "Yes We Can", c: "speech", y: 2008, u: "https://www.youtube.com/watch?v=mi8N5gDVpeg", s: "Call-and-response" },
+            { a: "Muhammad Ali", t: "I Am The Greatest", c: "speech", y: 1964, u: "https://www.youtube.com/watch?v=5ro71_ffCK8", s: "Rhythmic, poetic" },
+            { a: "Carl Sagan", t: "Pale Blue Dot", c: "speech", y: 1994, u: "https://www.youtube.com/watch?v=OjN-eL2YNsM", s: "Cosmic" },
+            { a: "Alan Watts", t: "Dream of Life", c: "speech", y: 1972, u: "https://www.youtube.com/watch?v=omxnKRZ6Pyg", s: "Soothing" },
+            { a: "Terence McKenna", t: "Culture Not Your Friend", c: "speech", y: 1999, u: "https://www.youtube.com/watch?v=lBDPM2JpoCM", s: "Radical" },
+            { a: "Gil Scott-Heron", t: "Revolution Not Televised", c: "speech", y: 1971, u: "https://www.youtube.com/watch?v=mbv9y00twuI", s: "Spoken word/Jazz" },
+            { a: "James Baldwin", t: "Notes Native Son", c: "speech", y: 1965, u: "https://www.youtube.com/watch?v=1TeTFRoXKqs", s: "Intellectual" },
+            { a: "Amiri Baraka", t: "Somebody Blew Up America", c: "speech", y: 2002, u: "https://www.youtube.com/watch?v=RmacIBYslr0", s: "Jazz poetry" },
+            { a: "James Brown", t: "Get Up Offa That Thing", c: "funk", y: 1976, u: "https://www.youtube.com/watch?v=ZEh9QAmy3lg", s: "High energy" },
+            { a: "James Brown", t: "The Payback", c: "funk", y: 1973, u: "https://www.youtube.com/watch?v=FEXt4Qzhyqo", s: "Sparse, reverb" },
+            { a: "Sly Stone", t: "Thank You", c: "funk", y: 1969, u: "https://www.youtube.com/watch?v=09bSoxFgaRI", s: "Slap bass" },
+            { a: "Parliament", t: "Flash Light", c: "funk", y: 1977, u: "https://www.youtube.com/watch?v=slntNpaqCoE", s: "Synth bass" },
+            { a: "Funkadelic", t: "One Nation Under Groove", c: "funk", y: 1978, u: "https://www.youtube.com/watch?v=nmjUvgdzimo", s: "Group vocals" },
+            { a: "Earth Wind Fire", t: "September", c: "funk", y: 1978, u: "https://www.youtube.com/watch?v=B2mmDEv0OEk", s: "Horns, hooks" },
+            { a: "Kool Gang", t: "Get Down On It", c: "funk", y: 1981, u: "https://www.youtube.com/watch?v=dVbeIjXuoM0", s: "Disco crossover" },
+            { a: "The Meters", t: "Cissy Strut", c: "funk", y: 1969, u: "https://www.youtube.com/watch?v=0s-AWl2wzMs", s: "New Orleans" },
+            { a: "Curtis Mayfield", t: "Move On Up", c: "funk", y: 1970, u: "https://www.youtube.com/watch?v=zPEaydx_E8Y", s: "Driving horns" },
+            { a: "Stevie Wonder", t: "Superstition", c: "funk", y: 1972, u: "https://www.youtube.com/watch?v=7_tmeHCO1IM", s: "Clavinet riff" },
+            { a: "Stevie Wonder", t: "Higher Ground", c: "funk", y: 1973, u: "https://www.youtube.com/watch?v=KJlkquCslYU", s: "Moog bass" },
+            { a: "Marvin Gaye", t: "What's Going On", c: "funk", y: 1971, u: "https://www.youtube.com/watch?v=u2XoqyVfc8g", s: "Layered vocals" },
+            { a: "Marvin Gaye", t: "Got To Give It Up", c: "funk", y: 1977, u: "https://www.youtube.com/watch?v=MgosSnJQCUI", s: "Party ambience" },
+            { a: "Al Green", t: "Love and Happiness", c: "funk", y: 1972, u: "https://www.youtube.com/watch?v=wzA-IGQhNiA", s: "Organ groove" },
+            { a: "Isaac Hayes", t: "Theme From Shaft", c: "funk", y: 1971, u: "https://www.youtube.com/watch?v=kfdW4687b_w", s: "Wah-wah guitar" },
+            { a: "Bill Withers", t: "Lovely Day", c: "funk", y: 1977, u: "https://www.youtube.com/watch?v=IABFp_C8qWw", s: "18-sec note" },
+            { a: "Bill Withers", t: "Ain't No Sunshine", c: "funk", y: 1971, u: "https://www.youtube.com/watch?v=lR2sp9tmKmY", s: "Melancholic" },
+            { a: "Aretha Franklin", t: "Respect", c: "funk", y: 1967, u: "https://www.youtube.com/watch?v=QS4UZrylKoA", s: "Powerful vocals" },
+            { a: "Donna Summer", t: "I Feel Love", c: "disco", y: 1977, u: "https://www.youtube.com/watch?v=u1RqhFGUV9Q", s: "Synth arp" },
+            { a: "Chic", t: "Good Times", c: "disco", y: 1979, u: "https://www.youtube.com/watch?v=KVz2GvIh_Gs", s: "Disco bass" },
+            { a: "Sister Sledge", t: "Lost In Music", c: "disco", y: 1979, u: "https://www.youtube.com/watch?v=mwVXJvcY45I", s: "Nile guitar" },
+            { a: "Bee Gees", t: "Stayin' Alive", c: "disco", y: 1977, u: "https://www.youtube.com/watch?v=zVZyGRPpl0w", s: "Falsetto" },
+            { a: "Diana Ross", t: "I'm Coming Out", c: "disco", y: 1980, u: "https://www.youtube.com/watch?v=vwQAdHO0Y-4", s: "Triumphant" },
+            { a: "Barry White", t: "Can't Get Enough", c: "disco", y: 1974, u: "https://www.youtube.com/watch?v=laMshX_12us", s: "Deep bass" },
+            { a: "Grandmaster Flash", t: "The Message", c: "hiphop", y: 1982, u: "https://www.youtube.com/watch?v=MLpv_HtEaks", s: "Social commentary" },
+            { a: "Sugarhill Gang", t: "Rapper's Delight", c: "hiphop", y: 1979, u: "https://www.youtube.com/watch?v=MyMta4RIrlg", s: "Good Times sample" },
+            { a: "Run-DMC", t: "It's Like That", c: "hiphop", y: 1983, u: "https://www.youtube.com/watch?v=4KTN6RgfYg8", s: "Drum machine" },
+            { a: "Eric B Rakim", t: "Paid In Full", c: "hiphop", y: 1987, u: "https://www.youtube.com/watch?v=LnVHrcRnlZw", s: "Roachclip break" },
+            { a: "Public Enemy", t: "Fight The Power", c: "hiphop", y: 1989, u: "https://www.youtube.com/watch?v=jRJKjiCtVco", s: "Dense layers" },
+            { a: "Tribe Called Quest", t: "Can I Kick It?", c: "hiphop", y: 1990, u: "https://www.youtube.com/watch?v=M-wpu3avo1Y", s: "Lou Reed sample" },
+            { a: "De La Soul", t: "Me Myself and I", c: "hiphop", y: 1989, u: "https://www.youtube.com/watch?v=NerII_Zgd5I", s: "P-Funk sample" },
+            { a: "Nas", t: "N.Y. State of Mind", c: "hiphop", y: 1994, u: "https://www.youtube.com/watch?v=LnaWZvXoG-k", s: "Preemo production" },
+            { a: "Wu-Tang", t: "C.R.E.A.M.", c: "hiphop", y: 1993, u: "https://www.youtube.com/watch?v=ecRs1sWZIL4", s: "Lo-fi soul" },
+            { a: "Dr. Dre", t: "Still D.R.E.", c: "hiphop", y: 1999, u: "https://www.youtube.com/watch?v=F7wxubr1_zg", s: "Piano interp" },
+            { a: "OutKast", t: "Hey Ya!", c: "hiphop", y: 2003, u: "https://www.youtube.com/watch?v=ubk1skSE9OA", s: "Pop crossover" },
+            { a: "OutKast", t: "B.O.B.", c: "hiphop", y: 2000, u: "https://www.youtube.com/watch?v=swTna2QJMXA", s: "DnB influence" },
+            { a: "Kanye West", t: "Through The Wire", c: "hiphop", y: 2003, u: "https://www.youtube.com/watch?v=_WnkTrEp9c8", s: "Chipmunk Soul" },
+            { a: "Kendrick Lamar", t: "HUMBLE.", c: "hiphop", y: 2017, u: "https://www.youtube.com/watch?v=ov4WobPqoSA", s: "Piano minimal" },
+            { a: "Missy Elliott", t: "Get Ur Freak On", c: "hiphop", y: 2001, u: "https://www.youtube.com/watch?v=36lThf6sdio", s: "Bhangra" },
+            { a: "Beyoncé", t: "Crazy In Love", c: "hiphop", y: 2003, u: "https://www.youtube.com/watch?v=T6xbOPSUe8M", s: "Chi-Lites horn" },
+            { a: "New Order", t: "Blue Monday", c: "electronic", y: 1983, u: "https://www.youtube.com/watch?v=TsgLhkjY4q0", s: "12-inch legend" },
+            { a: "Depeche Mode", t: "Personal Jesus", c: "electronic", y: 1989, u: "https://www.youtube.com/watch?v=rSb_KYzIgUs", s: "Blues/Synth" },
+            { a: "Pet Shop Boys", t: "West End Girls", c: "electronic", y: 1985, u: "https://www.youtube.com/watch?v=-G8KmNF-xc4", s: "Synth-pop" },
+            { a: "Daft Punk", t: "Around The World", c: "electronic", y: 1997, u: "https://www.youtube.com/watch?v=Jb6gcoR266U", s: "Filter house" },
+            { a: "Daft Punk", t: "Da Funk", c: "electronic", y: 1995, u: "https://www.youtube.com/watch?v=PwILkY9gRrc", s: "G-Funk/Acid" },
+            { a: "Chemical Bros", t: "Block Rockin Beats", c: "electronic", y: 1997, u: "https://www.youtube.com/watch?v=0kMfTYPzSnI", s: "Big Beat" },
+            { a: "Michael Jackson", t: "Wanna Be Startin", c: "pop", y: 1982, u: "https://www.youtube.com/watch?v=DsJlttdkybk", s: "Complex perc" },
+            { a: "Prince", t: "Kiss", c: "pop", y: 1986, u: "https://www.youtube.com/watch?v=rH9CZuuKpSg", s: "Minimal funk" },
+            { a: "Prince", t: "1999", c: "pop", y: 1982, u: "https://www.youtube.com/watch?v=weUhBGA8mxo", s: "Synth-funk" },
+            { a: "Prince", t: "When Doves Cry", c: "pop", y: 1984, u: "https://www.youtube.com/watch?v=dZ1pMu2NT0Q", s: "No bass" },
+            { a: "Rihanna", t: "Umbrella", c: "pop", y: 2007, u: "https://www.youtube.com/watch?v=5io69gNOTPk", s: "GarageBand loop" }
         ];
 
-        // =================================================================
-        // STATE
-        // =================================================================
-        let currentIndex = 0;
-        let queue = [...ARCHIVE];
-        let playedCount = 0;
-        let currentCategory = 'all';
-        let player = null;
+        let Q = [...A], idx = -1, played = 0, cat = 'all', auto = true, shuf = false, loop = false, P = null;
 
-        // =================================================================
-        // YOUTUBE PLAYER API
-        // =================================================================
+        // YT API
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         document.head.appendChild(tag);
 
-        function onYouTubeIframeAPIReady() {
-            loadTrack(0);
+        function onYouTubeIframeAPIReady() { }
+
+        function vid(u) { const m = u.match(/(?:v=|\/shorts\/|youtu\.be\/)([^&?\/]+)/); return m ? m[1] : null; }
+
+        function load(i) {
+            if (i < 0 || i >= Q.length) return;
+            const x = Q[i], id = vid(x.u);
+            if (P) P.loadVideoById(id);
+            else P = new YT.Player('player', { videoId: id, playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0 }, events: { onStateChange: onEnd } });
+            idx = i;
+            document.getElementById('np-artist').textContent = x.a;
+            document.getElementById('np-track').textContent = x.t;
+            document.getElementById('np-cat').textContent = x.c;
+            document.getElementById('np-year').textContent = x.y;
+            document.getElementById('np-sonic').textContent = x.s;
+            document.getElementById('s-idx').textContent = i + 1;
+            render();
         }
 
-        function extractVideoId(url) {
-            const match = url.match(/(?:v=|\/shorts\/|youtu\.be\/)([^&?\/]+)/);
-            return match ? match[1] : null;
-        }
-
-        function loadTrack(index) {
-            const track = queue[index];
-            if (!track) return;
-
-            const videoId = extractVideoId(track.url);
-
-            if (player) {
-                player.loadVideoById(videoId);
-            } else {
-                player = new YT.Player('player', {
-                    videoId: videoId,
-                    playerVars: {
-                        autoplay: 1,
-                        controls: 1,
-                        modestbranding: 1,
-                        rel: 0
-                    },
-                    events: {
-                        onStateChange: onPlayerStateChange
-                    }
-                });
-            }
-
-            updateNowPlaying(track);
-            renderQueue();
-            currentIndex = index;
-        }
-
-        function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.ENDED) {
-                playedCount++;
-                document.getElementById('stat-played').textContent = playedCount;
-                next();
+        function onEnd(e) {
+            if (e.data === 0) {
+                played++;
+                document.getElementById('s-played').textContent = played;
+                if (loop) { P.seekTo(0); P.playVideo(); }
+                else if (auto) next();
             }
         }
 
-        // =================================================================
-        // UI UPDATES
-        // =================================================================
+        function next() { idx = shuf ? Math.floor(Math.random() * Q.length) : (idx + 1) % Q.length; load(idx); }
+        function prev() { idx = idx <= 0 ? Q.length - 1 : idx - 1; load(idx); }
+        function rand() { idx = Math.floor(Math.random() * Q.length); load(idx); }
 
-        function updateNowPlaying(track) {
-            document.getElementById('np-artist').textContent = track.artist;
-            document.getElementById('np-track').textContent = track.track;
-            document.getElementById('np-category').textContent = track.category;
-            document.getElementById('np-year').textContent = track.year;
-            document.getElementById('np-sonic').textContent = track.sonic;
+        function filter(c) {
+            cat = c;
+            Q = c === 'all' ? [...A] : A.filter(x => x.c === c);
+            idx = -1;
+            document.querySelectorAll('.cat-chip').forEach(e => e.classList.toggle('active', e.dataset.c === c));
+            stats(); render();
         }
 
-        function renderQueue() {
-            const container = document.getElementById('queue');
-            container.innerHTML = '<div class="queue-header">UP NEXT</div>';
-
-            const start = currentIndex + 1;
-            const end = Math.min(start + 5, queue.length);
-
-            for (let i = start; i < end; i++) {
-                const track = queue[i];
-                const item = document.createElement('div');
-                item.className = 'queue-item';
-                item.innerHTML = `
-                    <span class="queue-num">${i + 1}</span>
-                    <div class="queue-info">
-                        <div class="queue-artist">${track.artist}</div>
-                        <div class="queue-track">${track.track}</div>
-                    </div>
-                    <span class="queue-cat">${track.category}</span>
-                `;
-                item.onclick = () => loadTrack(i);
-                container.appendChild(item);
-            }
+        function render() {
+            document.getElementById('list').innerHTML = Q.map((x, i) => `
+                <div class="track ${i === idx ? 'playing' : ''}" onclick="load(${i})">
+                    <div class="t-num">${i + 1}</div>
+                    <div class="t-info"><div class="t-artist">${x.a}</div><div class="t-title">${x.t}</div></div>
+                    <div class="t-meta"><span class="t-cat">${x.c}</span>${x.y}</div>
+                </div>
+            `).join('');
         }
 
-        function updateStats() {
-            document.getElementById('stat-total').textContent = queue.length;
-            document.getElementById('stat-category').textContent = currentCategory.toUpperCase();
+        function cats() {
+            const c = {}; A.forEach(x => c[x.c] = (c[x.c] || 0) + 1);
+            document.getElementById('cats').innerHTML = `<div class="cat-chip active" data-c="all" onclick="filter('all')">ALL<span>${A.length}</span></div>` +
+                Object.keys(c).map(k => `<div class="cat-chip" data-c="${k}" onclick="filter('${k}')">${k.toUpperCase()}<span>${c[k]}</span></div>`).join('');
         }
 
-        // =================================================================
-        // CONTROLS
-        // =================================================================
-
-        function next() {
-            let nextIndex = currentIndex + 1;
-            if (nextIndex >= queue.length) nextIndex = 0;
-            loadTrack(nextIndex);
+        function stats() {
+            document.getElementById('s-total').textContent = A.length;
+            document.getElementById('s-show').textContent = Q.length;
         }
-
-        function prev() {
-            let prevIndex = currentIndex - 1;
-            if (prevIndex < 0) prevIndex = queue.length - 1;
-            loadTrack(prevIndex);
-        }
-
-        function shuffle() {
-            queue = [...queue].sort(() => Math.random() - 0.5);
-            currentIndex = 0;
-            loadTrack(0);
-            renderQueue();
-        }
-
-        function filterCategory(cat) {
-            currentCategory = cat;
-            if (cat === 'all') {
-                queue = [...ARCHIVE];
-            } else {
-                queue = ARCHIVE.filter(t => t.category === cat);
-            }
-            currentIndex = 0;
-            updateStats();
-            if (queue.length > 0) {
-                loadTrack(0);
-            }
-
-            // Update chips
-            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-            document.querySelector(`[data-cat="${cat}"]`)?.classList.add('active');
-        }
-
-        // =================================================================
-        // INIT
-        // =================================================================
 
         document.getElementById('btn-next').onclick = next;
         document.getElementById('btn-prev').onclick = prev;
-        document.getElementById('btn-shuffle').onclick = shuffle;
+        document.getElementById('btn-rand').onclick = rand;
 
-        document.querySelectorAll('.cat-chip').forEach(chip => {
-            chip.onclick = () => filterCategory(chip.dataset.cat);
-        });
+        document.getElementById('p-auto').onclick = function () { auto = !auto; this.classList.toggle('on', auto); };
+        document.getElementById('p-shuf').onclick = function () { shuf = !shuf; this.classList.toggle('on', shuf); };
+        document.getElementById('p-loop').onclick = function () { loop = !loop; this.classList.toggle('on', loop); };
 
-        updateStats();
+        cats(); render(); stats();
     </script>
 </body>
 

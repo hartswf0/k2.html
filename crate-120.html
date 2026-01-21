@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>SAMPLE CRATE 120</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel: #111;
+            --border: #222;
+            --accent: #ff6b35;
+            --accent2: #00ff88;
+            --text: #e8e8e8;
+            --dim: #666;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'SF Mono', 'Monaco', monospace;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .app {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            background: #080808;
+        }
+
+        .brand {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        .mode-pills {
+            display: flex;
+            gap: 4px;
+        }
+
+        .pill {
+            padding: 4px 8px;
+            font-size: 8px;
+            border-radius: 10px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            cursor: pointer;
+        }
+
+        .pill.on {
+            background: var(--accent2);
+            color: #000;
+            border-color: var(--accent2);
+        }
+
+        .video-section {
+            flex-shrink: 0;
+            background: #000;
+        }
+
+        .video-wrap {
+            position: relative;
+            width: 100%;
+            padding-bottom: 40%;
+        }
+
+        .video-wrap iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .now-playing {
+            padding: 10px 12px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .np-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .np-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .np-artist {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-track {
+            font-size: 10px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .tag.cat {
+            background: rgba(255, 107, 53, 0.2);
+            color: var(--accent);
+        }
+
+        .tag.sonic {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent2);
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tag.year {
+            color: var(--dim);
+            border: 1px solid var(--border);
+        }
+
+        .controls {
+            display: flex;
+            gap: 6px;
+            padding: 10px 12px;
+            background: #080808;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ctrl {
+            flex: 1;
+            padding: 12px 8px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .ctrl:active {
+            transform: scale(0.95);
+        }
+
+        .ctrl.primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .ctrl.on {
+            background: var(--accent2);
+            color: #000;
+            border-color: var(--accent2);
+        }
+
+        .cat-bar {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+            overflow-x: auto;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .cat-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-chip {
+            flex-shrink: 0;
+            padding: 5px 10px;
+            font-size: 9px;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--dim);
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+
+        .cat-chip.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .cat-chip span {
+            opacity: 0.6;
+            margin-left: 2px;
+        }
+
+        .track-list {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .track {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .track:active {
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .track.playing {
+            background: rgba(0, 255, 136, 0.08);
+            border-left: 2px solid var(--accent2);
+        }
+
+        .t-num {
+            width: 20px;
+            font-size: 9px;
+            color: var(--dim);
+            text-align: center;
+        }
+
+        .t-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .t-artist {
+            font-size: 10px;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-title {
+            font-size: 9px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-meta {
+            font-size: 8px;
+            color: var(--dim);
+            text-align: right;
+        }
+
+        .t-cat {
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 12px;
+            background: #080808;
+            border-top: 1px solid var(--border);
+            font-size: 9px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-val {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .stat-lbl {
+            color: var(--dim);
+            font-size: 7px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="header">
+            <span class="brand">SAMPLE CRATE 120</span>
+            <div class="mode-pills">
+                <div class="pill on" id="p-auto">AUTO</div>
+                <div class="pill" id="p-shuf">SHUF</div>
+                <div class="pill" id="p-loop">LOOP</div>
+            </div>
+        </div>
+        <div class="video-section">
+            <div class="video-wrap">
+                <div id="player"></div>
+            </div>
+        </div>
+        <div class="now-playing">
+            <div class="np-row">
+                <div class="np-main">
+                    <div class="np-artist" id="np-artist">Select a track</div>
+                    <div class="np-track" id="np-track">--</div>
+                </div>
+            </div>
+            <div class="np-tags">
+                <span class="tag cat" id="np-cat">--</span>
+                <span class="tag year" id="np-year">--</span>
+                <span class="tag sonic" id="np-sonic">--</span>
+            </div>
+        </div>
+        <div class="controls">
+            <button class="ctrl" id="btn-prev">PREV</button>
+            <button class="ctrl primary" id="btn-next">NEXT</button>
+            <button class="ctrl" id="btn-rand">RND</button>
+        </div>
+        <div class="cat-bar" id="cats"></div>
+        <div class="track-list" id="list"></div>
+        <div class="footer">
+            <div class="stat"><span class="stat-val" id="s-total">0</span><br><span class="stat-lbl">TOTAL</span></div>
+            <div class="stat"><span class="stat-val" id="s-show">0</span><br><span class="stat-lbl">SHOWING</span></div>
+            <div class="stat"><span class="stat-val" id="s-played">0</span><br><span class="stat-lbl">PLAYED</span>
+            </div>
+            <div class="stat"><span class="stat-val" id="s-idx">0</span><br><span class="stat-lbl">INDEX</span></div>
+        </div>
+    </div>
+    <script>
+        const A = [
+            // FUNK
+            { a: "James Brown", t: "Funky Drummer", c: "funk", y: 1970, u: "https://www.youtube.com/watch?v=AoQ4AtsFWVM", s: "Most sampled drum break ever" },
+            { a: "James Brown", t: "Get Up Offa That Thing", c: "funk", y: 1976, u: "https://www.youtube.com/watch?v=1_uNMy20qAI", s: "Pure energy funk" },
+            { a: "James Brown", t: "The Payback", c: "funk", y: 1973, u: "https://www.youtube.com/watch?v=1cBZcpSeiFc", s: "Slow-burning revenge funk" },
+            { a: "Sly & The Family Stone", t: "Thank You", c: "funk", y: 1969, u: "https://www.youtube.com/watch?v=NOa5UOHdwnc", s: "Origin of slap bass" },
+            { a: "Parliament", t: "Flash Light", c: "funk", y: 1977, u: "https://www.youtube.com/watch?v=E5uH1JFcaq8", s: "P-Funk synth bass" },
+            { a: "Funkadelic", t: "One Nation Under A Groove", c: "funk", y: 1978, u: "https://www.youtube.com/watch?v=3WOZwwRH6XU", s: "George Clinton anthem" },
+            { a: "Earth, Wind & Fire", t: "September", c: "funk", y: 1978, u: "https://www.youtube.com/watch?v=Gs069dndIYk", s: "Undeniable groove" },
+            { a: "Kool & The Gang", t: "Get Down On It", c: "funk", y: 1981, u: "https://www.youtube.com/watch?v=qchPLaiKocI", s: "Infectious boogie" },
+            { a: "The Meters", t: "Cissy Strut", c: "funk", y: 1969, u: "https://www.youtube.com/watch?v=MXI5Nuz6OHg", s: "New Orleans funk instrumental" },
+            { a: "Curtis Mayfield", t: "Move On Up", c: "funk", y: 1970, u: "https://www.youtube.com/watch?v=6Z66wVo7uNw", s: "9-minute soul/funk epic" },
+            { a: "Stevie Wonder", t: "Superstition", c: "funk", y: 1972, u: "https://www.youtube.com/watch?v=0CFuCYNx-1g", s: "Clavinet-driven classic" },
+            { a: "Stevie Wonder", t: "Higher Ground", c: "funk", y: 1973, u: "https://www.youtube.com/watch?v=4wZ3ZG_Wams", s: "Moog synth twist" },
+            { a: "Marvin Gaye", t: "What's Going On", c: "funk", y: 1971, u: "https://www.youtube.com/watch?v=H-kA3UtBj4M", s: "Social commentary soul" },
+            { a: "Al Green", t: "Love and Happiness", c: "funk", y: 1972, u: "https://www.youtube.com/watch?v=IQl54ozhwZg", s: "Memphis groove" },
+            { a: "Isaac Hayes", t: "Theme from Shaft", c: "funk", y: 1971, u: "https://www.youtube.com/watch?v=_pdZLODrRLQ", s: "Wah-wah guitar, orchestral" },
+            { a: "Barry White", t: "Can't Get Enough", c: "funk", y: 1974, u: "https://www.youtube.com/watch?v=hgzCrjkcm0Y", s: "Orchestral soul-disco" },
+            { a: "Bill Withers", t: "Lovely Day", c: "funk", y: 1977, u: "https://www.youtube.com/watch?v=bEeaS6fuUoA", s: "18-second sustained note" },
+            { a: "Bill Withers", t: "Ain't No Sunshine", c: "funk", y: 1971, u: "https://www.youtube.com/watch?v=YuKfiH0Scao", s: "Melancholic soul" },
+            { a: "Aretha Franklin", t: "Respect", c: "funk", y: 1967, u: "https://www.youtube.com/watch?v=JzqGZjFnYnA", s: "Soul anthem" },
+            { a: "David Bowie", t: "Fame", c: "funk", y: 1975, u: "https://www.youtube.com/watch?v=Ypgq0qdgVZA", s: "Funk-rock crossover w/ Lennon" },
+            // DISCO
+            { a: "Donna Summer", t: "I Feel Love", c: "disco", y: 1977, u: "https://www.youtube.com/watch?v=yEbaeLv-aOo", s: "Electronic disco, Moroder" },
+            { a: "Chic", t: "Good Times", c: "disco", y: 1979, u: "https://www.youtube.com/watch?v=Er9xGRolrT4", s: "Birthed hip-hop's first hit" },
+            { a: "Sister Sledge", t: "Lost in Music", c: "disco", y: 1979, u: "https://www.youtube.com/watch?v=43qB9FpfCR8", s: "Nile Rodgers production" },
+            { a: "Bee Gees", t: "Stayin' Alive", c: "disco", y: 1977, u: "https://www.youtube.com/watch?v=I_izvAbhExY", s: "Saturday Night Fever" },
+            { a: "Diana Ross", t: "I'm Coming Out", c: "disco", y: 1980, u: "https://www.youtube.com/watch?v=F-mjl63e0ms", s: "Chic-written anthem" },
+            { a: "Marvin Gaye", t: "Got to Give It Up", c: "disco", y: 1977, u: "https://www.youtube.com/watch?v=qhFNY9zW2F4", s: "Funk-disco groove" },
+            { a: "Blondie", t: "Heart of Glass", c: "disco", y: 1978, u: "https://www.youtube.com/watch?v=WGU_4-5RaxU", s: "New Wave meets disco" },
+            { a: "Barry White", t: "Can't Get Enough", c: "disco", y: 1974, u: "https://www.youtube.com/watch?v=WGU_4-5RaxU", s: "Lush string-laden disco" },
+            // HIP-HOP
+            { a: "Grandmaster Flash", t: "The Message", c: "hiphop", y: 1982, u: "https://www.youtube.com/watch?v=PobrSpMwKk4", s: "First conscious rap" },
+            { a: "Sugarhill Gang", t: "Rapper's Delight", c: "hiphop", y: 1979, u: "https://www.youtube.com/watch?v=rKTUAESacQM", s: "First rap hit, Good Times" },
+            { a: "Run-DMC", t: "It's Like That", c: "hiphop", y: 1983, u: "https://www.youtube.com/watch?v=X0Dd4PvaGhU", s: "Drum-machine beats" },
+            { a: "Eric B. & Rakim", t: "Paid in Full", c: "hiphop", y: 1987, u: "https://www.youtube.com/watch?v=E7t8eoA_1jQ", s: "Golden-age quintessential" },
+            { a: "Public Enemy", t: "Fight the Power", c: "hiphop", y: 1989, u: "https://www.youtube.com/watch?v=mmo3HFa2vjg", s: "Political anthem, Do the Right Thing" },
+            { a: "A Tribe Called Quest", t: "Can I Kick It?", c: "hiphop", y: 1990, u: "https://www.youtube.com/watch?v=O3pyCGnZzYA", s: "Lou Reed sample" },
+            { a: "De La Soul", t: "Me, Myself and I", c: "hiphop", y: 1989, u: "https://www.youtube.com/watch?v=jdtKT5q-CW8", s: "D.A.I.S.Y. age rap" },
+            { a: "Nas", t: "N.Y. State of Mind", c: "hiphop", y: 1994, u: "https://www.youtube.com/watch?v=hI8A14Qcv68", s: "Illmatic boom-bap" },
+            { a: "Wu-Tang Clan", t: "C.R.E.A.M.", c: "hiphop", y: 1993, u: "https://www.youtube.com/watch?v=PBwAxmrE194", s: "Iconic piano loop" },
+            { a: "Dr. Dre", t: "Still D.R.E.", c: "hiphop", y: 1999, u: "https://www.youtube.com/watch?v=F7wxubr1_zg", s: "West Coast piano riff" },
+            { a: "Kanye West", t: "Through The Wire", c: "hiphop", y: 2003, u: "https://www.youtube.com/watch?v=_WnkTrEp9c8", s: "Chipmunk Soul definition" },
+            { a: "Kendrick Lamar", t: "HUMBLE.", c: "hiphop", y: 2017, u: "https://www.youtube.com/watch?v=ov4WobPqoSA", s: "Modern piano minimalism" },
+            { a: "Missy Elliott", t: "Get Ur Freak On", c: "hiphop", y: 2001, u: "https://www.youtube.com/watch?v=36lThf6sdio", s: "Bhangra rhythm fusion" },
+            { a: "OutKast", t: "Hey Ya!", c: "hiphop", y: 2003, u: "https://www.youtube.com/watch?v=ubk1skSE9OA", s: "Pop/Rap crossover" },
+            { a: "OutKast", t: "B.O.B.", c: "hiphop", y: 2000, u: "https://www.youtube.com/watch?v=swTna2QJMXA", s: "Drum n Bass tempo" },
+            { a: "Blondie", t: "Rapture", c: "hiphop", y: 1981, u: "https://www.youtube.com/watch?v=Qwg8OGS-a0M", s: "First rap #1 by white artist" },
+            // POP
+            { a: "Michael Jackson", t: "Billie Jean", c: "pop", y: 1982, u: "https://www.youtube.com/watch?v=Zi_XLOBDo_Y", s: "Signature bassline" },
+            { a: "Michael Jackson", t: "Wanna Be Startin' Somethin'", c: "pop", y: 1982, u: "https://www.youtube.com/watch?v=H9tEvfIsDyo", s: "Mama-say mama-sah chant" },
+            { a: "Prince", t: "Kiss", c: "pop", y: 1986, u: "https://www.youtube.com/watch?v=rH9CZuuKpSg", s: "Minimalist funk-pop" },
+            { a: "Prince", t: "1999", c: "pop", y: 1982, u: "https://www.youtube.com/watch?v=rblt2EtFfC4", s: "Millennium party anthem" },
+            { a: "Prince", t: "When Doves Cry", c: "pop", y: 1984, u: "https://www.youtube.com/watch?v=UG3VcCAlUgE", s: "No bass line experiment" },
+            { a: "David Bowie", t: "Let's Dance", c: "pop", y: 1983, u: "https://www.youtube.com/watch?v=VbD_kBJc_gI", s: "Nile Rodgers production" },
+            { a: "Madonna", t: "Vogue", c: "pop", y: 1990, u: "https://www.youtube.com/watch?v=guXl_AD1bGI", s: "House-influenced, ballroom" },
+            { a: "Madonna", t: "Into the Groove", c: "pop", y: 1985, u: "https://www.youtube.com/watch?v=52T_WG0C9qI", s: "80s dance-pop staple" },
+            { a: "Whitney Houston", t: "I Wanna Dance with Somebody", c: "pop", y: 1987, u: "https://www.youtube.com/watch?v=k_cQMQPnGMs", s: "Joyful 80s pop" },
+            { a: "Janet Jackson", t: "Rhythm Nation", c: "pop", y: 1989, u: "https://www.youtube.com/watch?v=qG_G-w3WTr0", s: "New jack swing anthem" },
+            { a: "Beyoncé", t: "Crazy in Love", c: "pop", y: 2003, u: "https://www.youtube.com/watch?v=T6xbOPSUe8M", s: "Chi-Lites horn sample" },
+            { a: "Rihanna", t: "Umbrella", c: "pop", y: 2007, u: "https://www.youtube.com/watch?v=5io69gNOTPk", s: "Era-defining pop-R&B" },
+            // ROCK
+            { a: "The Beatles", t: "Come Together", c: "rock", y: 1969, u: "https://www.youtube.com/watch?v=45cYwDMibGo", s: "Swampy groove, iconic bass" },
+            { a: "The Beatles", t: "Tomorrow Never Knows", c: "rock", y: 1966, u: "https://www.youtube.com/watch?v=m4BuziKGMy4", s: "Psychedelic tape-loop" },
+            { a: "Led Zeppelin", t: "When the Levee Breaks", c: "rock", y: 1971, u: "https://www.youtube.com/watch?v=JM3fodiK9rY", s: "Famous drum recording" },
+            { a: "Rolling Stones", t: "Paint It, Black", c: "rock", y: 1966, u: "https://www.youtube.com/watch?v=O4irXQhgMqg", s: "Sitar-laced rock" },
+            { a: "Queen", t: "Another One Bites the Dust", c: "rock", y: 1980, u: "https://www.youtube.com/watch?v=rY0WxgSXdEE", s: "Chic-inspired bass" },
+            { a: "Queen", t: "We Will Rock You", c: "rock", y: 1977, u: "https://www.youtube.com/watch?v=-tJYN-eG1zk", s: "Stadium stomp-clap" },
+            { a: "Fleetwood Mac", t: "The Chain", c: "rock", y: 1977, u: "https://www.youtube.com/watch?v=kBYHwH1Vb-c", s: "F1 theme bass breakdown" },
+            { a: "AC/DC", t: "Back in Black", c: "rock", y: 1980, u: "https://www.youtube.com/watch?v=pAgnJDJN4VA", s: "Ultimate hard-rock riff" },
+            { a: "Talking Heads", t: "Once in a Lifetime", c: "rock", y: 1980, u: "https://www.youtube.com/watch?v=5IsSpAOD6K8", s: "Eno, Afrobeat rhythms" },
+            // ELECTRONIC
+            { a: "Kraftwerk", t: "Trans-Europe Express", c: "electronic", y: 1977, u: "https://www.youtube.com/watch?v=DWSceMtAjPw", s: "Sampled by Bambaataa" },
+            { a: "Kraftwerk", t: "Numbers", c: "electronic", y: 1981, u: "https://www.youtube.com/watch?v=4YPiCeLwh5o", s: "Electro blueprint" },
+            { a: "Yellow Magic Orchestra", t: "Rydeen", c: "electronic", y: 1979, u: "https://www.youtube.com/watch?v=Yxep-gS-Btg", s: "Japanese electropop" },
+            { a: "Giorgio Moroder", t: "Chase", c: "electronic", y: 1978, u: "https://www.youtube.com/watch?v=ViN2bRGrBx8", s: "Midnight Express theme" },
+            { a: "New Order", t: "Blue Monday", c: "electronic", y: 1983, u: "https://www.youtube.com/watch?v=cNd4eocq2K0", s: "Best-selling 12\" ever" },
+            { a: "Depeche Mode", t: "Personal Jesus", c: "electronic", y: 1989, u: "https://www.youtube.com/watch?v=p3j2NYZ8FKs", s: "Bluesy electronic pop" },
+            { a: "Pet Shop Boys", t: "West End Girls", c: "electronic", y: 1985, u: "https://www.youtube.com/watch?v=-G8KmNF-xc4", s: "Synth-pop #1 hit" },
+            { a: "Daft Punk", t: "Around the World", c: "electronic", y: 1997, u: "https://www.youtube.com/watch?v=K0HSD_i2DvA", s: "French house vocoder" },
+            { a: "Daft Punk", t: "Da Funk", c: "electronic", y: 1995, u: "https://www.youtube.com/watch?v=mmi60Bd4jSs", s: "Funk-infused house" },
+            { a: "Chemical Brothers", t: "Block Rockin' Beats", c: "electronic", y: 1997, u: "https://www.youtube.com/watch?v=iTxOKsyZ0Lw", s: "Big beat era" },
+            // WORLD
+            { a: "Fela Kuti", t: "Zombie", c: "world", y: 1976, u: "https://www.youtube.com/watch?v=Qj5x6pbJMyU", s: "Afrobeat anthem" },
+            { a: "Fela Kuti", t: "Water No Get Enemy", c: "world", y: 1975, u: "https://www.youtube.com/watch?v=IQBC5URoF0s", s: "Uplifting Afrobeat" },
+            { a: "Miriam Makeba", t: "Pata Pata", c: "world", y: 1967, u: "https://www.youtube.com/watch?v=JBJVVhn7iuo", s: "South African pop" },
+            { a: "Manu Dibango", t: "Soul Makossa", c: "world", y: 1972, u: "https://www.youtube.com/watch?v=TxRWQHCSmUg", s: "Sampled by MJ" },
+            { a: "Celia Cruz", t: "Quimbara", c: "world", y: 1974, u: "https://www.youtube.com/watch?v=tGbRZ73NvlY", s: "High-energy salsa" },
+            { a: "Buena Vista Social Club", t: "Chan Chan", c: "world", y: 1996, u: "https://www.youtube.com/watch?v=XIbJylD_c84", s: "Cuban son sensation" },
+            { a: "Os Mutantes", t: "A Minha Menina", c: "world", y: 1968, u: "https://www.youtube.com/watch?v=6w6ewcRu-HQ", s: "Brazilian Tropicália" },
+            { a: "Serge Gainsbourg", t: "Je T'aime... Moi Non Plus", c: "world", y: 1969, u: "https://www.youtube.com/watch?v=GlpDf6XX_j0", s: "Sultry French pop" },
+            // SOUNDTRACK
+            { a: "Ennio Morricone", t: "The Ecstasy of Gold", c: "soundtrack", y: 1966, u: "https://www.youtube.com/watch?v=PYI09PMNazw", s: "Western epic theme" },
+            { a: "Ennio Morricone", t: "Good Bad Ugly Theme", c: "soundtrack", y: 1966, u: "https://www.youtube.com/watch?v=AFa1-kciCb4", s: "Iconic whistle" },
+            { a: "John Williams", t: "Imperial March", c: "soundtrack", y: 1980, u: "https://www.youtube.com/watch?v=-bzWSJG93P8", s: "Darth Vader theme" },
+            { a: "Vangelis", t: "Blade Runner Blues", c: "soundtrack", y: 1982, u: "https://www.youtube.com/watch?v=RScZrvTebeA", s: "Future noir synth" },
+            { a: "Vangelis", t: "Chariots of Fire", c: "soundtrack", y: 1981, u: "https://www.youtube.com/watch?v=8a-HfNE3EIo", s: "Olympic drama theme" },
+            { a: "Bernard Herrmann", t: "Psycho Prelude", c: "soundtrack", y: 1960, u: "https://www.youtube.com/watch?v=qMTrVgpDwPk", s: "Shower scene strings" },
+            // JAZZ
+            { a: "Quincy Jones", t: "Soul Bossa Nova", c: "jazz", y: 1962, u: "https://www.youtube.com/watch?v=T5ALPzS0QfQ", s: "Austin Powers theme" },
+            { a: "Herbie Hancock", t: "Rockit", c: "jazz", y: 1983, u: "https://www.youtube.com/watch?v=GHhD4PD75zY", s: "Jazz-electro, scratching" },
+            { a: "Herbie Hancock", t: "Chameleon", c: "jazz", y: 1973, u: "https://www.youtube.com/watch?v=iqomTAiRnVM", s: "15-min jazz-funk" },
+            { a: "Miles Davis", t: "So What", c: "jazz", y: 1959, u: "https://www.youtube.com/watch?v=ylXk1LBvIqU", s: "Modal jazz, Kind of Blue" },
+            { a: "Dave Brubeck", t: "Take Five", c: "jazz", y: 1959, u: "https://www.youtube.com/watch?v=vmDDOFXSgAs", s: "5/4 time signature" },
+            { a: "Bob James", t: "Nautilus", c: "jazz", y: 1974, u: "https://www.youtube.com/watch?v=2XPfkYs6O8I", s: "Most sampled in hip-hop" },
+            { a: "Nina Simone", t: "Feeling Good", c: "jazz", y: 1965, u: "https://www.youtube.com/watch?v=oHRNrgDIJfo", s: "Empowering standard" },
+            { a: "Nina Simone", t: "Sinnerman", c: "jazz", y: 1965, u: "https://www.youtube.com/watch?v=QH3Fx41Jpl4", s: "10-min spiritual groove" },
+            { a: "Billie Holiday", t: "Strange Fruit", c: "jazz", y: 1939, u: "https://www.youtube.com/watch?v=649wWWkW_1o", s: "Protest song, lynching" },
+            { a: "Ella Fitzgerald", t: "Summertime", c: "jazz", y: 1968, u: "https://www.youtube.com/watch?v=u2bigf337aU", s: "Scat Gershwin" },
+            { a: "Louis Armstrong", t: "What a Wonderful World", c: "jazz", y: 1967, u: "https://www.youtube.com/watch?v=rBrd_3VMC3c", s: "Timeless optimism" },
+            // SPEECH
+            { a: "MLK", t: "I Have a Dream", c: "speech", y: 1963, u: "https://www.youtube.com/watch?v=6dKimoybmEo", s: "March on Washington" },
+            { a: "Malcolm X", t: "By Any Means Necessary", c: "speech", y: 1964, u: "https://www.youtube.com/watch?v=p-sJl95s1E8", s: "Fiery Black rights" },
+            { a: "JFK", t: "Ask Not What Your Country", c: "speech", y: 1961, u: "https://www.youtube.com/watch?v=PEC1C4p0k3E", s: "Inaugural address" },
+            { a: "Muhammad Ali", t: "I Am the Greatest", c: "speech", y: 1964, u: "https://www.youtube.com/watch?v=5ro71_ffCK8", s: "Pre-fight braggadocio" },
+            { a: "Nina Simone", t: "Mississippi Goddam", c: "speech", y: 1964, u: "https://www.youtube.com/watch?v=LJ25-U3jNWM", s: "Protest song live" },
+            { a: "Angela Davis", t: "Freedom is a Constant Struggle", c: "speech", y: 1972, u: "https://www.youtube.com/watch?v=5u1aHpEtWyA", s: "Justice speech" },
+            { a: "Gil Scott-Heron", t: "Revolution Will Not Be Televised", c: "speech", y: 1971, u: "https://www.youtube.com/watch?v=mbv9y00twuI", s: "Proto-rap spoken word" },
+            { a: "James Baldwin", t: "Notes of a Native Son", c: "speech", y: 1965, u: "https://www.youtube.com/watch?v=1TeTFRoXKqs", s: "Cambridge debate" },
+            { a: "Amiri Baraka", t: "Somebody Blew Up America", c: "speech", y: 2002, u: "https://www.youtube.com/watch?v=RmacIBYslr0", s: "Post-9/11 poem" },
+            { a: "Stokely Carmichael", t: "Black Power", c: "speech", y: 1966, u: "https://www.youtube.com/watch?v=2lAm2QhFq1o", s: "Movement slogan" },
+            { a: "Charlie Chaplin", t: "Great Dictator Speech", c: "speech", y: 1940, u: "https://www.youtube.com/watch?v=k0CzXi9e66M", s: "Humanity plea" },
+            { a: "FDR", t: "Fear Itself", c: "speech", y: 1933, u: "https://www.youtube.com/watch?v=rIKMbma6_dc", s: "First inaugural" },
+            { a: "Winston Churchill", t: "We Shall Fight on Beaches", c: "speech", y: 1940, u: "https://www.youtube.com/watch?v=D3E6OyHdzTk", s: "WWII resolve" },
+            { a: "Carl Sagan", t: "Pale Blue Dot", c: "speech", y: 1994, u: "https://www.youtube.com/watch?v=OjN-eL2YNsM", s: "Cosmic reflection" },
+            { a: "Barack Obama", t: "Yes We Can", c: "speech", y: 2008, u: "https://www.youtube.com/watch?v=mi8N5gDVpeg", s: "Election night" },
+            { a: "Alan Watts", t: "The Dream of Life", c: "speech", y: 1972, u: "https://www.youtube.com/watch?v=omxnKRZ6Pyg", s: "Philosophical" },
+            { a: "Terence McKenna", t: "Culture Not Your Friend", c: "speech", y: 1999, u: "https://www.youtube.com/watch?v=lBDPM2JpoCM", s: "Counter-culture" },
+            { a: "Fred Hampton", t: "I Am a Revolutionary", c: "speech", y: 1969, u: "https://www.youtube.com/watch?v=PJ6shH-4M-U", s: "Black Panther leader" },
+            { a: "Huey P. Newton", t: "Interview 1973", c: "speech", y: 1973, u: "https://www.youtube.com/watch?v=pS9dsJs_wRo", s: "Revolutionary Suicide" },
+            { a: "Assata Shakur", t: "To My People", c: "speech", y: 1973, u: "https://www.youtube.com/watch?v=KsZpGEReM2E", s: "Letter from exile" }
+        ];
+
+        let Q = [...A], idx = -1, played = 0, cat = 'all', auto = true, shuf = false, loop = false, P = null;
+
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+
+        function onYouTubeIframeAPIReady() { }
+
+        function vid(u) { const m = u.match(/(?:v=|\/shorts\/|youtu\.be\/)([^&?\/]+)/); return m ? m[1] : null; }
+
+        function load(i) {
+            if (i < 0 || i >= Q.length) return;
+            const x = Q[i], id = vid(x.u);
+            if (P) P.loadVideoById(id);
+            else P = new YT.Player('player', { videoId: id, playerVars: { autoplay: 1, controls: 1, modestbranding: 1, rel: 0 }, events: { onStateChange: onEnd } });
+            idx = i;
+            document.getElementById('np-artist').textContent = x.a;
+            document.getElementById('np-track').textContent = x.t;
+            document.getElementById('np-cat').textContent = x.c;
+            document.getElementById('np-year').textContent = x.y;
+            document.getElementById('np-sonic').textContent = x.s;
+            document.getElementById('s-idx').textContent = i + 1;
+            render();
+        }
+
+        function onEnd(e) {
+            if (e.data === 0) {
+                played++;
+                document.getElementById('s-played').textContent = played;
+                if (loop) { P.seekTo(0); P.playVideo(); }
+                else if (auto) next();
+            }
+        }
+
+        function next() { idx = shuf ? Math.floor(Math.random() * Q.length) : (idx + 1) % Q.length; load(idx); }
+        function prev() { idx = idx <= 0 ? Q.length - 1 : idx - 1; load(idx); }
+        function rand() { idx = Math.floor(Math.random() * Q.length); load(idx); }
+
+        function filter(c) {
+            cat = c;
+            Q = c === 'all' ? [...A] : A.filter(x => x.c === c);
+            idx = -1;
+            document.querySelectorAll('.cat-chip').forEach(e => e.classList.toggle('active', e.dataset.c === c));
+            stats(); render();
+        }
+
+        function render() {
+            document.getElementById('list').innerHTML = Q.map((x, i) => `
+        <div class="track ${i === idx ? 'playing' : ''}" onclick="load(${i})">
+            <div class="t-num">${i + 1}</div>
+            <div class="t-info"><div class="t-artist">${x.a}</div><div class="t-title">${x.t}</div></div>
+            <div class="t-meta"><span class="t-cat">${x.c}</span>${x.y}</div>
+        </div>
+    `).join('');
+        }
+
+        function cats() {
+            const c = {}; A.forEach(x => c[x.c] = (c[x.c] || 0) + 1);
+            document.getElementById('cats').innerHTML = `<div class="cat-chip active" data-c="all" onclick="filter('all')">ALL<span>${A.length}</span></div>` +
+                Object.keys(c).map(k => `<div class="cat-chip" data-c="${k}" onclick="filter('${k}')">${k.toUpperCase()}<span>${c[k]}</span></div>`).join('');
+        }
+
+        function stats() {
+            document.getElementById('s-total').textContent = A.length;
+            document.getElementById('s-show').textContent = Q.length;
+        }
+
+        document.getElementById('btn-next').onclick = next;
+        document.getElementById('btn-prev').onclick = prev;
+        document.getElementById('btn-rand').onclick = rand;
+        document.getElementById('p-auto').onclick = function () { auto = !auto; this.classList.toggle('on', auto); };
+        document.getElementById('p-shuf').onclick = function () { shuf = !shuf; this.classList.toggle('on', shuf); };
+        document.getElementById('p-loop').onclick = function () { loop = !loop; this.classList.toggle('on', loop); };
+
+        cats(); render(); stats();
+    </script>
+</body>
+
+</html>
