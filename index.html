@@ -27,8 +27,8 @@
             background-color: var(--bg);
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
         }
@@ -95,6 +95,34 @@
             pointer-events: none;
             z-index: 50;
             opacity: 0.3;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .tool-card {
+                padding: 16px;
+            }
+
+            .tool-card p {
+                font-size: 12px;
+                margin-bottom: 12px;
+            }
+
+            header {
+                margin-bottom: 24px;
+                padding-bottom: 16px;
+            }
+
+            h1 {
+                font-size: 28px !important;
+            }
+
+            footer {
+                margin-top: 24px;
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
         }
     </style>
 </head>
