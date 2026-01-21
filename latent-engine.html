@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>LATENT ENGINE // Procedural Music</title>
+    <style>
+        :root {
+            --bg: #050508;
+            --panel: #0a0a0f;
+            --border: #1a1a2e;
+            --accent: #ff6b35;
+            --accent2: #00ff88;
+            --accent3: #8855ff;
+            --text: #e0e0e0;
+            --dim: #444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'SF Mono', 'Monaco', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 10px;
+            color: var(--dim);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        /* OPERATOR DISPLAY */
+        .operator-panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+
+        .operator-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .operator-name {
+            font-size: 14px;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        .operator-axis {
+            font-size: 10px;
+            padding: 4px 12px;
+            background: rgba(255, 107, 53, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            color: var(--accent);
+        }
+
+        .operator-function {
+            font-size: 12px;
+            color: var(--dim);
+            margin-bottom: 16px;
+        }
+
+        /* VISUALIZATION */
+        .viz-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .viz-box {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            height: 120px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .viz-label {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 9px;
+            color: var(--dim);
+            letter-spacing: 1px;
+        }
+
+        #waveform,
+        #spectrum {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* PATTERN DISPLAY */
+        .pattern-display {
+            display: flex;
+            gap: 4px;
+            margin: 16px 0;
+            justify-content: center;
+        }
+
+        .pattern-step {
+            width: 16px;
+            height: 40px;
+            background: #111;
+            border-radius: 4px;
+            transition: all 0.1s;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .pattern-step.active {
+            background: linear-gradient(to top, var(--accent) 0%, var(--accent3) 100%);
+        }
+
+        .pattern-step.playing {
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        .pattern-step .bar {
+            width: 100%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: height 0.1s;
+        }
+
+        /* PARAMETERS */
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .param {
+            text-align: center;
+        }
+
+        .param-label {
+            font-size: 9px;
+            color: var(--dim);
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        .param-value {
+            font-size: 20px;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* TUNING INFO */
+        .tuning-info {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            padding: 16px;
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tuning-stat {
+            text-align: center;
+        }
+
+        .tuning-stat-value {
+            font-size: 16px;
+            color: var(--accent2);
+        }
+
+        .tuning-stat-label {
+            font-size: 9px;
+            color: var(--dim);
+        }
+
+        /* CONTROLS */
+        .controls {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin: 32px 0;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 12px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+        }
+
+        .btn.primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            font-size: 14px;
+            padding: 20px 48px;
+        }
+
+        .btn.primary.running {
+            background: #333;
+            color: var(--accent);
+        }
+
+        /* LOG */
+        .log-container {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            height: 150px;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 10px;
+            margin-top: 24px;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
+
+        .log-entry.operator {
+            color: var(--accent);
+        }
+
+        .log-entry.note {
+            color: var(--accent2);
+        }
+
+        .log-entry.transition {
+            color: var(--accent3);
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--dim);
+            font-size: 10px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>LATENT ENGINE</h1>
+            <div class="subtitle">Procedural Music Machine • Thinking Operators</div>
+        </header>
+
+        <div class="operator-panel">
+            <div class="operator-header">
+                <span class="operator-name" id="op-name">THE GEOMETRIC PULSE</span>
+                <span class="operator-axis" id="op-axis">GEOMETRY</span>
+            </div>
+            <div class="operator-function" id="op-function">Base-8 Geometry / Celestial Timing</div>
+
+            <div class="viz-container">
+                <div class="viz-box">
+                    <span class="viz-label">WAVEFORM</span>
+                    <canvas id="waveform"></canvas>
+                </div>
+                <div class="viz-box">
+                    <span class="viz-label">SPECTRUM</span>
+                    <canvas id="spectrum"></canvas>
+                </div>
+            </div>
+
+            <div class="pattern-display" id="pattern">
+                <!-- Steps injected here -->
+            </div>
+        </div>
+
+        <div class="tuning-info">
+            <div class="tuning-stat">
+                <div class="tuning-stat-value" id="tuning-name">slendro</div>
+                <div class="tuning-stat-label">TUNING</div>
+            </div>
+            <div class="tuning-stat">
+                <div class="tuning-stat-value" id="note-count">5</div>
+                <div class="tuning-stat-label">NOTES</div>
+            </div>
+            <div class="tuning-stat">
+                <div class="tuning-stat-value" id="evolution">0</div>
+                <div class="tuning-stat-label">EVOLUTION</div>
+            </div>
+        </div>
+
+        <div class="params-grid">
+            <div class="param">
+                <div class="param-label">BPM</div>
+                <div class="param-value" id="bpm-display">115</div>
+            </div>
+            <div class="param">
+                <div class="param-label">DENSITY</div>
+                <div class="param-value" id="density-display">50%</div>
+            </div>
+            <div class="param">
+                <div class="param-label">DRIFT</div>
+                <div class="param-value" id="drift-display">0.0</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="btn-evolve">EVOLVE</button>
+            <button class="btn primary" id="btn-start">▶ START ENGINE</button>
+            <button class="btn" id="btn-midi">↓ MIDI</button>
+        </div>
+
+        <div class="log-container" id="log">
+            <div class="log-entry">// LATENT ENGINE v1.0</div>
+            <div class="log-entry">// Ready to generate procedural music</div>
+        </div>
+
+        <footer>
+            LATENT ENGINE • THINKING OPERATORS • PROCEDURAL MUSIC MACHINE
+        </footer>
+    </div>
+
+    <script>
+        // =================================================================
+        // THINKING OPERATORS
+        // =================================================================
+        const OPERATORS = {
+            anchor: {
+                name: "THE SEISMIC ANCHOR",
+                axis: "MASS",
+                function: "Lithic Resonance / Structural Stress",
+                bpmRange: [80, 150],
+                densityRange: [0.6, 0.9],
+                noteRange: [0, 0.3],  // Low notes
+                drift: 0.02,
+                attack: 0.05,
+                release: 0.8
+            },
+            slingshot: {
+                name: "THE KEPLERIAN SPEED-RUN",
+                axis: "VELOCITY",
+                function: "Variable Velocity / Orbital Acceleration",
+                bpmRange: [130, 180],
+                densityRange: [0.5, 0.95],
+                noteRange: [0, 1],
+                drift: 0.1,
+                attack: 0.01,
+                release: 0.2
+            },
+            floor: {
+                name: "THE ATMOSPHERIC FLOOR",
+                axis: "SPACE",
+                function: "Material Dust / High-Vertical Filtering",
+                bpmRange: [80, 105],
+                densityRange: [0.2, 0.4],
+                noteRange: [0.3, 0.7],
+                drift: 0.005,
+                attack: 0.1,
+                release: 1.5
+            },
+            cavern: {
+                name: "THE DEEP CAVERN",
+                axis: "TIME",
+                function: "Seismic Dread / The Zimmer Scale",
+                bpmRange: [60, 90],
+                densityRange: [0.3, 0.5],
+                noteRange: [0, 0.2],
+                drift: 0.01,
+                attack: 0.2,
+                release: 2.0
+            },
+            pulse: {
+                name: "THE GEOMETRIC PULSE",
+                axis: "GEOMETRY",
+                function: "Base-8 Geometry / Celestial Timing",
+                bpmRange: [100, 130],
+                densityRange: [0.4, 0.6],
+                noteRange: [0, 1],
+                drift: 0.03,
+                attack: 0.02,
+                release: 0.4
+            },
+            lung: {
+                name: "THE BIOLOGICAL LUNG",
+                axis: "BIOLOGY",
+                function: "Respiratory Rate / Bio-Logic",
+                bpmRange: [60, 90],
+                densityRange: [0.3, 0.5],
+                noteRange: [0.2, 0.8],
+                drift: 0.008,
+                attack: 0.15,
+                release: 1.2
+            }
+        };
+
+        const OPERATOR_KEYS = Object.keys(OPERATORS);
+
+        // =================================================================
+        // TUNINGS (from Scala archive)
+        // =================================================================
+        const TUNINGS = [
+            { name: "slendro", notes: 5, intervals: [231.17, 498.04, 701.96, 968.83, 1200] },
+            { name: "pelog", notes: 7, intervals: [231.17, 315.64, 470.78, 701.96, 789.23, 968.83, 1200] },
+            { name: "arabic", notes: 17, intervals: [90.22, 180.45, 203.91, 294.13, 384.36, 407.82, 498.04, 588.27, 678.49, 701.96, 792.18, 882.40, 905.87, 996.09, 1086.31, 1109.78, 1200] },
+            { name: "indian", notes: 22, intervals: [90.22, 111.73, 182.40, 203.91, 294.13, 315.64, 386.31, 407.82, 498.04, 519.55, 590.22, 610.22, 701.96, 792.18, 813.69, 884.36, 905.87, 996.09, 1017.60, 1088.27, 1109.78, 1200] },
+            { name: "blues", notes: 12, intervals: [87.92, 203.91, 327.31, 386.31, 498.04, 578.07, 701.96, 794.87, 884.36, 986.62, 1088.27, 1200] },
+            { name: "just", notes: 12, intervals: [111.73, 203.91, 315.64, 386.31, 498.04, 590.22, 701.96, 813.69, 884.36, 996.09, 1088.27, 1200] }
+        ];
+
+        // =================================================================
+        // ENGINE STATE
+        // =================================================================
+        let ctx = null;
+        let masterGain = null;
+        let analyser = null;
+        let running = false;
+        let evolution = 0;
+
+        let currentOperator = OPERATORS.pulse;
+        let currentTuning = TUNINGS[0];
+        let pattern = new Array(16).fill(null);
+        let currentStep = 0;
+        let bpm = 115;
+        let density = 0.5;
+        let drift = 0;
+        let attack = 0.02;
+        let release = 0.4;
+
+        let stepInterval = null;
+        let evolveTimeout = null;
+
+        // =================================================================
+        // AUDIO ENGINE
+        // =================================================================
+
+        function initAudio() {
+            if (ctx) return;
+            const AC = window.AudioContext || window.webkitAudioContext;
+            ctx = new AC();
+
+            masterGain = ctx.createGain();
+            masterGain.gain.value = 0.4;
+
+            analyser = ctx.createAnalyser();
+            analyser.fftSize = 512;
+
+            masterGain.connect(analyser);
+            analyser.connect(ctx.destination);
+
+            log('Audio engine initialized', 'note');
+        }
+
+        function centsToFreq(cents, baseFreq = 261.63) {
+            return baseFreq * Math.pow(2, cents / 1200);
+        }
+
+        function playNote(noteIndex) {
+            if (!ctx || ctx.state === 'suspended') ctx?.resume();
+
+            const intervals = currentTuning.intervals;
+            const cents = intervals[noteIndex % intervals.length] || 0;
+            const freq = centsToFreq(cents);
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            // Operator-influenced waveform
+            const waveforms = ['sine', 'triangle', 'sawtooth'];
+            osc.type = waveforms[Math.floor(Math.random() * waveforms.length)];
+            osc.frequency.value = freq + (Math.random() - 0.5) * drift * freq;
+
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + attack);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + attack + release);
+
+            osc.connect(gain);
+            gain.connect(masterGain);
+
+            osc.start();
+            osc.stop(ctx.currentTime + attack + release + 0.1);
+        }
+
+        // =================================================================
+        // PROCEDURAL GENERATION
+        // =================================================================
+
+        function generatePattern() {
+            const op = currentOperator;
+            const noteCount = currentTuning.intervals.length;
+
+            pattern = [];
+
+            for (let i = 0; i < 16; i++) {
+                // Density check
+                if (Math.random() < density) {
+                    // Note selection based on operator
+                    const [lo, hi] = op.noteRange;
+                    const noteRange = Math.floor(noteCount * (hi - lo));
+                    const noteBase = Math.floor(noteCount * lo);
+                    const note = noteBase + Math.floor(Math.random() * Math.max(1, noteRange));
+
+                    // Geometric patterns for pulse operator
+                    if (op === OPERATORS.pulse && !(i % 3 === 0 || i % 5 === 0)) {
+                        pattern.push(null);
+                    } else {
+                        pattern.push(Math.min(note, noteCount - 1));
+                    }
+                } else {
+                    pattern.push(null);
+                }
+            }
+
+            renderPattern();
+            log(`Generated pattern: ${pattern.filter(n => n !== null).length} notes`, 'note');
+        }
+
+        function evolve() {
+            evolution++;
+            document.getElementById('evolution').textContent = evolution;
+
+            // Maybe change operator
+            if (Math.random() < 0.3) {
+                const newOpKey = OPERATOR_KEYS[Math.floor(Math.random() * OPERATOR_KEYS.length)];
+                currentOperator = OPERATORS[newOpKey];
+                applyOperator();
+                log(`Operator → ${currentOperator.name}`, 'operator');
+            }
+
+            // Maybe change tuning
+            if (Math.random() < 0.2) {
+                currentTuning = TUNINGS[Math.floor(Math.random() * TUNINGS.length)];
+                document.getElementById('tuning-name').textContent = currentTuning.name;
+                document.getElementById('note-count').textContent = currentTuning.notes;
+                log(`Tuning → ${currentTuning.name} (${currentTuning.notes} notes)`, 'transition');
+            }
+
+            // Drift parameters
+            const op = currentOperator;
+            bpm += (Math.random() - 0.5) * 10;
+            bpm = Math.max(op.bpmRange[0], Math.min(op.bpmRange[1], bpm));
+
+            density += (Math.random() - 0.5) * 0.1;
+            density = Math.max(op.densityRange[0], Math.min(op.densityRange[1], density));
+
+            drift = op.drift * (0.5 + Math.random());
+
+            updateDisplay();
+            generatePattern();
+
+            // Restart stepper with new BPM
+            if (running && stepInterval) {
+                clearInterval(stepInterval);
+                startStepper();
+            }
+        }
+
+        function applyOperator() {
+            const op = currentOperator;
+
+            document.getElementById('op-name').textContent = op.name;
+            document.getElementById('op-axis').textContent = op.axis;
+            document.getElementById('op-function').textContent = op.function;
+
+            bpm = op.bpmRange[0] + Math.random() * (op.bpmRange[1] - op.bpmRange[0]);
+            density = op.densityRange[0] + Math.random() * (op.densityRange[1] - op.densityRange[0]);
+            drift = op.drift;
+            attack = op.attack;
+            release = op.release;
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('bpm-display').textContent = Math.round(bpm);
+            document.getElementById('density-display').textContent = Math.round(density * 100) + '%';
+            document.getElementById('drift-display').textContent = drift.toFixed(3);
+        }
+
+        // =================================================================
+        // SEQUENCER
+        // =================================================================
+
+        function startStepper() {
+            const stepTime = 60000 / bpm / 4;
+
+            stepInterval = setInterval(() => {
+                // Play note
+                if (pattern[currentStep] !== null) {
+                    playNote(pattern[currentStep]);
+                }
+
+                // Update display
+                renderPattern();
+
+                // Advance
+                currentStep = (currentStep + 1) % 16;
+
+                // Auto-evolve every 4 bars
+                if (currentStep === 0 && Math.random() < 0.5) {
+                    evolve();
+                }
+            }, stepTime);
+        }
+
+        function startEngine() {
+            initAudio();
+            running = true;
+
+            document.getElementById('btn-start').textContent = '■ STOP';
+            document.getElementById('btn-start').classList.add('running');
+
+            applyOperator();
+            generatePattern();
+            startStepper();
+
+            // Schedule evolutions
+            scheduleEvolution();
+
+            log('Engine started', 'operator');
+        }
+
+        function stopEngine() {
+            running = false;
+
+            if (stepInterval) {
+                clearInterval(stepInterval);
+                stepInterval = null;
+            }
+
+            if (evolveTimeout) {
+                clearTimeout(evolveTimeout);
+                evolveTimeout = null;
+            }
+
+            currentStep = 0;
+            document.getElementById('btn-start').textContent = '▶ START ENGINE';
+            document.getElementById('btn-start').classList.remove('running');
+
+            renderPattern();
+            log('Engine stopped', 'operator');
+        }
+
+        function scheduleEvolution() {
+            if (!running) return;
+
+            const delay = 8000 + Math.random() * 16000; // 8-24 seconds
+            evolveTimeout = setTimeout(() => {
+                if (running) {
+                    evolve();
+                    scheduleEvolution();
+                }
+            }, delay);
+        }
+
+        // =================================================================
+        // UI
+        // =================================================================
+
+        function renderPattern() {
+            const container = document.getElementById('pattern');
+            container.innerHTML = '';
+
+            for (let i = 0; i < 16; i++) {
+                const step = document.createElement('div');
+                step.className = 'pattern-step';
+
+                if (pattern[i] !== null) {
+                    step.classList.add('active');
+                    const height = 20 + (pattern[i] / currentTuning.intervals.length) * 20;
+                    step.innerHTML = `<div class="bar" style="height:${height}px"></div>`;
+                }
+
+                if (i === currentStep && running) {
+                    step.classList.add('playing');
+                }
+
+                container.appendChild(step);
+            }
+        }
+
+        function log(message, type = '') {
+            const logEl = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // =================================================================
+        // VISUALIZATION
+        // =================================================================
+
+        function drawVisuals() {
+            const waveCanvas = document.getElementById('waveform');
+            const specCanvas = document.getElementById('spectrum');
+
+            waveCanvas.width = waveCanvas.offsetWidth * 2;
+            waveCanvas.height = waveCanvas.offsetHeight * 2;
+            specCanvas.width = specCanvas.offsetWidth * 2;
+            specCanvas.height = specCanvas.offsetHeight * 2;
+
+            const waveCtx = waveCanvas.getContext('2d');
+            const specCtx = specCanvas.getContext('2d');
+
+            // Clear
+            waveCtx.fillStyle = '#000';
+            waveCtx.fillRect(0, 0, waveCanvas.width, waveCanvas.height);
+            specCtx.fillStyle = '#000';
+            specCtx.fillRect(0, 0, specCanvas.width, specCanvas.height);
+
+            if (!analyser) {
+                requestAnimationFrame(drawVisuals);
+                return;
+            }
+
+            // Waveform
+            const timeData = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteTimeDomainData(timeData);
+
+            waveCtx.strokeStyle = '#ff6b35';
+            waveCtx.lineWidth = 2;
+            waveCtx.beginPath();
+
+            const wSlice = waveCanvas.width / timeData.length;
+            let x = 0;
+            for (let i = 0; i < timeData.length; i++) {
+                const y = (timeData[i] / 128) * waveCanvas.height / 2;
+                i === 0 ? waveCtx.moveTo(x, y) : waveCtx.lineTo(x, y);
+                x += wSlice;
+            }
+            waveCtx.stroke();
+
+            // Spectrum
+            const freqData = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(freqData);
+
+            const barWidth = specCanvas.width / freqData.length * 2;
+            x = 0;
+            for (let i = 0; i < freqData.length / 2; i++) {
+                const barHeight = (freqData[i] / 255) * specCanvas.height;
+                const hue = (i / freqData.length) * 60 + 20;
+                specCtx.fillStyle = `hsl(${hue}, 80%, 50%)`;
+                specCtx.fillRect(x, specCanvas.height - barHeight, barWidth - 1, barHeight);
+                x += barWidth;
+            }
+
+            requestAnimationFrame(drawVisuals);
+        }
+
+        // =================================================================
+        // MIDI EXPORT
+        // =================================================================
+
+        function downloadMIDI() {
+            if (!pattern.some(n => n !== null)) {
+                alert('Pattern is empty!');
+                return;
+            }
+
+            const ticksPerBeat = 480;
+            const events = [];
+
+            function vlq(value) {
+                const result = [];
+                result.push(value & 0x7F);
+                value >>= 7;
+                while (value) {
+                    result.push((value & 0x7F) | 0x80);
+                    value >>= 7;
+                }
+                return result.reverse();
+            }
+
+            const stepTicks = ticksPerBeat / 4;
+            const velocity = 100;
+
+            for (let step = 0; step < pattern.length; step++) {
+                const noteIdx = pattern[step];
+                if (noteIdx === null) continue;
+
+                const cents = currentTuning.intervals[noteIdx % currentTuning.intervals.length] || 0;
+                const pitch = Math.max(0, Math.min(127, 60 + Math.round(cents / 100)));
+                const startTick = step * stepTicks;
+                const endTick = startTick + Math.floor(stepTicks * 0.9);
+
+                events.push({ tick: startTick, bytes: [0x90, pitch, velocity] });
+                events.push({ tick: endTick, bytes: [0x80, pitch, 0] });
+            }
+
+            events.sort((a, b) => a.tick - b.tick);
+
+            const trackData = [];
+            let prevTick = 0;
+
+            const tempo = Math.floor(60000000 / bpm);
+            trackData.push(...vlq(0), 0xFF, 0x51, 0x03);
+            trackData.push((tempo >> 16) & 0xFF, (tempo >> 8) & 0xFF, tempo & 0xFF);
+
+            for (const event of events) {
+                trackData.push(...vlq(event.tick - prevTick), ...event.bytes);
+                prevTick = event.tick;
+            }
+
+            trackData.push(...vlq(0), 0xFF, 0x2F, 0x00);
+
+            const data = [
+                0x4D, 0x54, 0x68, 0x64, 0x00, 0x00, 0x00, 0x06,
+                0x00, 0x00, 0x00, 0x01,
+                (ticksPerBeat >> 8) & 0xFF, ticksPerBeat & 0xFF,
+                0x4D, 0x54, 0x72, 0x6B,
+                (trackData.length >> 24) & 0xFF, (trackData.length >> 16) & 0xFF,
+                (trackData.length >> 8) & 0xFF, trackData.length & 0xFF,
+                ...trackData
+            ];
+
+            const blob = new Blob([new Uint8Array(data)], { type: 'audio/midi' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `latent_${currentTuning.name}_${Math.round(bpm)}bpm.mid`;
+            a.click();
+
+            log('MIDI exported', 'note');
+        }
+
+        // =================================================================
+        // INIT
+        // =================================================================
+
+        document.getElementById('btn-start').onclick = () => {
+            running ? stopEngine() : startEngine();
+        };
+
+        document.getElementById('btn-evolve').onclick = () => {
+            initAudio();
+            evolve();
+        };
+
+        document.getElementById('btn-midi').onclick = downloadMIDI;
+
+        // Initial render
+        renderPattern();
+        drawVisuals();
+
+        log('System ready. Press START ENGINE to begin procedural generation.');
+    </script>
+</body>
+
+</html>

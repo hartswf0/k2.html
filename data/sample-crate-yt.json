@@ -1,0 +1,636 @@
+{
+    "project": "SAMPLE CRATE 120",
+    "description": "The Infinite Archive: Ethnomusicological Source Code for Mixing & Sampling",
+    "generated": "2026-01-21",
+    "categories": {
+        "funk": "Funk, Soul, R&B grooves",
+        "disco": "Disco, Boogie, Dance classics",
+        "hiphop": "Hip-Hop foundational tracks",
+        "pop": "Pop hits you can't escape",
+        "electronic": "Electronic dance landmarks",
+        "speech": "Historic speeches & spoken word"
+    },
+    "tracks": [
+        {
+            "id": 122,
+            "artist": "James Brown",
+            "track": "Get Up Offa That Thing",
+            "year": 1976,
+            "category": "funk",
+            "sample_note": "High energy drums/shouts",
+            "yt": "https://www.youtube.com/watch?v=ZEh9QAmy3lg"
+        },
+        {
+            "id": 123,
+            "artist": "James Brown",
+            "track": "The Payback",
+            "year": 1973,
+            "category": "funk",
+            "sample_note": "Sparse, reverb-heavy drums",
+            "yt": "https://www.youtube.com/watch?v=FEXt4Qzhyqo"
+        },
+        {
+            "id": 124,
+            "artist": "Sly & The Family Stone",
+            "track": "Thank You",
+            "year": 1969,
+            "category": "funk",
+            "sample_note": "Clean bass sample / Slap technique",
+            "yt": "https://www.youtube.com/watch?v=09bSoxFgaRI"
+        },
+        {
+            "id": 125,
+            "artist": "Parliament",
+            "track": "Flash Light",
+            "year": 1977,
+            "category": "funk",
+            "sample_note": "Synth bass blueprint",
+            "yt": "https://www.youtube.com/watch?v=slntNpaqCoE"
+        },
+        {
+            "id": 126,
+            "artist": "Funkadelic",
+            "track": "One Nation Under A Groove",
+            "year": 1978,
+            "category": "funk",
+            "sample_note": "Group vocals, guitar rhythm",
+            "yt": "https://www.youtube.com/watch?v=nmjUvgdzimo"
+        },
+        {
+            "id": 127,
+            "artist": "Earth, Wind & Fire",
+            "track": "September",
+            "year": 1978,
+            "category": "funk",
+            "sample_note": "Melodic hooks, horns",
+            "yt": "https://www.youtube.com/watch?v=B2mmDEv0OEk"
+        },
+        {
+            "id": 128,
+            "artist": "Kool & The Gang",
+            "track": "Get Down On It",
+            "year": 1981,
+            "category": "funk",
+            "sample_note": "Disco/Funk crossover beat",
+            "yt": "https://www.youtube.com/watch?v=dVbeIjXuoM0"
+        },
+        {
+            "id": 129,
+            "artist": "The Meters",
+            "track": "Cissy Strut",
+            "year": 1969,
+            "category": "funk",
+            "sample_note": "New Orleans funk syncopation",
+            "yt": "https://www.youtube.com/watch?v=0s-AWl2wzMs"
+        },
+        {
+            "id": 130,
+            "artist": "Curtis Mayfield",
+            "track": "Move On Up",
+            "year": 1970,
+            "category": "funk",
+            "sample_note": "Horns, driving percussion",
+            "yt": "https://www.youtube.com/watch?v=zPEaydx_E8Y"
+        },
+        {
+            "id": 131,
+            "artist": "Donna Summer",
+            "track": "I Feel Love",
+            "year": 1977,
+            "category": "electronic",
+            "sample_note": "Arpeggiated synth sequencer",
+            "yt": "https://www.youtube.com/watch?v=u1RqhFGUV9Q"
+        },
+        {
+            "id": 132,
+            "artist": "Chic",
+            "track": "Good Times",
+            "year": 1979,
+            "category": "disco",
+            "sample_note": "Definitive disco bassline",
+            "yt": "https://www.youtube.com/watch?v=KVz2GvIh_Gs"
+        },
+        {
+            "id": 133,
+            "artist": "Sister Sledge",
+            "track": "Lost In Music",
+            "year": 1979,
+            "category": "disco",
+            "sample_note": "Nile Rodgers guitar work",
+            "yt": "https://www.youtube.com/watch?v=mwVXJvcY45I"
+        },
+        {
+            "id": 134,
+            "artist": "Bee Gees",
+            "track": "Stayin' Alive",
+            "year": 1977,
+            "category": "disco",
+            "sample_note": "Falsetto vocals, steady loop",
+            "yt": "https://www.youtube.com/watch?v=zVZyGRPpl0w"
+        },
+        {
+            "id": 135,
+            "artist": "Diana Ross",
+            "track": "I'm Coming Out",
+            "year": 1980,
+            "category": "disco",
+            "sample_note": "Upbeat, triumphant loop",
+            "yt": "https://www.youtube.com/watch?v=vwQAdHO0Y-4"
+        },
+        {
+            "id": 137,
+            "artist": "Michael Jackson",
+            "track": "Wanna Be Startin' Somethin'",
+            "year": 1982,
+            "category": "pop",
+            "sample_note": "Complex percussion, chants",
+            "yt": "https://www.youtube.com/watch?v=DsJlttdkybk"
+        },
+        {
+            "id": 138,
+            "artist": "Prince",
+            "track": "Kiss",
+            "year": 1986,
+            "category": "pop",
+            "sample_note": "Minimalist funk guitar",
+            "yt": "https://www.youtube.com/watch?v=rH9CZuuKpSg"
+        },
+        {
+            "id": 139,
+            "artist": "Prince",
+            "track": "1999",
+            "year": 1982,
+            "category": "pop",
+            "sample_note": "Synth pop/Funk fusion",
+            "yt": "https://www.youtube.com/watch?v=weUhBGA8mxo"
+        },
+        {
+            "id": 140,
+            "artist": "Prince",
+            "track": "When Doves Cry",
+            "year": 1984,
+            "category": "pop",
+            "sample_note": "Bass-less funk production",
+            "yt": "https://www.youtube.com/watch?v=Yvxsaupv788"
+        },
+        {
+            "id": 141,
+            "artist": "Stevie Wonder",
+            "track": "Superstition",
+            "year": 1972,
+            "category": "funk",
+            "sample_note": "Clavinet riff",
+            "yt": "https://www.youtube.com/watch?v=7_tmeHCO1IM"
+        },
+        {
+            "id": 142,
+            "artist": "Stevie Wonder",
+            "track": "Higher Ground",
+            "year": 1973,
+            "category": "funk",
+            "sample_note": "Moog bass, shuffle beat",
+            "yt": "https://www.youtube.com/watch?v=KJlkquCslYU"
+        },
+        {
+            "id": 143,
+            "artist": "Marvin Gaye",
+            "track": "What's Going On",
+            "year": 1971,
+            "category": "funk",
+            "sample_note": "Social commentary, smooth jazz",
+            "yt": "https://www.youtube.com/watch?v=u2XoqyVfc8g"
+        },
+        {
+            "id": 144,
+            "artist": "Marvin Gaye",
+            "track": "Got To Give It Up",
+            "year": 1977,
+            "category": "disco",
+            "sample_note": "Party ambience, percussion",
+            "yt": "https://www.youtube.com/watch?v=MgosSnJQCUI"
+        },
+        {
+            "id": 145,
+            "artist": "Al Green",
+            "track": "Love and Happiness",
+            "year": 1972,
+            "category": "funk",
+            "sample_note": "Organ intro, slow groove",
+            "yt": "https://www.youtube.com/watch?v=uRsfAskzc4E"
+        },
+        {
+            "id": 146,
+            "artist": "Isaac Hayes",
+            "track": "Theme From Shaft",
+            "year": 1971,
+            "category": "funk",
+            "sample_note": "Wah-wah guitar, cinematic",
+            "yt": "https://www.youtube.com/watch?v=kfdW4687b_w"
+        },
+        {
+            "id": 147,
+            "artist": "Barry White",
+            "track": "Can't Get Enough Of Your Love",
+            "year": 1974,
+            "category": "disco",
+            "sample_note": "Deep bass voice, orchestral",
+            "yt": "https://www.youtube.com/watch?v=laMshX_12us"
+        },
+        {
+            "id": 148,
+            "artist": "Bill Withers",
+            "track": "Lovely Day",
+            "year": 1977,
+            "category": "funk",
+            "sample_note": "Sustained note, sunny vibe",
+            "yt": "https://www.youtube.com/watch?v=IABFp_C8qWw"
+        },
+        {
+            "id": 149,
+            "artist": "Bill Withers",
+            "track": "Ain't No Sunshine",
+            "year": 1971,
+            "category": "funk",
+            "sample_note": "Melancholic loop",
+            "yt": "https://www.youtube.com/watch?v=lR2sp9tmKmY"
+        },
+        {
+            "id": 150,
+            "artist": "Aretha Franklin",
+            "track": "Respect",
+            "year": 1967,
+            "category": "funk",
+            "sample_note": "Powerful vocals, spelling hook",
+            "yt": "https://www.youtube.com/watch?v=QS4UZrylKoA"
+        },
+        {
+            "id": 151,
+            "artist": "Grandmaster Flash",
+            "track": "The Message",
+            "year": 1982,
+            "category": "hiphop",
+            "sample_note": "Synth-led social commentary",
+            "yt": "https://www.youtube.com/watch?v=MLpv_HtEaks"
+        },
+        {
+            "id": 152,
+            "artist": "Sugarhill Gang",
+            "track": "Rapper's Delight",
+            "year": 1979,
+            "category": "hiphop",
+            "sample_note": "Interpolation of 'Good Times'",
+            "yt": "https://www.youtube.com/watch?v=MyMta4RIrlg"
+        },
+        {
+            "id": 153,
+            "artist": "Run-DMC",
+            "track": "It's Like That",
+            "year": 1983,
+            "category": "hiphop",
+            "sample_note": "Drum machine minimalism",
+            "yt": "https://www.youtube.com/watch?v=4KTN6RgfYg8"
+        },
+        {
+            "id": 154,
+            "artist": "Eric B. & Rakim",
+            "track": "Paid In Full",
+            "year": 1987,
+            "category": "hiphop",
+            "sample_note": "Ashley's Roachclip break usage",
+            "yt": "https://www.youtube.com/watch?v=LnVHrcRnlZw"
+        },
+        {
+            "id": 155,
+            "artist": "Public Enemy",
+            "track": "Fight The Power",
+            "year": 1989,
+            "category": "hiphop",
+            "sample_note": "Dense sample layering (Wall of Noise)",
+            "yt": "https://www.youtube.com/watch?v=jRJKjiCtVco"
+        },
+        {
+            "id": 156,
+            "artist": "A Tribe Called Quest",
+            "track": "Can I Kick It?",
+            "year": 1990,
+            "category": "hiphop",
+            "sample_note": "Walk on the Wild Side sample",
+            "yt": "https://www.youtube.com/watch?v=M-wpu3avo1Y"
+        },
+        {
+            "id": 157,
+            "artist": "De La Soul",
+            "track": "Me Myself and I",
+            "year": 1989,
+            "category": "hiphop",
+            "sample_note": "P-Funk sample re-contextualization",
+            "yt": "https://www.youtube.com/watch?v=NerII_Zgd5I"
+        },
+        {
+            "id": 158,
+            "artist": "Nas",
+            "track": "N.Y. State of Mind",
+            "year": 1994,
+            "category": "hiphop",
+            "sample_note": "Preemo production style",
+            "yt": "https://www.youtube.com/watch?v=LnaWZvXoG-k"
+        },
+        {
+            "id": 159,
+            "artist": "Wu-Tang Clan",
+            "track": "C.R.E.A.M.",
+            "year": 1993,
+            "category": "hiphop",
+            "sample_note": "Lo-fi soul sampling (Charmels)",
+            "yt": "https://www.youtube.com/watch?v=ecRs1sWZIL4"
+        },
+        {
+            "id": 160,
+            "artist": "Dr. Dre",
+            "track": "Still D.R.E.",
+            "year": 1999,
+            "category": "hiphop",
+            "sample_note": "Clean piano interpolation",
+            "yt": "https://www.youtube.com/watch?v=F7wxubr1_zg"
+        },
+        {
+            "id": 165,
+            "artist": "New Order",
+            "track": "Blue Monday",
+            "year": 1983,
+            "category": "electronic",
+            "sample_note": "The best-selling 12-inch single",
+            "yt": "https://www.youtube.com/watch?v=TsgLhkjY4q0"
+        },
+        {
+            "id": 166,
+            "artist": "Depeche Mode",
+            "track": "Personal Jesus",
+            "year": 1989,
+            "category": "electronic",
+            "sample_note": "Blues/Synth fusion",
+            "yt": "https://www.youtube.com/watch?v=rSb_KYzIgUs"
+        },
+        {
+            "id": 167,
+            "artist": "Pet Shop Boys",
+            "track": "West End Girls",
+            "year": 1985,
+            "category": "electronic",
+            "sample_note": "Synth-pop defining track",
+            "yt": "https://www.youtube.com/watch?v=-G8KmNF-xc4"
+        },
+        {
+            "id": 168,
+            "artist": "Daft Punk",
+            "track": "Around The World",
+            "year": 1997,
+            "category": "electronic",
+            "sample_note": "Filter house blueprint",
+            "yt": "https://www.youtube.com/watch?v=Jb6gcoR266U"
+        },
+        {
+            "id": 169,
+            "artist": "Daft Punk",
+            "track": "Da Funk",
+            "year": 1995,
+            "category": "electronic",
+            "sample_note": "G-Funk/Acid House fusion",
+            "yt": "https://www.youtube.com/watch?v=PwILkY9gRrc"
+        },
+        {
+            "id": 170,
+            "artist": "The Chemical Brothers",
+            "track": "Block Rockin' Beats",
+            "year": 1997,
+            "category": "electronic",
+            "sample_note": "Big Beat genre definition",
+            "yt": "https://www.youtube.com/watch?v=0kMfTYPzSnI"
+        },
+        {
+            "id": 213,
+            "artist": "Beyoncé",
+            "track": "Crazy In Love",
+            "year": 2003,
+            "category": "pop",
+            "sample_note": "Chi-Lites horn sample",
+            "yt": "https://www.youtube.com/watch?v=T6xbOPSUe8M"
+        },
+        {
+            "id": 214,
+            "artist": "Rihanna",
+            "track": "Umbrella",
+            "year": 2007,
+            "category": "pop",
+            "sample_note": "GarageBand drum loop usage",
+            "yt": "https://www.youtube.com/watch?v=5io69gNOTPk"
+        },
+        {
+            "id": 216,
+            "artist": "Kanye West",
+            "track": "Through The Wire",
+            "year": 2003,
+            "category": "hiphop",
+            "sample_note": "Chipmunk Soul definition",
+            "yt": "https://www.youtube.com/watch?v=_WnkTrEp9c8"
+        },
+        {
+            "id": 217,
+            "artist": "Kendrick Lamar",
+            "track": "HUMBLE.",
+            "year": 2017,
+            "category": "hiphop",
+            "sample_note": "Modern piano minimalism",
+            "yt": "https://www.youtube.com/watch?v=ov4WobPqoSA"
+        },
+        {
+            "id": 218,
+            "artist": "Missy Elliott",
+            "track": "Get Ur Freak On",
+            "year": 2001,
+            "category": "hiphop",
+            "sample_note": "Bhangra rhythm usage",
+            "yt": "https://www.youtube.com/watch?v=36lThf6sdio"
+        },
+        {
+            "id": 219,
+            "artist": "OutKast",
+            "track": "Hey Ya!",
+            "year": 2003,
+            "category": "hiphop",
+            "sample_note": "Pop/Rap crossover",
+            "yt": "https://www.youtube.com/watch?v=ubk1skSE9OA"
+        },
+        {
+            "id": 220,
+            "artist": "OutKast",
+            "track": "B.O.B.",
+            "year": 2000,
+            "category": "hiphop",
+            "sample_note": "High BPM flow",
+            "yt": "https://www.youtube.com/watch?v=swTna2QJMXA"
+        },
+        {
+            "id": 221,
+            "artist": "Martin Luther King Jr.",
+            "track": "I Have a Dream",
+            "year": 1963,
+            "category": "speech",
+            "sample_note": "Melodic, rising cadence",
+            "yt": "https://www.youtube.com/watch?v=6dKimoybmEo"
+        },
+        {
+            "id": 222,
+            "artist": "Malcolm X",
+            "track": "By Any Means Necessary",
+            "year": 1964,
+            "category": "speech",
+            "sample_note": "Staccato, percussive",
+            "yt": "https://www.youtube.com/watch?v=p-sJl95s1E8"
+        },
+        {
+            "id": 223,
+            "artist": "JFK",
+            "track": "Ask Not What Your Country",
+            "year": 1961,
+            "category": "speech",
+            "sample_note": "Iconic, reverb-heavy",
+            "yt": "https://www.youtube.com/shorts/L8l11q_MNRY"
+        },
+        {
+            "id": 224,
+            "artist": "Muhammad Ali",
+            "track": "I Will Win / I Am The Greatest",
+            "year": 1964,
+            "category": "speech",
+            "sample_note": "Rhythmic, poetic, confident",
+            "yt": "https://www.youtube.com/watch?v=5ro71_ffCK8"
+        },
+        {
+            "id": 226,
+            "artist": "Angela Davis",
+            "track": "Freedom is a Constant Struggle",
+            "year": 1972,
+            "category": "speech",
+            "sample_note": "Academic, precise, authoritative",
+            "yt": "https://www.youtube.com/watch?v=5u1aHpEtWyA"
+        },
+        {
+            "id": 227,
+            "artist": "Gil Scott-Heron",
+            "track": "The Revolution Will Not Be Televised",
+            "year": 1971,
+            "category": "speech",
+            "sample_note": "Spoken word/Jazz fusion",
+            "yt": "https://www.youtube.com/watch?v=mbv9y00twuI"
+        },
+        {
+            "id": 228,
+            "artist": "James Baldwin",
+            "track": "Notes of a Native Son",
+            "year": 1965,
+            "category": "speech",
+            "sample_note": "Intellectual discourse",
+            "yt": "https://www.youtube.com/watch?v=1TeTFRoXKqs"
+        },
+        {
+            "id": 229,
+            "artist": "Amiri Baraka",
+            "track": "Somebody Blew Up America",
+            "year": 2002,
+            "category": "speech",
+            "sample_note": "Jazz poetry, rhythmic",
+            "yt": "https://www.youtube.com/watch?v=RmacIBYslr0"
+        },
+        {
+            "id": 230,
+            "artist": "Stokely Carmichael",
+            "track": "Black Power",
+            "year": 1966,
+            "category": "speech",
+            "sample_note": "Call-and-response, chanting",
+            "yt": "https://www.youtube.com/watch?v=2lAm2QhFq1o"
+        },
+        {
+            "id": 231,
+            "artist": "Charlie Chaplin",
+            "track": "The Great Dictator Speech",
+            "year": 1940,
+            "category": "speech",
+            "sample_note": "Theatrical, emotional crescendo",
+            "yt": "https://www.youtube.com/watch?v=k0CzXi9e66M"
+        },
+        {
+            "id": 232,
+            "artist": "FDR",
+            "track": "The Only Thing We Have to Fear",
+            "year": 1933,
+            "category": "speech",
+            "sample_note": "Vintage, stabilizing, patrician",
+            "yt": "https://www.youtube.com/watch?v=rIKMbma6_dc"
+        },
+        {
+            "id": 233,
+            "artist": "Winston Churchill",
+            "track": "We Shall Fight on the Beaches",
+            "year": 1940,
+            "category": "speech",
+            "sample_note": "Ostinato, bass-heavy",
+            "yt": "https://www.youtube.com/watch?v=D3E6OyHdzTk"
+        },
+        {
+            "id": 234,
+            "artist": "Carl Sagan",
+            "track": "Pale Blue Dot",
+            "year": 1994,
+            "category": "speech",
+            "sample_note": "Philosophical, cosmic",
+            "yt": "https://www.youtube.com/watch?v=OjN-eL2YNsM"
+        },
+        {
+            "id": 235,
+            "artist": "Barack Obama",
+            "track": "Yes We Can",
+            "year": 2008,
+            "category": "speech",
+            "sample_note": "Rhythmic, call-and-response",
+            "yt": "https://www.youtube.com/live/Fe751kMBwms"
+        },
+        {
+            "id": 236,
+            "artist": "Alan Watts",
+            "track": "The Dream of Life",
+            "year": 1972,
+            "category": "speech",
+            "sample_note": "British accent, soothing",
+            "yt": "https://www.youtube.com/watch?v=omxnKRZ6Pyg"
+        },
+        {
+            "id": 237,
+            "artist": "Terence McKenna",
+            "track": "Why Culture Is Not Your Friend",
+            "year": 1999,
+            "category": "speech",
+            "sample_note": "Radical, nasal, distinct",
+            "yt": "https://www.youtube.com/watch?v=lBDPM2JpoCM"
+        },
+        {
+            "id": 239,
+            "artist": "Huey P. Newton",
+            "track": "Revolutionary Suicide",
+            "year": 1973,
+            "category": "speech",
+            "sample_note": "Philosophical, calm intensity",
+            "yt": "https://www.youtube.com/watch?v=pS9dsJs_wRo"
+        },
+        {
+            "id": 240,
+            "artist": "Assata Shakur",
+            "track": "To My People",
+            "year": 1973,
+            "category": "speech",
+            "sample_note": "Lo-fi, revolutionary mantra",
+            "yt": "https://www.youtube.com/watch?v=KsZpGEReM2E"
+        }
+    ]
+}

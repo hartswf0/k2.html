@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>SCALA // LIVE</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎹</text></svg>">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel: #111;
+            --border: #222;
+            --accent: #ff6b35;
+            --accent-dim: #9c3d1a;
+            --text: #f0f0f0;
+            --text-dim: #666;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: #080808;
+        }
+
+        .brand {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 3px;
+        }
+
+        .status {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* TUNING SELECTOR */
+        .tuning-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tuning-chip {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tuning-chip.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        /* KEYBOARD/PAD GRID */
+        .keyboard-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        .keyboard-row {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .key {
+            flex: 1;
+            background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .key::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, var(--accent) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+
+        .key.active::before {
+            opacity: 0.3;
+        }
+
+        .key.active {
+            background: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%);
+            border-color: var(--accent);
+            transform: scale(0.98);
+        }
+
+        .key-note {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            z-index: 1;
+        }
+
+        .key-cents {
+            font-size: 8px;
+            color: var(--accent-dim);
+            margin-top: 2px;
+            z-index: 1;
+        }
+
+        /* SEQUENCER */
+        .sequencer-container {
+            padding: 0 16px 16px;
+        }
+
+        .seq-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .seq-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .seq-grid {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 4px;
+        }
+
+        .seq-step {
+            aspect-ratio: 1;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .seq-step.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .seq-step.playing {
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* CONTROLS */
+        .controls {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #080808;
+            border-top: 1px solid var(--border);
+        }
+
+        .ctrl-btn {
+            flex: 1;
+            padding: 16px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ctrl-btn:active {
+            transform: scale(0.95);
+        }
+
+        .ctrl-btn.play {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .ctrl-btn.play.active {
+            background: #333;
+            color: var(--accent);
+        }
+
+        /* BPM/PARAMS */
+        .param-row {
+            display: flex;
+            gap: 16px;
+            padding: 12px 16px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+        }
+
+        .param {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .param-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .param-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .param-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* OSCILLOSCOPE */
+        #scope {
+            height: 60px;
+            background: #050505;
+            border-top: 1px solid var(--border);
+        }
+
+        #scope canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="brand">SCALA // LIVE</div>
+            <div class="status" id="status">READY</div>
+        </header>
+
+        <div class="tuning-bar" id="tuning-bar">
+            <!-- Tuning chips injected here -->
+        </div>
+
+        <div class="keyboard-container" id="keyboard">
+            <!-- Keys injected here -->
+        </div>
+
+        <div class="sequencer-container">
+            <div class="seq-header">
+                <span class="seq-label">SEQUENCE</span>
+                <span class="seq-label" id="step-display">1/16</span>
+            </div>
+            <div class="seq-grid" id="seq-grid">
+                <!-- Steps injected here -->
+            </div>
+        </div>
+
+        <div class="param-row">
+            <div class="param">
+                <span class="param-label">BPM</span>
+                <span class="param-value" id="bpm-val">120</span>
+                <input type="range" class="param-slider" id="bpm-slider" min="40" max="200" value="120">
+            </div>
+            <div class="param">
+                <span class="param-label">ATTACK</span>
+                <span class="param-value" id="atk-val">10ms</span>
+                <input type="range" class="param-slider" id="atk-slider" min="1" max="500" value="10">
+            </div>
+            <div class="param">
+                <span class="param-label">RELEASE</span>
+                <span class="param-value" id="rel-val">300ms</span>
+                <input type="range" class="param-slider" id="rel-slider" min="50" max="2000" value="300">
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="ctrl-btn play" id="btn-play">▶ PLAY</button>
+            <button class="ctrl-btn" id="btn-clear">CLEAR</button>
+            <button class="ctrl-btn" id="btn-rand">RANDOM</button>
+            <button class="ctrl-btn" id="btn-midi">↓ MIDI</button>
+        </div>
+
+        <div id="scope">
+            <canvas id="scope-canvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // =================================================================
+        // TUNINGS DATA (from Scala archive)
+        // =================================================================
+        const TUNINGS = [
+            { name: "12-TET", description: "Standard Equal Temperament", intervals: Array.from({ length: 12 }, (_, i) => (i + 1) * 100) },
+            { name: "zeus22", description: "22-note Pythagorean", intervals: [47.22, 109.87, 157.09, 230.89, 266.96, 314.18, 387.98, 424.05, 497.85, 545.06, 592.28, 654.94, 702.15, 775.95, 812.02, 885.82, 933.04, 969.11, 1042.91, 1090.13, 1152.78, 1200] },
+            { name: "slendro", description: "Javanese Gamelan", intervals: [231.17, 498.04, 701.96, 968.83, 1200] },
+            { name: "pelog", description: "Javanese 7-note", intervals: [231.17, 315.64, 470.78, 701.96, 789.23, 968.83, 1200] },
+            { name: "arabic", description: "17-note Arabic Maqam", intervals: [90.22, 180.45, 203.91, 294.13, 384.36, 407.82, 498.04, 588.27, 678.49, 701.96, 792.18, 882.40, 905.87, 996.09, 1086.31, 1109.78, 1200] },
+            { name: "indian", description: "22 Shruti System", intervals: [90.22, 111.73, 182.40, 203.91, 294.13, 315.64, 386.31, 407.82, 498.04, 519.55, 590.22, 610.22, 701.96, 792.18, 813.69, 884.36, 905.87, 996.09, 1017.60, 1088.27, 1109.78, 1200] },
+            { name: "blues", description: "Country Blues", intervals: [87.92, 203.91, 327.31, 386.31, 498.04, 578.07, 701.96, 794.87, 884.36, 986.62, 1088.27, 1200] },
+            { name: "just", description: "Just Intonation", intervals: [111.73, 203.91, 315.64, 386.31, 498.04, 590.22, 701.96, 813.69, 884.36, 996.09, 1088.27, 1200] }
+        ];
+
+        // =================================================================
+        // AUDIO ENGINE
+        // =================================================================
+        let ctx = null;
+        let masterGain = null;
+        let analyser = null;
+        let isPlaying = false;
+        let currentStep = 0;
+        let sequence = new Array(16).fill(null);
+        let bpm = 120;
+        let attack = 0.01;
+        let release = 0.3;
+        let currentTuning = TUNINGS[0];
+        let baseFreq = 261.63; // Middle C
+
+        // Haptics
+        const Haptics = {
+            enabled: !!navigator.vibrate,
+            tick() { if (this.enabled) navigator.vibrate(5); },
+            thud() { if (this.enabled) navigator.vibrate([15, 10]); }
+        };
+
+        function initAudio() {
+            if (ctx) return;
+            const AC = window.AudioContext || window.webkitAudioContext;
+            ctx = new AC();
+
+            masterGain = ctx.createGain();
+            masterGain.gain.value = 0.5;
+
+            analyser = ctx.createAnalyser();
+            analyser.fftSize = 512;
+
+            masterGain.connect(analyser);
+            analyser.connect(ctx.destination);
+
+            document.getElementById('status').textContent = 'AUDIO OK';
+        }
+
+        function centsToRatio(cents) {
+            return Math.pow(2, cents / 1200);
+        }
+
+        function playNote(noteIndex, duration = 0.3) {
+            if (!ctx) return;
+            if (ctx.state === 'suspended') ctx.resume();
+
+            const intervals = currentTuning.intervals;
+            const octave = Math.floor(noteIndex / intervals.length);
+            const degree = noteIndex % intervals.length;
+            const cents = intervals[degree] + (octave * 1200);
+            const freq = baseFreq * centsToRatio(cents);
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + attack);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + attack + release);
+
+            osc.connect(gain);
+            gain.connect(masterGain);
+
+            osc.start();
+            osc.stop(ctx.currentTime + attack + release + 0.1);
+
+            Haptics.tick();
+        }
+
+        // =================================================================
+        // SEQUENCER
+        // =================================================================
+        let seqInterval = null;
+
+        function startSequencer() {
+            if (seqInterval) return;
+            isPlaying = true;
+            document.getElementById('btn-play').classList.add('active');
+            document.getElementById('btn-play').textContent = '■ STOP';
+
+            const stepTime = 60000 / bpm / 4; // 16th notes
+
+            seqInterval = setInterval(() => {
+                // Clear previous step highlight
+                document.querySelectorAll('.seq-step.playing').forEach(s => s.classList.remove('playing'));
+
+                // Highlight current step
+                const stepEl = document.querySelector(`.seq-step[data-step="${currentStep}"]`);
+                if (stepEl) stepEl.classList.add('playing');
+
+                // Play note if sequence has one
+                if (sequence[currentStep] !== null) {
+                    playNote(sequence[currentStep]);
+                }
+
+                document.getElementById('step-display').textContent = `${currentStep + 1}/16`;
+
+                currentStep = (currentStep + 1) % 16;
+            }, stepTime);
+        }
+
+        function stopSequencer() {
+            if (seqInterval) {
+                clearInterval(seqInterval);
+                seqInterval = null;
+            }
+            isPlaying = false;
+            currentStep = 0;
+            document.getElementById('btn-play').classList.remove('active');
+            document.getElementById('btn-play').textContent = '▶ PLAY';
+            document.querySelectorAll('.seq-step.playing').forEach(s => s.classList.remove('playing'));
+            document.getElementById('step-display').textContent = '1/16';
+        }
+
+        function toggleSequencer() {
+            if (isPlaying) {
+                stopSequencer();
+            } else {
+                initAudio();
+                startSequencer();
+            }
+            Haptics.thud();
+        }
+
+        // =================================================================
+        // UI GENERATION
+        // =================================================================
+
+        function renderTunings() {
+            const bar = document.getElementById('tuning-bar');
+            bar.innerHTML = '';
+
+            TUNINGS.forEach((t, i) => {
+                const chip = document.createElement('div');
+                chip.className = 'tuning-chip' + (t === currentTuning ? ' active' : '');
+                chip.textContent = t.name;
+                chip.title = t.description;
+                chip.onclick = () => {
+                    currentTuning = t;
+                    renderTunings();
+                    renderKeyboard();
+                    Haptics.tick();
+                };
+                bar.appendChild(chip);
+            });
+        }
+
+        function renderKeyboard() {
+            const kb = document.getElementById('keyboard');
+            kb.innerHTML = '';
+
+            const intervals = currentTuning.intervals;
+            const notesPerRow = Math.min(8, Math.ceil(intervals.length / 2));
+            const rows = Math.ceil(intervals.length / notesPerRow);
+
+            for (let row = 0; row < rows; row++) {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'keyboard-row';
+
+                for (let col = 0; col < notesPerRow; col++) {
+                    const noteIdx = row * notesPerRow + col;
+                    if (noteIdx >= intervals.length) break;
+
+                    const key = document.createElement('div');
+                    key.className = 'key';
+                    key.dataset.note = noteIdx;
+
+                    const cents = intervals[noteIdx];
+                    const centsDisplay = typeof cents === 'number' ? Math.round(cents) : cents;
+
+                    key.innerHTML = `
+                        <span class="key-note">${noteIdx + 1}</span>
+                        <span class="key-cents">${centsDisplay}¢</span>
+                    `;
+
+                    // Touch events
+                    key.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        initAudio();
+                        key.classList.add('active');
+                        playNote(noteIdx);
+                    });
+
+                    key.addEventListener('touchend', () => {
+                        key.classList.remove('active');
+                    });
+
+                    key.addEventListener('mousedown', () => {
+                        initAudio();
+                        key.classList.add('active');
+                        playNote(noteIdx);
+                    });
+
+                    key.addEventListener('mouseup', () => {
+                        key.classList.remove('active');
+                    });
+
+                    key.addEventListener('mouseleave', () => {
+                        key.classList.remove('active');
+                    });
+
+                    rowEl.appendChild(key);
+                }
+
+                kb.appendChild(rowEl);
+            }
+        }
+
+        function renderSequencer() {
+            const grid = document.getElementById('seq-grid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < 16; i++) {
+                const step = document.createElement('div');
+                step.className = 'seq-step' + (sequence[i] !== null ? ' active' : '');
+                step.dataset.step = i;
+
+                step.onclick = () => {
+                    initAudio();
+                    if (sequence[i] !== null) {
+                        sequence[i] = null;
+                        step.classList.remove('active');
+                    } else {
+                        // Use most recently played note or random
+                        const randomNote = Math.floor(Math.random() * currentTuning.intervals.length);
+                        sequence[i] = randomNote;
+                        step.classList.add('active');
+                        playNote(randomNote);
+                    }
+                    Haptics.tick();
+                };
+
+                grid.appendChild(step);
+            }
+        }
+
+        function clearSequence() {
+            sequence = new Array(16).fill(null);
+            renderSequencer();
+            Haptics.thud();
+        }
+
+        function randomSequence() {
+            initAudio();
+            const density = 0.4 + Math.random() * 0.3;
+            sequence = Array.from({ length: 16 }, () => {
+                if (Math.random() < density) {
+                    return Math.floor(Math.random() * currentTuning.intervals.length);
+                }
+                return null;
+            });
+            renderSequencer();
+            Haptics.thud();
+        }
+
+        // =================================================================
+        // MIDI GENERATOR (Pure JavaScript - Standard MIDI File)
+        // =================================================================
+
+        function createMIDI() {
+            const ticksPerBeat = 480;
+            const events = [];
+
+            // Variable-length quantity encoder
+            function vlq(value) {
+                const result = [];
+                result.push(value & 0x7F);
+                value >>= 7;
+                while (value) {
+                    result.push((value & 0x7F) | 0x80);
+                    value >>= 7;
+                }
+                return result.reverse();
+            }
+
+            // Convert cents to nearest MIDI semitone from C4 (60)
+            function centsToMidi(cents) {
+                const semitones = Math.round(cents / 100);
+                return Math.max(0, Math.min(127, 60 + semitones));
+            }
+
+            // Step duration in ticks (16th note = 1/4 beat)
+            const stepTicks = ticksPerBeat / 4;
+            const velocity = 100;
+
+            // Build events from sequence
+            const intervals = currentTuning.intervals;
+
+            for (let step = 0; step < sequence.length; step++) {
+                const noteIdx = sequence[step];
+                if (noteIdx === null) continue;
+
+                const cents = intervals[noteIdx % intervals.length] || 0;
+                const pitch = centsToMidi(cents);
+                const startTick = step * stepTicks;
+                const endTick = startTick + Math.floor(stepTicks * 0.9);
+
+                // Note On
+                events.push({ tick: startTick, bytes: [0x90, pitch, velocity] });
+                // Note Off
+                events.push({ tick: endTick, bytes: [0x80, pitch, 0] });
+            }
+
+            // Sort by tick
+            events.sort((a, b) => a.tick - b.tick);
+
+            // Build track data
+            const trackData = [];
+            let prevTick = 0;
+
+            // Tempo meta event (microseconds per beat)
+            const tempo = Math.floor(60000000 / bpm);
+            trackData.push(...vlq(0)); // Delta 0
+            trackData.push(0xFF, 0x51, 0x03); // Tempo meta
+            trackData.push((tempo >> 16) & 0xFF, (tempo >> 8) & 0xFF, tempo & 0xFF);
+
+            // Add note events
+            for (const event of events) {
+                const delta = event.tick - prevTick;
+                trackData.push(...vlq(delta));
+                trackData.push(...event.bytes);
+                prevTick = event.tick;
+            }
+
+            // End of track
+            trackData.push(...vlq(0));
+            trackData.push(0xFF, 0x2F, 0x00);
+
+            // Build complete file
+            const data = [];
+
+            // Header chunk
+            data.push(0x4D, 0x54, 0x68, 0x64); // "MThd"
+            data.push(0x00, 0x00, 0x00, 0x06); // Length 6
+            data.push(0x00, 0x00); // Format 0
+            data.push(0x00, 0x01); // 1 track
+            data.push((ticksPerBeat >> 8) & 0xFF, ticksPerBeat & 0xFF); // Division
+
+            // Track chunk
+            data.push(0x4D, 0x54, 0x72, 0x6B); // "MTrk"
+            const len = trackData.length;
+            data.push((len >> 24) & 0xFF, (len >> 16) & 0xFF, (len >> 8) & 0xFF, len & 0xFF);
+            data.push(...trackData);
+
+            return new Uint8Array(data);
+        }
+
+        function downloadMIDI() {
+            if (!sequence.some(n => n !== null)) {
+                alert('Sequence is empty! Add some notes first.');
+                return;
+            }
+
+            const midiData = createMIDI();
+            const blob = new Blob([midiData], { type: 'audio/midi' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentTuning.name}_${bpm}bpm.mid`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            Haptics.thud();
+            document.getElementById('status').textContent = 'MIDI SAVED';
+            setTimeout(() => {
+                document.getElementById('status').textContent = 'READY';
+            }, 2000);
+        }
+
+        // =================================================================
+        // OSCILLOSCOPE
+        // =================================================================
+
+        function drawScope() {
+            const canvas = document.getElementById('scope-canvas');
+            const ctxCanvas = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+
+            if (!analyser) {
+                requestAnimationFrame(drawScope);
+                return;
+            }
+
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteTimeDomainData(data);
+
+            ctxCanvas.fillStyle = '#050505';
+            ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctxCanvas.strokeStyle = '#ff6b35';
+            ctxCanvas.lineWidth = 2;
+            ctxCanvas.beginPath();
+
+            const sliceWidth = canvas.width / data.length;
+            let x = 0;
+
+            for (let i = 0; i < data.length; i++) {
+                const v = data[i] / 128.0;
+                const y = v * canvas.height / 2;
+
+                if (i === 0) {
+                    ctxCanvas.moveTo(x, y);
+                } else {
+                    ctxCanvas.lineTo(x, y);
+                }
+                x += sliceWidth;
+            }
+
+            ctxCanvas.stroke();
+            requestAnimationFrame(drawScope);
+        }
+
+        // =================================================================
+        // PARAMETER CONTROLS
+        // =================================================================
+
+        document.getElementById('bpm-slider').oninput = (e) => {
+            bpm = parseInt(e.target.value);
+            document.getElementById('bpm-val').textContent = bpm;
+            if (isPlaying) {
+                stopSequencer();
+                startSequencer();
+            }
+        };
+
+        document.getElementById('atk-slider').oninput = (e) => {
+            attack = parseInt(e.target.value) / 1000;
+            document.getElementById('atk-val').textContent = `${Math.round(attack * 1000)}ms`;
+        };
+
+        document.getElementById('rel-slider').oninput = (e) => {
+            release = parseInt(e.target.value) / 1000;
+            document.getElementById('rel-val').textContent = `${Math.round(release * 1000)}ms`;
+        };
+
+        // =================================================================
+        // INIT
+        // =================================================================
+
+        document.getElementById('btn-play').onclick = toggleSequencer;
+        document.getElementById('btn-clear').onclick = clearSequence;
+        document.getElementById('btn-rand').onclick = randomSequence;
+        document.getElementById('btn-midi').onclick = downloadMIDI;
+
+        renderTunings();
+        renderKeyboard();
+        renderSequencer();
+        drawScope();
+
+        // Prevent bounce on iOS
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.tuning-bar')) return;
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+
+</html>

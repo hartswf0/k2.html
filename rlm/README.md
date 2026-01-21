@@ -123,4 +123,54 @@ This achieves **O(log N)** scaling for retrieval tasks - a 10M token document co
 - `rlm_core.py` - Core RLM engine with REPL and recursive primitives
 - `playlist_agent.py` - Music document analyzer
 - `rlm_cli.py` - Command-line interface
+- `dataset_loaders.py` - External audio dataset loaders
 - `requirements.txt` - Python dependencies
+
+## External Dataset Loaders
+
+The `dataset_loaders.py` module provides access to major audio/music datasets:
+
+### NSynth (Magenta)
+Parametric music note dataset with 300K+ labeled instrument sounds.
+
+```python
+from dataset_loaders import DatasetLoader
+
+loader = DatasetLoader(cache_dir="./data")
+df = loader.load_nsynth(subset="test")  # 300MB download
+
+# Filter for dark bass sounds
+dark_bass = loader.filter_nsynth(df, instrument_family="bass", qualities=["dark"])
+```
+
+### WebAudioFont
+Browser-playable instrument samples in JSON format.
+
+```python
+piano = loader.load_webaudiofont("0000_JCLive_sf2_file")
+print(f"Loaded {len(piano.zones)} zones for {piano.name}")
+```
+
+### Scala Tunings
+5000+ microtonal scales from the Scala archive.
+
+```python
+tuning = loader.load_scala_tuning("zeus22")
+print(tuning.to_cents())  # Intervals in cents
+```
+
+### FSD50K
+Environmental sound classification dataset.
+
+```python
+df = loader.load_fsd50k()
+guitars = loader.filter_fsd50k(df, labels=["Guitar", "Electric"])
+```
+
+### CLI Usage
+```bash
+python dataset_loaders.py nsynth --list
+python dataset_loaders.py webaudiofont --item 0000_JCLive_sf2_file
+python dataset_loaders.py scala --item zeus22
+python dataset_loaders.py fsd50k --output sounds.json
+```
