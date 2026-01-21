@@ -1,0 +1,1099 @@
+{
+    "project": "SAMPLE CRATE 120",
+    "description": "Hits, Bangers & Speeches - 1950s to Now - For Mixing & Sampling",
+    "generated": "2026-01-18",
+    "categories": {
+        "funk": "Funk, Soul, R&B grooves",
+        "disco": "Disco, Boogie, Dance classics",
+        "hiphop": "Hip-Hop foundational tracks",
+        "pop": "Pop hits you can't escape",
+        "rock": "Rock classics with hooks",
+        "electronic": "Electronic dance landmarks",
+        "world": "Global grooves",
+        "jazz": "Jazz cuts for sampling",
+        "speech": "Historic speeches & spoken word",
+        "soundtrack": "Film scores & iconic cues"
+    },
+    "tracks": [
+        {
+            "id": 121,
+            "artist": "James Brown",
+            "track": "Funky Drummer",
+            "year": 1970,
+            "category": "funk",
+            "sample_note": "Most sampled break ever",
+            "yt": "James Brown Funky Drummer"
+        },
+        {
+            "id": 122,
+            "artist": "James Brown",
+            "track": "Get Up Offa That Thing",
+            "year": 1976,
+            "category": "funk",
+            "sample_note": "Pure energy",
+            "yt": "James Brown Get Up Offa That Thing"
+        },
+        {
+            "id": 123,
+            "artist": "James Brown",
+            "track": "The Payback",
+            "year": 1973,
+            "category": "funk",
+            "sample_note": "Revenge funk",
+            "yt": "James Brown The Payback"
+        },
+        {
+            "id": 124,
+            "artist": "Sly & The Family Stone",
+            "track": "Thank You",
+            "year": 1969,
+            "category": "funk",
+            "sample_note": "Slap bass origin",
+            "yt": "Sly Family Stone Thank You"
+        },
+        {
+            "id": 125,
+            "artist": "Parliament",
+            "track": "Flash Light",
+            "year": 1977,
+            "category": "funk",
+            "sample_note": "Bass synth classic",
+            "yt": "Parliament Flash Light"
+        },
+        {
+            "id": 126,
+            "artist": "Funkadelic",
+            "track": "One Nation Under a Groove",
+            "year": 1978,
+            "category": "funk",
+            "sample_note": "P-Funk anthem",
+            "yt": "Funkadelic One Nation Under a Groove"
+        },
+        {
+            "id": 127,
+            "artist": "Earth Wind & Fire",
+            "track": "September",
+            "year": 1978,
+            "category": "funk",
+            "sample_note": "Undeniable hook",
+            "yt": "Earth Wind Fire September"
+        },
+        {
+            "id": 128,
+            "artist": "Kool & The Gang",
+            "track": "Get Down On It",
+            "year": 1981,
+            "category": "funk",
+            "sample_note": "Boogie banger",
+            "yt": "Kool The Gang Get Down On It"
+        },
+        {
+            "id": 129,
+            "artist": "The Meters",
+            "track": "Cissy Strut",
+            "year": 1969,
+            "category": "funk",
+            "sample_note": "New Orleans groove",
+            "yt": "The Meters Cissy Strut"
+        },
+        {
+            "id": 130,
+            "artist": "Curtis Mayfield",
+            "track": "Move On Up",
+            "year": 1970,
+            "category": "funk",
+            "sample_note": "9-minute epic",
+            "yt": "Curtis Mayfield Move On Up"
+        },
+        {
+            "id": 131,
+            "artist": "Donna Summer",
+            "track": "I Feel Love",
+            "year": 1977,
+            "category": "disco",
+            "sample_note": "Electronic disco genesis",
+            "yt": "Donna Summer I Feel Love"
+        },
+        {
+            "id": 132,
+            "artist": "Chic",
+            "track": "Good Times",
+            "year": 1979,
+            "category": "disco",
+            "sample_note": "Hip-hop foundation",
+            "yt": "Chic Good Times"
+        },
+        {
+            "id": 133,
+            "artist": "Sister Sledge",
+            "track": "Lost in Music",
+            "year": 1979,
+            "category": "disco",
+            "sample_note": "Nile Rodgers magic",
+            "yt": "Sister Sledge Lost in Music"
+        },
+        {
+            "id": 134,
+            "artist": "Bee Gees",
+            "track": "Stayin' Alive",
+            "year": 1977,
+            "category": "disco",
+            "sample_note": "The beat",
+            "yt": "Bee Gees Stayin Alive"
+        },
+        {
+            "id": 135,
+            "artist": "Diana Ross",
+            "track": "I'm Coming Out",
+            "year": 1980,
+            "category": "disco",
+            "sample_note": "Anthem",
+            "yt": "Diana Ross I'm Coming Out"
+        },
+        {
+            "id": 136,
+            "artist": "Michael Jackson",
+            "track": "Billie Jean",
+            "year": 1982,
+            "category": "pop",
+            "sample_note": "The bassline",
+            "yt": "Michael Jackson Billie Jean"
+        },
+        {
+            "id": 137,
+            "artist": "Michael Jackson",
+            "track": "Wanna Be Startin' Somethin'",
+            "year": 1982,
+            "category": "pop",
+            "sample_note": "Afro-chant hook",
+            "yt": "Michael Jackson Wanna Be Startin Somethin"
+        },
+        {
+            "id": 138,
+            "artist": "Prince",
+            "track": "Kiss",
+            "year": 1986,
+            "category": "pop",
+            "sample_note": "Minimal funk",
+            "yt": "Prince Kiss"
+        },
+        {
+            "id": 139,
+            "artist": "Prince",
+            "track": "1999",
+            "year": 1982,
+            "category": "pop",
+            "sample_note": "Synth-funk party",
+            "yt": "Prince 1999"
+        },
+        {
+            "id": 140,
+            "artist": "Prince",
+            "track": "When Doves Cry",
+            "year": 1984,
+            "category": "pop",
+            "sample_note": "No bass experiment",
+            "yt": "Prince When Doves Cry"
+        },
+        {
+            "id": 141,
+            "artist": "Stevie Wonder",
+            "track": "Superstition",
+            "year": 1972,
+            "category": "funk",
+            "sample_note": "Clavinet classic",
+            "yt": "Stevie Wonder Superstition"
+        },
+        {
+            "id": 142,
+            "artist": "Stevie Wonder",
+            "track": "Higher Ground",
+            "year": 1973,
+            "category": "funk",
+            "sample_note": "Synth funk",
+            "yt": "Stevie Wonder Higher Ground"
+        },
+        {
+            "id": 143,
+            "artist": "Marvin Gaye",
+            "track": "What's Going On",
+            "year": 1971,
+            "category": "funk",
+            "sample_note": "Social soul",
+            "yt": "Marvin Gaye What's Going On"
+        },
+        {
+            "id": 144,
+            "artist": "Marvin Gaye",
+            "track": "Got to Give It Up",
+            "year": 1977,
+            "category": "disco",
+            "sample_note": "Blurred Lines source",
+            "yt": "Marvin Gaye Got to Give It Up"
+        },
+        {
+            "id": 145,
+            "artist": "Al Green",
+            "track": "Love and Happiness",
+            "year": 1972,
+            "category": "funk",
+            "sample_note": "Memphis groove",
+            "yt": "Al Green Love and Happiness"
+        },
+        {
+            "id": 146,
+            "artist": "Isaac Hayes",
+            "track": "Theme from Shaft",
+            "year": 1971,
+            "category": "funk",
+            "sample_note": "Wah-wah guitar",
+            "yt": "Isaac Hayes Theme Shaft"
+        },
+        {
+            "id": 147,
+            "artist": "Barry White",
+            "track": "Can't Get Enough",
+            "year": 1974,
+            "category": "disco",
+            "sample_note": "Orchestral soul",
+            "yt": "Barry White Can't Get Enough"
+        },
+        {
+            "id": 148,
+            "artist": "Bill Withers",
+            "track": "Lovely Day",
+            "year": 1977,
+            "category": "funk",
+            "sample_note": "18-second note",
+            "yt": "Bill Withers Lovely Day"
+        },
+        {
+            "id": 149,
+            "artist": "Bill Withers",
+            "track": "Ain't No Sunshine",
+            "year": 1971,
+            "category": "funk",
+            "sample_note": "I know I know",
+            "yt": "Bill Withers Ain't No Sunshine"
+        },
+        {
+            "id": 150,
+            "artist": "Aretha Franklin",
+            "track": "Respect",
+            "year": 1967,
+            "category": "funk",
+            "sample_note": "Queen of Soul",
+            "yt": "Aretha Franklin Respect"
+        },
+        {
+            "id": 151,
+            "artist": "Grandmaster Flash",
+            "track": "The Message",
+            "year": 1982,
+            "category": "hiphop",
+            "sample_note": "Conscious rap genesis",
+            "yt": "Grandmaster Flash The Message"
+        },
+        {
+            "id": 152,
+            "artist": "Sugarhill Gang",
+            "track": "Rapper's Delight",
+            "year": 1979,
+            "category": "hiphop",
+            "sample_note": "First rap hit",
+            "yt": "Sugarhill Gang Rapper's Delight"
+        },
+        {
+            "id": 153,
+            "artist": "Run-DMC",
+            "track": "It's Like That",
+            "year": 1983,
+            "category": "hiphop",
+            "sample_note": "Drum machine era",
+            "yt": "Run-DMC It's Like That"
+        },
+        {
+            "id": 154,
+            "artist": "Eric B. & Rakim",
+            "track": "Paid in Full",
+            "year": 1987,
+            "category": "hiphop",
+            "sample_note": "Golden age",
+            "yt": "Eric B Rakim Paid in Full"
+        },
+        {
+            "id": 155,
+            "artist": "Public Enemy",
+            "track": "Fight the Power",
+            "year": 1989,
+            "category": "hiphop",
+            "sample_note": "Production layering",
+            "yt": "Public Enemy Fight the Power"
+        },
+        {
+            "id": 156,
+            "artist": "A Tribe Called Quest",
+            "track": "Can I Kick It?",
+            "year": 1990,
+            "category": "hiphop",
+            "sample_note": "Lou Reed sample",
+            "yt": "Tribe Called Quest Can I Kick It"
+        },
+        {
+            "id": 157,
+            "artist": "De La Soul",
+            "track": "Me Myself and I",
+            "year": 1989,
+            "category": "hiphop",
+            "sample_note": "Daisy age",
+            "yt": "De La Soul Me Myself and I"
+        },
+        {
+            "id": 158,
+            "artist": "Nas",
+            "track": "N.Y. State of Mind",
+            "year": 1994,
+            "category": "hiphop",
+            "sample_note": "Illmatic perfection",
+            "yt": "Nas NY State of Mind"
+        },
+        {
+            "id": 159,
+            "artist": "Wu-Tang Clan",
+            "track": "C.R.E.A.M.",
+            "year": 1993,
+            "category": "hiphop",
+            "sample_note": "Charmels sample",
+            "yt": "Wu-Tang Clan CREAM"
+        },
+        {
+            "id": 160,
+            "artist": "Dr. Dre",
+            "track": "Still D.R.E.",
+            "year": 1999,
+            "category": "hiphop",
+            "sample_note": "G-funk piano",
+            "yt": "Dr Dre Still DRE"
+        },
+        {
+            "id": 161,
+            "artist": "Kraftwerk",
+            "track": "Trans-Europe Express",
+            "year": 1977,
+            "category": "electronic",
+            "sample_note": "Afrika Bambaataa source",
+            "yt": "Kraftwerk Trans-Europe Express"
+        },
+        {
+            "id": 162,
+            "artist": "Kraftwerk",
+            "track": "Numbers",
+            "year": 1981,
+            "category": "electronic",
+            "sample_note": "Electro blueprint",
+            "yt": "Kraftwerk Numbers"
+        },
+        {
+            "id": 163,
+            "artist": "Yellow Magic Orchestra",
+            "track": "Rydeen",
+            "year": 1979,
+            "category": "electronic",
+            "sample_note": "Future pop",
+            "yt": "Yellow Magic Orchestra Rydeen"
+        },
+        {
+            "id": 164,
+            "artist": "Giorgio Moroder",
+            "track": "Chase",
+            "year": 1978,
+            "category": "electronic",
+            "sample_note": "Synth score",
+            "yt": "Giorgio Moroder Chase"
+        },
+        {
+            "id": 165,
+            "artist": "New Order",
+            "track": "Blue Monday",
+            "year": 1983,
+            "category": "electronic",
+            "sample_note": "Best-selling 12\"",
+            "yt": "New Order Blue Monday"
+        },
+        {
+            "id": 166,
+            "artist": "Depeche Mode",
+            "track": "Personal Jesus",
+            "year": 1989,
+            "category": "electronic",
+            "sample_note": "Industrial pop",
+            "yt": "Depeche Mode Personal Jesus"
+        },
+        {
+            "id": 167,
+            "artist": "Pet Shop Boys",
+            "track": "West End Girls",
+            "year": 1985,
+            "category": "electronic",
+            "sample_note": "Synth-pop noir",
+            "yt": "Pet Shop Boys West End Girls"
+        },
+        {
+            "id": 168,
+            "artist": "Daft Punk",
+            "track": "Around the World",
+            "year": 1997,
+            "category": "electronic",
+            "sample_note": "French filter house",
+            "yt": "Daft Punk Around the World"
+        },
+        {
+            "id": 169,
+            "artist": "Daft Punk",
+            "track": "Da Funk",
+            "year": 1995,
+            "category": "electronic",
+            "sample_note": "TB-303 acid",
+            "yt": "Daft Punk Da Funk"
+        },
+        {
+            "id": 170,
+            "artist": "The Chemical Brothers",
+            "track": "Block Rockin' Beats",
+            "year": 1997,
+            "category": "electronic",
+            "sample_note": "Big beat era",
+            "yt": "Chemical Brothers Block Rockin Beats"
+        },
+        {
+            "id": 171,
+            "artist": "Fela Kuti",
+            "track": "Zombie",
+            "year": 1976,
+            "category": "world",
+            "sample_note": "Afrobeat anthem",
+            "yt": "Fela Kuti Zombie"
+        },
+        {
+            "id": 172,
+            "artist": "Fela Kuti",
+            "track": "Water No Get Enemy",
+            "year": 1975,
+            "category": "world",
+            "sample_note": "Extended groove",
+            "yt": "Fela Kuti Water No Get Enemy"
+        },
+        {
+            "id": 173,
+            "artist": "Miriam Makeba",
+            "track": "Pata Pata",
+            "year": 1967,
+            "category": "world",
+            "sample_note": "South African pop",
+            "yt": "Miriam Makeba Pata Pata"
+        },
+        {
+            "id": 174,
+            "artist": "Manu Dibango",
+            "track": "Soul Makossa",
+            "year": 1972,
+            "category": "world",
+            "sample_note": "Sampled by MJ",
+            "yt": "Manu Dibango Soul Makossa"
+        },
+        {
+            "id": 175,
+            "artist": "Fania All-Stars",
+            "track": "Quimbara",
+            "year": 1974,
+            "category": "world",
+            "sample_note": "Salsa gold",
+            "yt": "Celia Cruz Quimbara"
+        },
+        {
+            "id": 176,
+            "artist": "Buena Vista Social Club",
+            "track": "Chan Chan",
+            "year": 1996,
+            "category": "world",
+            "sample_note": "Cuban revival",
+            "yt": "Buena Vista Social Club Chan Chan"
+        },
+        {
+            "id": 177,
+            "artist": "Os Mutantes",
+            "track": "A Minha Menina",
+            "year": 1968,
+            "category": "world",
+            "sample_note": "Tropicália psychedelia",
+            "yt": "Os Mutantes A Minha Menina"
+        },
+        {
+            "id": 178,
+            "artist": "Serge Gainsbourg",
+            "track": "Je T'Aime... Moi Non Plus",
+            "year": 1969,
+            "category": "world",
+            "sample_note": "Scandalous whispers",
+            "yt": "Serge Gainsbourg Je T'Aime"
+        },
+        {
+            "id": 179,
+            "artist": "Ennio Morricone",
+            "track": "Ecstasy of Gold",
+            "year": 1966,
+            "category": "soundtrack",
+            "sample_note": "Western epic",
+            "yt": "Ennio Morricone Ecstasy of Gold"
+        },
+        {
+            "id": 180,
+            "artist": "Ennio Morricone",
+            "track": "The Good Bad Ugly Theme",
+            "year": 1966,
+            "category": "soundtrack",
+            "sample_note": "Iconic whistle",
+            "yt": "Ennio Morricone Good Bad Ugly"
+        },
+        {
+            "id": 181,
+            "artist": "John Williams",
+            "track": "Imperial March",
+            "year": 1980,
+            "category": "soundtrack",
+            "sample_note": "Darth Vader theme",
+            "yt": "John Williams Imperial March"
+        },
+        {
+            "id": 182,
+            "artist": "Vangelis",
+            "track": "Blade Runner Blues",
+            "year": 1982,
+            "category": "soundtrack",
+            "sample_note": "Synth noir",
+            "yt": "Vangelis Blade Runner Blues"
+        },
+        {
+            "id": 183,
+            "artist": "Vangelis",
+            "track": "Chariots of Fire",
+            "year": 1981,
+            "category": "soundtrack",
+            "sample_note": "Slow-mo synth",
+            "yt": "Vangelis Chariots of Fire"
+        },
+        {
+            "id": 184,
+            "artist": "Bernard Herrmann",
+            "track": "Psycho Theme",
+            "year": 1960,
+            "category": "soundtrack",
+            "sample_note": "Shower strings",
+            "yt": "Bernard Herrmann Psycho"
+        },
+        {
+            "id": 185,
+            "artist": "Quincy Jones",
+            "track": "Soul Bossa Nova",
+            "year": 1962,
+            "category": "jazz",
+            "sample_note": "Austin Powers theme",
+            "yt": "Quincy Jones Soul Bossa Nova"
+        },
+        {
+            "id": 186,
+            "artist": "Herbie Hancock",
+            "track": "Rockit",
+            "year": 1983,
+            "category": "jazz",
+            "sample_note": "Scratch classic",
+            "yt": "Herbie Hancock Rockit"
+        },
+        {
+            "id": 187,
+            "artist": "Herbie Hancock",
+            "track": "Chameleon",
+            "year": 1973,
+            "category": "jazz",
+            "sample_note": "Jazz-funk fusion",
+            "yt": "Herbie Hancock Chameleon"
+        },
+        {
+            "id": 188,
+            "artist": "Miles Davis",
+            "track": "So What",
+            "year": 1959,
+            "category": "jazz",
+            "sample_note": "Modal jazz",
+            "yt": "Miles Davis So What"
+        },
+        {
+            "id": 189,
+            "artist": "Dave Brubeck",
+            "track": "Take Five",
+            "year": 1959,
+            "category": "jazz",
+            "sample_note": "5/4 time signature",
+            "yt": "Dave Brubeck Take Five"
+        },
+        {
+            "id": 190,
+            "artist": "Bob James",
+            "track": "Nautilus",
+            "year": 1974,
+            "category": "jazz",
+            "sample_note": "Most sampled jazz",
+            "yt": "Bob James Nautilus"
+        },
+        {
+            "id": 191,
+            "artist": "Nina Simone",
+            "track": "Feeling Good",
+            "year": 1965,
+            "category": "jazz",
+            "sample_note": "Empowerment anthem",
+            "yt": "Nina Simone Feeling Good"
+        },
+        {
+            "id": 192,
+            "artist": "Nina Simone",
+            "track": "Sinnerman",
+            "year": 1965,
+            "category": "jazz",
+            "sample_note": "10-min epic",
+            "yt": "Nina Simone Sinnerman"
+        },
+        {
+            "id": 193,
+            "artist": "Billie Holiday",
+            "track": "Strange Fruit",
+            "year": 1939,
+            "category": "jazz",
+            "sample_note": "Protest song",
+            "yt": "Billie Holiday Strange Fruit"
+        },
+        {
+            "id": 194,
+            "artist": "Ella Fitzgerald",
+            "track": "Summertime",
+            "year": 1968,
+            "category": "jazz",
+            "sample_note": "Gershwin standard",
+            "yt": "Ella Fitzgerald Summertime"
+        },
+        {
+            "id": 195,
+            "artist": "Louis Armstrong",
+            "track": "What a Wonderful World",
+            "year": 1967,
+            "category": "jazz",
+            "sample_note": "Optimism classic",
+            "yt": "Louis Armstrong What a Wonderful World"
+        },
+        {
+            "id": 196,
+            "artist": "The Beatles",
+            "track": "Come Together",
+            "year": 1969,
+            "category": "rock",
+            "sample_note": "That bassline",
+            "yt": "Beatles Come Together"
+        },
+        {
+            "id": 197,
+            "artist": "The Beatles",
+            "track": "Tomorrow Never Knows",
+            "year": 1966,
+            "category": "rock",
+            "sample_note": "Tape loops pioneer",
+            "yt": "Beatles Tomorrow Never Knows"
+        },
+        {
+            "id": 198,
+            "artist": "Led Zeppelin",
+            "track": "When the Levee Breaks",
+            "year": 1971,
+            "category": "rock",
+            "sample_note": "Bonham drums sample",
+            "yt": "Led Zeppelin When the Levee Breaks"
+        },
+        {
+            "id": 199,
+            "artist": "The Rolling Stones",
+            "track": "Paint It Black",
+            "year": 1966,
+            "category": "rock",
+            "sample_note": "Sitar rock",
+            "yt": "Rolling Stones Paint It Black"
+        },
+        {
+            "id": 200,
+            "artist": "David Bowie",
+            "track": "Let's Dance",
+            "year": 1983,
+            "category": "pop",
+            "sample_note": "Nile Rodgers production",
+            "yt": "David Bowie Let's Dance"
+        },
+        {
+            "id": 201,
+            "artist": "David Bowie",
+            "track": "Fame",
+            "year": 1975,
+            "category": "funk",
+            "sample_note": "Lennon collab",
+            "yt": "David Bowie Fame"
+        },
+        {
+            "id": 202,
+            "artist": "Queen",
+            "track": "Another One Bites the Dust",
+            "year": 1980,
+            "category": "rock",
+            "sample_note": "Chic-inspired bass",
+            "yt": "Queen Another One Bites the Dust"
+        },
+        {
+            "id": 203,
+            "artist": "Queen",
+            "track": "We Will Rock You",
+            "year": 1977,
+            "category": "rock",
+            "sample_note": "Stomp stomp clap",
+            "yt": "Queen We Will Rock You"
+        },
+        {
+            "id": 204,
+            "artist": "Fleetwood Mac",
+            "track": "The Chain",
+            "year": 1977,
+            "category": "rock",
+            "sample_note": "F1 theme bassline",
+            "yt": "Fleetwood Mac The Chain"
+        },
+        {
+            "id": 205,
+            "artist": "AC/DC",
+            "track": "Back in Black",
+            "year": 1980,
+            "category": "rock",
+            "sample_note": "Guitar riff icon",
+            "yt": "ACDC Back in Black"
+        },
+        {
+            "id": 206,
+            "artist": "Talking Heads",
+            "track": "Once in a Lifetime",
+            "year": 1980,
+            "category": "rock",
+            "sample_note": "Afrobeat new wave",
+            "yt": "Talking Heads Once in a Lifetime"
+        },
+        {
+            "id": 207,
+            "artist": "Blondie",
+            "track": "Heart of Glass",
+            "year": 1978,
+            "category": "disco",
+            "sample_note": "Disco punk",
+            "yt": "Blondie Heart of Glass"
+        },
+        {
+            "id": 208,
+            "artist": "Blondie",
+            "track": "Rapture",
+            "year": 1980,
+            "category": "hiphop",
+            "sample_note": "First rap #1",
+            "yt": "Blondie Rapture"
+        },
+        {
+            "id": 209,
+            "artist": "Madonna",
+            "track": "Vogue",
+            "year": 1990,
+            "category": "pop",
+            "sample_note": "House pop crossover",
+            "yt": "Madonna Vogue"
+        },
+        {
+            "id": 210,
+            "artist": "Madonna",
+            "track": "Into the Groove",
+            "year": 1985,
+            "category": "pop",
+            "sample_note": "Dance floor classic",
+            "yt": "Madonna Into the Groove"
+        },
+        {
+            "id": 211,
+            "artist": "Whitney Houston",
+            "track": "I Wanna Dance with Somebody",
+            "year": 1987,
+            "category": "pop",
+            "sample_note": "Pure joy",
+            "yt": "Whitney Houston I Wanna Dance"
+        },
+        {
+            "id": 212,
+            "artist": "Janet Jackson",
+            "track": "Rhythm Nation",
+            "year": 1989,
+            "category": "pop",
+            "sample_note": "Industrial pop",
+            "yt": "Janet Jackson Rhythm Nation"
+        },
+        {
+            "id": 213,
+            "artist": "Beyoncé",
+            "track": "Crazy in Love",
+            "year": 2003,
+            "category": "pop",
+            "sample_note": "Chi-Lites sample",
+            "yt": "Beyonce Crazy in Love"
+        },
+        {
+            "id": 214,
+            "artist": "Rihanna",
+            "track": "Umbrella",
+            "year": 2007,
+            "category": "pop",
+            "sample_note": "2000s defining hit",
+            "yt": "Rihanna Umbrella"
+        },
+        {
+            "id": 215,
+            "artist": "Kanye West",
+            "track": "Stronger",
+            "year": 2007,
+            "category": "hiphop",
+            "sample_note": "Daft Punk sample",
+            "yt": "Kanye West Stronger"
+        },
+        {
+            "id": 216,
+            "artist": "Kanye West",
+            "track": "Through the Wire",
+            "year": 2003,
+            "category": "hiphop",
+            "sample_note": "Chaka Khan sample",
+            "yt": "Kanye West Through the Wire"
+        },
+        {
+            "id": 217,
+            "artist": "Kendrick Lamar",
+            "track": "Humble",
+            "year": 2017,
+            "category": "hiphop",
+            "sample_note": "Piano stabs",
+            "yt": "Kendrick Lamar Humble"
+        },
+        {
+            "id": 218,
+            "artist": "Missy Elliott",
+            "track": "Get Ur Freak On",
+            "year": 2001,
+            "category": "hiphop",
+            "sample_note": "Bhangra beats",
+            "yt": "Missy Elliott Get Ur Freak On"
+        },
+        {
+            "id": 219,
+            "artist": "OutKast",
+            "track": "Hey Ya!",
+            "year": 2003,
+            "category": "hiphop",
+            "sample_note": "Genre-breaking",
+            "yt": "OutKast Hey Ya"
+        },
+        {
+            "id": 220,
+            "artist": "OutKast",
+            "track": "B.O.B.",
+            "year": 2000,
+            "category": "hiphop",
+            "sample_note": "Tempo shifts",
+            "yt": "OutKast BOB"
+        },
+        {
+            "id": 221,
+            "artist": "Martin Luther King Jr.",
+            "track": "I Have a Dream",
+            "year": 1963,
+            "category": "speech",
+            "sample_note": "Civil rights",
+            "yt": "Martin Luther King I Have a Dream"
+        },
+        {
+            "id": 222,
+            "artist": "Malcolm X",
+            "track": "By Any Means Necessary",
+            "year": 1964,
+            "category": "speech",
+            "sample_note": "Revolutionary",
+            "yt": "Malcolm X By Any Means Necessary"
+        },
+        {
+            "id": 223,
+            "artist": "JFK",
+            "track": "Ask Not What Your Country",
+            "year": 1961,
+            "category": "speech",
+            "sample_note": "Inaugural address",
+            "yt": "JFK Ask Not"
+        },
+        {
+            "id": 224,
+            "artist": "Muhammad Ali",
+            "track": "I Am the Greatest",
+            "year": 1964,
+            "category": "speech",
+            "sample_note": "Pre-fight",
+            "yt": "Muhammad Ali I Am the Greatest"
+        },
+        {
+            "id": 225,
+            "artist": "Nina Simone",
+            "track": "Mississippi Goddam",
+            "year": 1964,
+            "category": "speech",
+            "sample_note": "Protest song",
+            "yt": "Nina Simone Mississippi Goddam"
+        },
+        {
+            "id": 226,
+            "artist": "Angela Davis",
+            "track": "Freedom is a Constant Struggle",
+            "year": 1972,
+            "category": "speech",
+            "sample_note": "Radical philosophy",
+            "yt": "Angela Davis Freedom Struggle"
+        },
+        {
+            "id": 227,
+            "artist": "Gil Scott-Heron",
+            "track": "The Revolution Will Not Be Televised",
+            "year": 1971,
+            "category": "speech",
+            "sample_note": "Proto-rap spoken word",
+            "yt": "Gil Scott-Heron Revolution"
+        },
+        {
+            "id": 228,
+            "artist": "James Baldwin",
+            "track": "Notes of a Native Son",
+            "year": 1965,
+            "category": "speech",
+            "sample_note": "Literary voice",
+            "yt": "James Baldwin interview"
+        },
+        {
+            "id": 229,
+            "artist": "Amiri Baraka",
+            "track": "Somebody Blew Up America",
+            "year": 2002,
+            "category": "speech",
+            "sample_note": "Post-9/11 poem",
+            "yt": "Amiri Baraka Somebody Blew Up America"
+        },
+        {
+            "id": 230,
+            "artist": "Stokely Carmichael",
+            "track": "Black Power",
+            "year": 1966,
+            "category": "speech",
+            "sample_note": "Movement origin",
+            "yt": "Stokely Carmichael Black Power"
+        },
+        {
+            "id": 231,
+            "artist": "Charlie Chaplin",
+            "track": "The Great Dictator Speech",
+            "year": 1940,
+            "category": "speech",
+            "sample_note": "Humanist plea",
+            "yt": "Charlie Chaplin Great Dictator Speech"
+        },
+        {
+            "id": 232,
+            "artist": "FDR",
+            "track": "Fear Itself",
+            "year": 1933,
+            "category": "speech",
+            "sample_note": "Depression era",
+            "yt": "FDR Fear Itself"
+        },
+        {
+            "id": 233,
+            "artist": "Winston Churchill",
+            "track": "We Shall Fight on the Beaches",
+            "year": 1940,
+            "category": "speech",
+            "sample_note": "WWII defiance",
+            "yt": "Churchill We Shall Fight Beaches"
+        },
+        {
+            "id": 234,
+            "artist": "Carl Sagan",
+            "track": "Pale Blue Dot",
+            "year": 1994,
+            "category": "speech",
+            "sample_note": "Cosmic perspective",
+            "yt": "Carl Sagan Pale Blue Dot"
+        },
+        {
+            "id": 235,
+            "artist": "Barack Obama",
+            "track": "Yes We Can",
+            "year": 2008,
+            "category": "speech",
+            "sample_note": "Hope campaign",
+            "yt": "Barack Obama Yes We Can"
+        },
+        {
+            "id": 236,
+            "artist": "Alan Watts",
+            "track": "The Dream of Life",
+            "year": 1972,
+            "category": "speech",
+            "sample_note": "Philosophy",
+            "yt": "Alan Watts Dream of Life"
+        },
+        {
+            "id": 237,
+            "artist": "Terence McKenna",
+            "track": "Culture is Not Your Friend",
+            "year": 1999,
+            "category": "speech",
+            "sample_note": "Psychedelic philosophy",
+            "yt": "Terence McKenna Culture Not Your Friend"
+        },
+        {
+            "id": 238,
+            "artist": "Fred Hampton",
+            "track": "I Am a Revolutionary",
+            "year": 1969,
+            "category": "speech",
+            "sample_note": "Black Panther",
+            "yt": "Fred Hampton Revolutionary"
+        },
+        {
+            "id": 239,
+            "artist": "Huey Newton",
+            "track": "Revolutionary Suicide",
+            "year": 1973,
+            "category": "speech",
+            "sample_note": "Black Panther",
+            "yt": "Huey Newton interview"
+        },
+        {
+            "id": 240,
+            "artist": "Assata Shakur",
+            "track": "To My People",
+            "year": 1973,
+            "category": "speech",
+            "sample_note": "Liberation statement",
+            "yt": "Assata Shakur To My People"
+        }
+    ]
+}

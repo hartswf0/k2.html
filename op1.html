@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="LATENT RADIO OP-10 SPECTRAL - Dual-deck audio mixer for experimental music">
+    <meta name="theme-color" content="#111114">
+    <title>LATENT RADIO: OP-10 SPECTRAL</title>
+    <!-- Inline SVG Favicon - Radio Wave -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23111114'/><circle cx='50' cy='50' r='8' fill='%23ff4d00'/><path d='M50 25 Q65 50 50 75' stroke='%23ff4d00' stroke-width='4' fill='none'/><path d='M50 15 Q75 50 50 85' stroke='%23ff4d00' stroke-width='3' fill='none' opacity='0.6'/></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --te-orange: #ff4d00;
+            --te-bg: #c0c0c8;
+            --te-black: #111114;
+            --lcd-green: #9fb399;
+            --lcd-ink: #1e261c;
+        }
+
+        body {
+            background-color: var(--te-bg);
+            color: var(--te-black);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* Industrial Header */
+        header {
+            background: var(--te-black);
+            color: white;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 5px solid var(--te-orange);
+            z-index: 100;
+        }
+
+        /* LCD - High Density Readout */
+        .lcd {
+            background: var(--lcd-green);
+            box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.4), inset 0 0 40px rgba(0, 0, 0, 0.1);
+            border: 4px solid #4a5446;
+            color: var(--lcd-ink);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lcd-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(0, 0, 0, 0.1) 50%, transparent 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        canvas {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            opacity: 0.6;
+            image-rendering: pixelated;
+        }
+
+        /* Tactile Elements */
+        .te-btn {
+            background: #fdfdfd;
+            border-bottom: 5px solid #8e8e93;
+            border-radius: 2px;
+            transition: all 0.05s;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 10px;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .te-btn:active {
+            transform: translateY(3px);
+            border-bottom-width: 2px;
+        }
+
+        .te-btn.orange {
+            background: var(--te-orange);
+            color: white;
+            border-bottom-color: #a33200;
+        }
+
+        .te-btn.black {
+            background: var(--te-black);
+            color: white;
+            border-bottom-color: #000;
+        }
+
+        /* Faders */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #3f3f46;
+            height: 10px;
+            border-radius: 1px;
+            border: 1px solid #27272a;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 32px;
+            height: 20px;
+            background: #fff;
+            border: 3px solid var(--te-black);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Init System */
+        #init-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--te-black);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+
+        .signal-grid {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            gap: 1px;
+            width: 100%;
+            height: 4px;
+            opacity: 0.2;
+        }
+
+        .grid-pixel {
+            background: var(--lcd-ink);
+        }
+
+        .player-wrapper {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        /* Color utilities */
+        .text-te-orange {
+            color: var(--te-orange);
+        }
+
+        .bg-te-orange {
+            background-color: var(--te-orange);
+        }
+
+        .bg-te-orange\/10 {
+            background-color: rgba(255, 77, 0, 0.1);
+        }
+
+        .border-te-orange {
+            border-color: var(--te-orange);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            main {
+                padding: 8px !important;
+                gap: 8px !important;
+            }
+
+            /* Stack deck displays vertically */
+            .grid.grid-cols-2 {
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
+            }
+
+            /* Smaller deck displays */
+            .aspect-video {
+                min-height: 80px;
+            }
+
+            /* Smart Mix controls - stack on mobile */
+            .bg-zinc-800 .flex.items-center.justify-between {
+                flex-wrap: wrap;
+                gap: 12px !important;
+            }
+
+            /* Full width buttons on mobile */
+            #btn-smart-play {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Progress bars full width */
+            .flex-1.flex.flex-col.gap-1.max-w-xs {
+                max-width: none !important;
+                flex: 1 1 100% !important;
+                order: 10;
+            }
+
+            /* Control panel - stack controls */
+            .bg-zinc-400 .grid.grid-cols-3 {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            .bg-zinc-400 .grid.grid-cols-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Smaller buttons */
+            .te-btn.h-12 {
+                height: 40px !important;
+                font-size: 10px !important;
+            }
+
+            /* Track list items more compact */
+            #crate-list>div {
+                padding: 8px !important;
+            }
+
+            /* Hide less important elements on mobile */
+            .mono {
+                font-size: 6px;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+
+            /* Hide scopes on very small screens */
+            canvas {
+                display: none;
+            }
+
+            /* Even more compact */
+            h2 {
+                font-size: 10px !important;
+            }
+
+            p {
+                font-size: 8px !important;
+            }
+        }
+    </style>
+</head>
+
+<body id="master-body">
+
+    <!-- INITIALIZATION INTERFACE -->
+    <div id="init-overlay">
+        <div class="mono text-[10px] mb-12 opacity-40 tracking-[1em]">ARCHIVE_BOOT_SEQUENCE_V4</div>
+        <div class="mb-12">
+            <h1 class="text-3xl font-black mb-2 tracking-tighter">SPECTRAL CRATE</h1>
+            <p class="mono text-[9px] opacity-60">KEPLERIAN-ORGANIC SYNC REQUIRED</p>
+        </div>
+        <button onclick="powerOn()" class="te-btn orange px-16 py-8 text-lg flex flex-col items-center">
+            <span>ENGAGE POWER</span>
+            <span class="text-[8px] opacity-70 mt-2 font-normal">ENABLE AUDIO RELAY</span>
+        </button>
+        <div class="mt-12 mono text-[9px] text-zinc-700 max-w-xs uppercase leading-relaxed">
+            Note: Mobile browsers require manual engagement to initiate the signal stream.
+        </div>
+    </div>
+
+    <header>
+        <div class="flex items-center gap-3">
+            <div class="w-3 h-3 bg-red-600 rounded-full shadow-[0_0_12px_red]"></div>
+            <div class="flex flex-col">
+                <span class="font-black text-xs tracking-tighter">LATENT RADIO <span
+                        class="text-zinc-600">OP-10</span></span>
+                <span class="mono text-[7px] opacity-40">52.3702° N / 4.8952° E</span>
+            </div>
+        </div>
+        <div class="flex gap-4 items-center">
+            <div class="hidden md:block mono text-[8px] opacity-40 text-right uppercase">
+                Data Density: 98.4%<br>Spectral Shadow: Active
+            </div>
+            <a href="index.html"
+                class="te-btn px-3 h-8 flex items-center justify-center no-underline text-xs font-bold text-zinc-600">HOME</a>
+            <button onclick="haptic(); toggleShadow()" id="shadow-toggle" class="te-btn orange px-3 h-8">Shadow</button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col p-3 md:p-6 gap-3 overflow-hidden">
+
+        <!-- Dual Spectral Analyzers -->
+        <div class="grid grid-cols-2 gap-3 h-44">
+            <div class="lcd p-4 flex flex-col justify-between">
+                <div class="lcd-overlay"></div>
+                <div class="flex justify-between items-center mono text-[9px] font-bold z-20">
+                    <span class="bg-black/10 px-1">SIG_01</span>
+                    <span id="time-a">00:00:00</span>
+                </div>
+                <div class="z-20">
+                    <h2 id="title-a" class="text-[11px] font-black uppercase truncate leading-none mb-1">Cabo de Gata
+                    </h2>
+                    <p id="logic-a" class="text-[8px] mono opacity-70 truncate tracking-tight uppercase">Micro-Drift
+                        Environment</p>
+                </div>
+                <canvas id="scope-a"></canvas>
+            </div>
+
+            <div class="lcd p-4 flex flex-col justify-between">
+                <div class="lcd-overlay"></div>
+                <div class="flex justify-between items-center mono text-[9px] font-bold z-20">
+                    <span id="time-b">00:00:00</span>
+                    <span class="bg-black/10 px-1">SIG_02</span>
+                </div>
+                <div class="text-right z-20">
+                    <h2 id="title-b" class="text-[11px] font-black uppercase truncate leading-none mb-1 text-right">
+                        Beauty</h2>
+                    <p id="logic-b" class="text-[8px] mono opacity-70 truncate tracking-tight uppercase text-right">
+                        Industrial Harp</p>
+                </div>
+                <canvas id="scope-b"></canvas>
+            </div>
+        </div>
+
+        <!-- High Density Control Panel (ORIGINAL) -->
+        <div class="bg-zinc-400 p-4 rounded-sm border border-zinc-500 shadow-xl space-y-4">
+            <!-- Global Matrix -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="space-y-1">
+                    <div class="flex justify-between mono text-[7px] font-black opacity-60 items-center">
+                        <span>PITCH A</span>
+                        <button onclick="haptic(); syncDeck('A')"
+                            class="bg-zinc-700 text-white px-1 rounded hover:bg-zinc-600 transition-colors">SYNC</button>
+                        <span id="pitch-a-val">1.0X</span>
+                    </div>
+                    <input type="range" id="rate-a" min="50" max="150" value="100" class="w-full"
+                        oninput="updateRate('A', this.value)">
+                </div>
+                <div class="flex flex-col items-center justify-center">
+                    <span class="mono text-[8px] font-black opacity-40 mb-1 uppercase tracking-widest">Crossfader</span>
+                    <input type="range" id="crossfader" min="0" max="100" value="50" class="w-full">
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between mono text-[7px] font-black opacity-60 items-center">
+                        <span>PITCH B</span>
+                        <button onclick="haptic(); syncDeck('B')"
+                            class="bg-zinc-700 text-white px-1 rounded hover:bg-zinc-600 transition-colors">SYNC</button>
+                        <span id="pitch-b-val">1.0X</span>
+                    </div>
+                    <input type="range" id="rate-b" min="50" max="150" value="100" class="w-full"
+                        oninput="updateRate('B', this.value)">
+                </div>
+            </div>
+
+            <!-- Transport Matrix -->
+            <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="haptic(); nudge('A', -1)" class="te-btn h-12">Nudge-</button>
+                    <button id="btn-play-a" onclick="haptic(); togglePlay('A')" class="te-btn black h-12">Play</button>
+                    <button onclick="haptic(); nudge('A', 1)" class="te-btn h-12">Nudge+</button>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="haptic(); nudge('B', -1)" class="te-btn h-12">Nudge-</button>
+                    <button id="btn-play-b" onclick="haptic(); togglePlay('B')" class="te-btn black h-12">Play</button>
+                    <button onclick="haptic(); nudge('B', 1)" class="te-btn h-12">Nudge+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMART MIX CONTROLS (NEW - Additional Layer) -->
+        <div class="bg-zinc-800 p-3 rounded-sm border border-zinc-700 shadow-xl">
+            <div class="flex items-center justify-between gap-4">
+                <!-- Smart Mix Play -->
+                <button id="btn-smart-play" onclick="haptic(); smartMixToggle()"
+                    class="bg-te-orange hover:bg-orange-600 text-white px-4 py-2 rounded font-bold flex items-center gap-2 transition-colors">
+                    <span id="smart-play-icon">▶</span>
+                    <span id="smart-play-label">SMART MIX</span>
+                </button>
+
+                <!-- Mode Toggle -->
+                <div class="flex gap-1">
+                    <button id="mode-blend" onclick="setMixMode('blend')"
+                        class="px-2 py-1 text-[8px] font-bold rounded bg-purple-600 text-white">BLEND</button>
+                    <button id="mode-jump" onclick="setMixMode('jump')"
+                        class="px-2 py-1 text-[8px] font-bold rounded bg-zinc-600 text-zinc-300">JUMP</button>
+                    <!-- Infinite Radio Toggle -->
+                    <button id="mode-radio" onclick="haptic(); toggleInfinite()"
+                        class="px-2 py-1 text-[8px] font-bold rounded bg-zinc-600 text-zinc-300 ml-1 border border-zinc-500">RADIO:
+                        OFF</button>
+                </div>
+
+                <!-- Walk Controls -->
+                <div class="flex gap-1">
+                    <button onclick="haptic(); walkPrev()" class="te-btn px-3 py-1 text-[9px]">◀ PREV</button>
+                    <button onclick="haptic(); walkNext()" class="te-btn px-3 py-1 text-[9px]">NEXT ▶</button>
+                </div>
+
+                <!-- Progress bars -->
+                <div class="flex-1 flex flex-col gap-1 max-w-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="mono text-[7px] text-te-orange w-4">A</span>
+                        <div class="flex-1 h-1 bg-zinc-700 rounded-full overflow-hidden">
+                            <div id="progress-bar-a" class="h-full bg-te-orange transition-all" style="width: 0%"></div>
+                        </div>
+                        <span id="progress-a-time" class="mono text-[7px] text-zinc-400 w-12">0:00</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="mono text-[7px] text-blue-400 w-4">B</span>
+                        <div class="flex-1 h-1 bg-zinc-700 rounded-full overflow-hidden">
+                            <div id="progress-bar-b" class="h-full bg-blue-500 transition-all" style="width: 0%"></div>
+                        </div>
+                        <span id="progress-b-time" class="mono text-[7px] text-zinc-400 w-12">0:00</span>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="mono text-[8px] text-zinc-400">
+                    <span id="mix-status">Ready</span> •
+                    <span id="track-position">0</span>/<span id="track-count">20</span> •
+                    <span id="total-runtime">--:--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SYSTEM STATUS BAR -->
+        <div id="status-bar"
+            class="bg-zinc-900 text-white px-4 py-2 flex justify-between items-center text-[8px] mono uppercase tracking-wider">
+            <div class="flex gap-3 items-center">
+                <span id="sys-status" class="text-green-400">● READY</span>
+            </div>
+            <div class="flex gap-4 items-center">
+                <span id="deck-a-status">A: <span class="text-te-orange">IDLE</span></span>
+                <span id="deck-b-status">B: <span class="text-blue-400">IDLE</span></span>
+            </div>
+            <div id="error-display" class="text-red-400 hidden">ERROR</div>
+        </div>
+        <!-- Hidden elements for legacy autoplay -->
+        <div style="display:none">
+            <span id="autoplay-total">20</span>
+            <span id="autoplay-current">0</span>
+        </div>
+
+        <!-- The Archive Scroll -->
+        <div class="flex-1 bg-white border-t-2 border-zinc-500 overflow-hidden flex flex-col rounded-t-lg">
+            <div class="px-4 py-2 border-b flex justify-between items-center bg-zinc-100">
+                <span class="font-black text-[9px] tracking-widest uppercase">Signal Log_Archive</span>
+                <div class="flex gap-4 items-center">
+                    <span class="mono text-[8px] opacity-40" id="crate-info">LATENT_303 • 20 FILES</span>
+                </div>
+            </div>
+            <div id="crate-list" class="flex-1 overflow-y-auto no-scrollbar">
+                <!-- Tracks Injected -->
+            </div>
+        </div>
+    </main>
+
+    <div class="player-wrapper">
+        <div id="player-a"></div>
+    </div>
+    <div class="player-wrapper">
+        <div id="player-b"></div>
+    </div>
+
+    <script>
+        // LOCAL MP3 CRATE - All files from /audio folder
+        const tracks = [
+            { file: "audio/Istana.mp3", title: "Istana", artist: "Senyawa", bpm: 85, key: "Dm", logic: "Lithic Resonance" },
+            { file: "audio/Sote - Holy Error [Opal Tapes].mp3", title: "Holy Error", artist: "Sote", bpm: 120, key: "Fm", logic: "Keplerian Speed-Run" },
+            { file: "audio/Nicolas Jaar - Agosto.mp3", title: "Agosto", artist: "Nicolás Jaar", bpm: 110, key: "Em", logic: "Material Dust" },
+            { file: "audio/Excavation (Part 1).mp3", title: "Excavation (Part 1)", artist: "The Haxan Cloak", bpm: 70, key: "Cm", logic: "Seismic Dread" },
+            { file: "audio/Moondog - Lament I, Bird's Lament.mp3", title: "Bird's Lament", artist: "Moondog", bpm: 104, key: "Bb", logic: "Base-8 Geometry" },
+            { file: "audio/Caregiver part 1 (breathing).mp3", title: "Caregiver part 1", artist: "Oliver Coates", bpm: 60, key: "G", logic: "The Metal Lung" },
+            { file: "audio/Lucrecia Dalt - No tiempo [Official Video].mp3", title: "No Tiempo", artist: "Lucrecia Dalt", bpm: 115, key: "Bb", logic: "Xeno-Pop" },
+            { file: "audio/Alemu Aga Besmeab - Abatachin Hoy, playing the Begenna, the Harp of David from Ethiopia.mp3", title: "Begena Drones", artist: "Alemu Aga", bpm: 65, key: "E", logic: "The Unstable Rattle" },
+            { file: "audio/test pattern_1011.mp3", title: "Test Pattern #1011", artist: "Ryoji Ikeda", bpm: 140, key: "?", logic: "Binary Barcode" },
+            { file: "audio/Amnesia Scanner - AS Chaos feat. Pan Daijing (Lyric Video).mp3", title: "AS Chaos", artist: "Amnesia Scanner", bpm: 135, key: "Gm", logic: "Sentient Server" },
+            { file: "audio/SOPHIE  Ponyboy (Official Video).mp3", title: "Ponyboy", artist: "SOPHIE", bpm: 128, key: "F#m", logic: "Polymer Skin" },
+            { file: "audio/Mutant [2NV_zHmgw3U].mp3", title: "Mutant", artist: "Arca", bpm: 100, key: "Cm", logic: "Fluid Morphology" },
+            { file: "audio/Alan Lamb - Beauty.mp3", title: "Beauty", artist: "Alan Lamb", bpm: 0, key: "Dr", logic: "Natural Aeolian" },
+            { file: "audio/Bridge of Death - Hildur Guðnadóttir.mp3", title: "Bridge of Death", artist: "Hildur Guðnadóttir", bpm: 55, key: "Dm", logic: "Radioactive Caverns" },
+            { file: "audio/Floating Points, Pharaoh Sanders & London Symphony Orchestra - Promises - Movement 6 (at sea) [WP7_DwTuOM4].mp3", title: "Promises - Movement 6", artist: "Floating Points", bpm: 75, key: "Eb", logic: "Orbital Drift" },
+            { file: "audio/Sarah Davachi - Antiphonals (Full Album) [8cttc9Iq0jE].mp3", title: "Antiphonals", artist: "Sarah Davachi", bpm: 0, key: "Dr", logic: "Microtonal Beat" },
+            { file: "audio/Tanya Tagaq - Animism - Album Trailer.mp3", title: "Animism", artist: "Tanya Tagaq", bpm: 90, key: "?", logic: "The Throat Slingshot" },
+            { file: "audio/Why Don't You Eat Carrots [menuXx3oq80].mp3", title: "Carrots", artist: "Faust", bpm: 112, key: "A", logic: "Kraut-Slingshot" },
+            { file: "audio/Windy & Carl - Antarctica_ The Bliss Out, Vol. 2 [Full Album] [ILm_1mDb7aQ].mp3", title: "Antarctica", artist: "Windy & Carl", bpm: 0, key: "Dr", logic: "Frozen Reverb" },
+            { file: "audio/amorcito caradura.mp3", title: "Amorcito Caradura", artist: "Unknown", bpm: 95, key: "D", logic: "Forager Found" }
+        ];
+
+        // ═══════════════════════════════════════════════════════════════════
+        // AUDIO SYSTEM - With Full Observability (Bret Victor: Surface the Invisible)
+        // ═══════════════════════════════════════════════════════════════════
+
+        // ═══════════════════════════════════════════════════════════════════
+        // AUDIO SYSTEM - Web Audio API Upgrade (DJ Deck Engine)
+        // ═══════════════════════════════════════════════════════════════════
+
+        let ctx;
+        let masterGain, compressor, makeupGain;
+
+        // Deck State
+        const deckA = {
+            audio: new Audio(),
+            source: null,
+            gain: null,
+            analyser: null,
+            filter: null,
+            trackIdx: 0,
+            isPlaying: false
+        };
+        const deckB = {
+            audio: new Audio(),
+            source: null,
+            gain: null,
+            analyser: null,
+            filter: null,
+            trackIdx: 1,
+            isPlaying: false
+        };
+
+        // Initialize Audio Engine
+        function initAudioEngine() {
+            if (ctx) return;
+            ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Master Bus Chain: Decks -> MasterGain (Pre) -> Compressor -> MakeupGain (Post) -> Destination
+            masterGain = ctx.createGain();
+            masterGain.gain.value = 4.0; // DRIVE IT HARD: Boost input to compressor to ensure quiet tracks hit threshold
+
+            compressor = ctx.createDynamicsCompressor();
+            // Aggressive limiter/normalizer settings for consistent volume
+            compressor.threshold.value = -24; // Lower threshold to catch everything
+            compressor.knee.value = 5; // Harder knee
+            compressor.ratio.value = 20; // Brickwall limiting
+            compressor.attack.value = 0.001; // Instant attack
+            compressor.release.value = 0.2; // Fast release
+
+            makeupGain = ctx.createGain();
+            makeupGain.gain.value = 2.0; // Bring level back up after heavy compression
+
+            // Connect the chain
+            masterGain.connect(compressor);
+            compressor.connect(makeupGain);
+            makeupGain.connect(ctx.destination);
+
+            // Setup Decks
+            setupDeck(deckA);
+            setupDeck(deckB);
+
+            log('🔊 Audio Engine Initialized with Normalization');
+        }
+
+        function setupDeck(deck) {
+            // deck.audio.crossOrigin = "anonymous"; // REMOVED for local file support
+            deck.audio.loop = false; // Don't loop - let ended event fire for auto-advance
+
+            deck.source = ctx.createMediaElementSource(deck.audio);
+
+            // Filter (Neutral by default)
+            deck.filter = ctx.createBiquadFilter();
+            deck.filter.type = 'lowpass';
+            deck.filter.frequency.value = 22000;
+
+            // Gain (Fader)
+            deck.gain = ctx.createGain();
+            deck.gain.value = 1.0;
+
+            // Analyser (Scope)
+            deck.analyser = ctx.createAnalyser();
+            deck.analyser.fftSize = 2048;
+
+            // Chain: Source -> Filter -> Gain -> Analyser -> Master
+            deck.source.connect(deck.filter);
+            deck.filter.connect(deck.gain);
+            deck.gain.connect(deck.analyser);
+            deck.analyser.connect(masterGain);
+        }
+
+        // Legacy compatibility references (mapped to new engine)
+        const audioA = deckA.audio;
+        const audioB = deckB.audio;
+        let isPlayingA = false, isPlayingB = false; // Synced with deck state below
+        let currentTrackA = 0, currentTrackB = 1;
+
+        // DIAGNOSTIC STATE - Surface everything
+        const diag = {
+            aLoaded: false, bLoaded: false,
+            aReady: false, bReady: false,
+            aError: null, bError: null,
+            aSrc: '', bSrc: '',
+            aTime: 0, bTime: 0,
+            aDuration: 0, bDuration: 0,
+            aRate: 1.0, bRate: 1.0,
+            bpmA: 0, bpmB: 0
+        };
+
+        // AUTOPLAY STATE
+        let autoplayActive = false;
+        let autoplayIndex = 0;
+        const trackDurations = new Array(tracks.length).fill(0); // Will be populated
+        let totalPlaylistDuration = 0;
+
+        // SMART MIX STATE
+        let smartMixActive = false;
+        let mixMode = 'blend'; // 'blend' or 'jump'
+        let mixPosition = 0; // Current position in playlist (which pair of tracks)
+        let blendDuration = 5; // Seconds to crossfade between tracks
+
+        // INFINITE RADIO STATE
+        let infiniteMode = false;
+        let playHistory = []; // Keep track of last played songs to avoid repeats
+
+        // HARMONIC MIXING UTILS
+        const CHROMATIC_MAP = {
+            'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4,
+            'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9,
+            'A#': 10, 'Bb': 10, 'B': 11
+        };
+
+        function getCircleIndex(keyStr) {
+            if (!keyStr || keyStr === '?') return -1;
+            const match = keyStr.match(/^([A-G][b#]?)(m?)/);
+            if (!match) return -1;
+
+            let root = match[1];
+            let isMinor = match[2] === 'm';
+            let chromIdx = CHROMATIC_MAP[root];
+            if (chromIdx === undefined) return -1;
+
+            // If minor, shifting to relative major (+3 semitones)
+            // e.g. Am (9) -> C (0)
+            if (isMinor) chromIdx = (chromIdx + 3) % 12;
+
+            // Convert to Circle of Fifths position: (chrom * 7) % 12
+            return (chromIdx * 7) % 12;
+        }
+
+        function toggleInfinite() {
+            infiniteMode = !infiniteMode;
+            const btn = document.getElementById('mode-radio');
+            if (infiniteMode) {
+                btn.innerText = 'RADIO: ON';
+                btn.className = 'px-2 py-1 text-[8px] font-bold rounded bg-green-500 text-white ml-1 border border-green-600 shadow-[0_0_10px_rgba(34,197,94,0.5)]';
+                haptic();
+            } else {
+                btn.innerText = 'RADIO: OFF';
+                btn.className = 'px-2 py-1 text-[8px] font-bold rounded bg-zinc-600 text-zinc-300 ml-1 border border-zinc-500';
+            }
+        }
+
+        function pickHarmonicTrack(currentTrack) {
+            console.group('📻 RADIO SELECTOR');
+            console.log(`Current: "${currentTrack.title}" | BPM: ${currentTrack.bpm} | Key: ${currentTrack.key}`);
+            // 1. Filter out history and current
+            const candidates = tracks.filter((t, i) => {
+                if (t === currentTrack) return false;
+                if (playHistory.includes(i)) return false;
+                return true;
+            });
+
+            console.log(`Candidates: ${candidates.length} tracks available`);
+
+            // If we ran out of candidates, clear history
+            if (candidates.length === 0) {
+                playHistory = [];
+                return Math.floor(Math.random() * tracks.length);
+            }
+
+            const currentBpm = currentTrack.bpm || 120;
+            const currentCircle = getCircleIndex(currentTrack.key);
+
+            // 2. Score candidates
+            const scored = candidates.map((t, idx) => {
+                let score = 0;
+                let reasons = [];
+
+                // BPM Score (Max 20)
+                const tBpm = t.bpm || 120;
+                const bpmDiff = Math.abs(currentBpm - tBpm);
+                if (bpmDiff < 2) { score += 20; reasons.push('BPM Match'); }
+                else if (bpmDiff < 5) { score += 15; reasons.push('BPM Close'); }
+                else if (bpmDiff < 10) { score += 5; reasons.push('BPM Similar'); }
+
+                // Key Score (Max 20)
+                const tCircle = getCircleIndex(t.key);
+                if (currentCircle !== -1 && tCircle !== -1) {
+                    const diff = Math.min(Math.abs(currentCircle - tCircle), 12 - Math.abs(currentCircle - tCircle));
+                    if (diff === 0) { score += 20; reasons.push('Harmonic Key'); }
+                    else if (diff === 1) { score += 15; reasons.push('Compatible Key'); }
+                }
+
+                return { track: t, score: score, reasons: reasons, originalIdx: tracks.indexOf(t) };
+            });
+
+            // 3. Sort by score
+            scored.sort((a, b) => b.score - a.score);
+
+            // 4. Pick from top 3 weighted random to add variety
+            const topN = Math.min(3, scored.length);
+            const pick = scored[Math.floor(Math.random() * topN)];
+
+            console.log('Top Candidates:', scored.slice(0, 3).map(c => `${c.track.title} (${c.score}) [${c.reasons.join(', ')}]`));
+
+            // Add to history (keep last 5)
+            playHistory.push(pick.originalIdx);
+            if (playHistory.length > 5) playHistory.shift();
+
+            // Notify UI and Log
+            const reason = pick.reasons[0] || 'Random';
+            log(`📻 RADIO: Selected "${pick.track.title}" (${reason})`);
+
+            const mixStatus = document.getElementById('mix-status');
+            if (mixStatus) {
+                mixStatus.innerHTML = `<span class="text-green-400">RADIO:</span> ${pick.track.title} <span class="opacity-50 text-[7px]">${pick.reasons.join('+')}</span>`;
+            }
+
+            return pick.originalIdx;
+        }
+
+        // === CORE FUNCTIONS ===
+
+        function powerOn() {
+            haptic();
+            log('🔌 POWER ON - Initializing system');
+            document.getElementById('init-overlay').style.display = 'none';
+
+            initAudioEngine();
+            ctx.resume(); // Ensure context is running
+
+            renderCrate();
+            startScopes();
+            startDiagnostics();
+            loadAllDurations(); // Preload track durations
+
+            // Load initial tracks after a small delay
+            setTimeout(() => {
+                loadTrack('A', 0);
+                loadTrack('B', 1);
+            }, 100);
+
+            const autoplayTotal = document.getElementById('autoplay-total');
+            if (autoplayTotal) autoplayTotal.innerText = tracks.length;
+        }
+
+        // Load durations for all tracks (for total runtime display)
+        function loadAllDurations() {
+            tracks.forEach((t, i) => {
+                const tempAudio = new Audio();
+                tempAudio.src = t.file;
+                tempAudio.addEventListener('loadedmetadata', () => {
+                    trackDurations[i] = tempAudio.duration;
+                    totalPlaylistDuration = trackDurations.reduce((a, b) => a + b, 0);
+                    updateTotalRuntime();
+                    // Re-render crate to show durations
+                    renderCrate();
+                });
+            });
+        }
+
+        function updateTotalRuntime() {
+            const mins = Math.floor(totalPlaylistDuration / 60);
+            const secs = Math.floor(totalPlaylistDuration % 60);
+            document.getElementById('total-runtime').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // AUTOPLAY MODE - Dual Deck Crossfade
+        let autoplayDeck = 'A'; // Which deck is "active" (playing main track)
+
+        function toggleAutoplay() {
+            if (autoplayActive) {
+                stopAutoplay();
+            } else {
+                startAutoplay();
+            }
+        }
+
+        function startAutoplay() {
+            autoplayActive = true;
+            autoplayIndex = 0;
+            autoplayDeck = 'A';
+
+            // Load tracks on both decks: A gets 0, B gets 1
+            loadTrack('A', 0);
+            loadTrack('B', 1);
+
+            // Set crossfader to center (both audible)
+            document.getElementById('crossfader').value = 50;
+            if (deckA.gain) deckA.gain.gain.value = 0.707; // -3dB
+            if (deckB.gain) deckB.gain.gain.value = 0.707;
+
+            // Play both decks
+            setTimeout(() => {
+                togglePlay('A');
+                togglePlay('B');
+            }, 200);
+
+            updateAutoplayUI();
+            setStatus('DUAL-DECK AUTOPLAY', 'info');
+        }
+
+        function stopAutoplay() {
+            autoplayActive = false;
+            document.getElementById('btn-autoplay').innerHTML = '<span id="autoplay-icon">▶</span> <span id="autoplay-label">AUTOPLAY</span>';
+            setStatus('STOPPED', 'info');
+            renderCrate();
+        }
+
+        // Called when a track ends - load next track and crossfade
+        function autoplayAdvance(endedDeck) {
+            if (!autoplayActive) return;
+
+            // Determine which track index to load next
+            const nextIndex = Math.max(currentTrackA, currentTrackB) + 1;
+
+            if (nextIndex >= tracks.length) {
+                // Finished all tracks - loop back or stop
+                stopAutoplay();
+                setStatus('AUTOPLAY COMPLETE', 'info');
+                return;
+            }
+
+            // Load next track on the deck that just finished
+            loadTrack(endedDeck, nextIndex);
+
+            // Start playing after loading
+            setTimeout(() => {
+                const deck = (endedDeck === 'A') ? deckA : deckB;
+                if (!deck.isPlaying) {
+                    togglePlay(endedDeck);
+                }
+            }, 200);
+
+            updateAutoplayUI();
+        }
+
+        function updateAutoplayUI() {
+            const btnAutoplay = document.getElementById('btn-autoplay');
+            if (btnAutoplay) {
+                btnAutoplay.innerHTML = '<span id="autoplay-icon">⏹</span> <span id="autoplay-label">STOP</span>';
+            }
+
+            // Update deck status to show current tracks
+            const trackA = tracks[currentTrackA];
+            const trackB = tracks[currentTrackB];
+            const deckAStatus = document.getElementById('deck-a-status');
+            const deckBStatus = document.getElementById('deck-b-status');
+            if (deckAStatus) deckAStatus.innerHTML = 'A: <span class="text-te-orange">' + trackA.title.substring(0, 12) + '</span>';
+            if (deckBStatus) deckBStatus.innerHTML = 'B: <span class="text-blue-400">' + trackB.title.substring(0, 12) + '</span>';
+
+            renderCrate();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SMART MIX SYSTEM
+        // ═══════════════════════════════════════════════════════════════════
+
+        function smartMixToggle() {
+            if (smartMixActive) {
+                smartMixStop();
+            } else {
+                smartMixStart();
+            }
+        }
+
+        function smartMixStart() {
+            smartMixActive = true;
+            mixPosition = 0;
+
+            // Load first two tracks
+            loadTrack('A', 0);
+            loadTrack('B', 1);
+
+            // Set crossfader to center
+            document.getElementById('crossfader').value = 50;
+            if (deckA.gain) deckA.gain.gain.value = 0.707;
+            if (deckB.gain) deckB.gain.gain.value = 0.707;
+
+            // Ensure AudioContext is running
+            if (ctx.state === 'suspended') ctx.resume();
+
+            // Play both decks
+            setTimeout(() => {
+                deckA.audio.play().then(() => { deckA.isPlaying = true; isPlayingA = true; });
+                deckB.audio.play().then(() => { deckB.isPlaying = true; isPlayingB = true; });
+            }, 200);
+
+            updateSmartMixUI();
+            document.getElementById('mix-status').innerText = 'Playing: BLEND mode';
+        }
+
+        function smartMixStop() {
+            smartMixActive = false;
+
+            // Pause both decks
+            deckA.audio.pause(); deckA.isPlaying = false; isPlayingA = false;
+            deckB.audio.pause(); deckB.isPlaying = false; isPlayingB = false;
+
+            document.getElementById('smart-play-icon').innerText = '▶';
+            document.getElementById('smart-play-label').innerText = 'SMART MIX';
+            document.getElementById('mix-status').innerText = 'Stopped';
+
+            renderCrate();
+        }
+
+        function setMixMode(mode) {
+            mixMode = mode;
+
+            // Update button styles
+            document.getElementById('mode-blend').className = mode === 'blend'
+                ? 'px-3 py-2 text-[9px] font-bold rounded bg-purple-600 text-white'
+                : 'px-3 py-2 text-[9px] font-bold rounded bg-zinc-600 text-zinc-300 hover:bg-zinc-500';
+            document.getElementById('mode-jump').className = mode === 'jump'
+                ? 'px-3 py-2 text-[9px] font-bold rounded bg-green-600 text-white'
+                : 'px-3 py-2 text-[9px] font-bold rounded bg-zinc-600 text-zinc-300 hover:bg-zinc-500';
+
+            document.getElementById('mix-status').innerText = 'Mode: ' + mode.toUpperCase();
+        }
+
+        // Navigate to next pair of tracks
+        function walkNext() {
+            if (infiniteMode) {
+                // Radio Mode: Load a fresh harmonious pair
+                // Seed from current Track B or random if invalid
+                let seed = tracks[currentTrackB] || tracks[Math.floor(Math.random() * tracks.length)];
+
+                // Pick A based on seed
+                const idxA = pickHarmonicTrack(seed);
+
+                // Pick B based on A
+                const idxB = pickHarmonicTrack(tracks[idxA]);
+
+                loadTrack('A', idxA);
+                loadTrack('B', idxB);
+
+                // Ensure context is running if needed
+                if (ctx.state === 'suspended') ctx.resume();
+
+                // If Smart Mix active, keep playing
+                if (smartMixActive) {
+                    setTimeout(() => {
+                        deckA.audio.play().then(() => { deckA.isPlaying = true; isPlayingA = true; });
+                        deckB.audio.play().then(() => { deckB.isPlaying = true; isPlayingB = true; });
+                    }, 200);
+                }
+
+                // UI update handles itself via pickHarmonicTrack logs
+                return;
+            }
+
+            const maxPos = Math.floor(tracks.length / 2) - 1;
+            mixPosition = Math.min(mixPosition + 1, maxPos);
+            loadMixPair();
+        }
+
+        // Navigate to previous pair of tracks
+        function walkPrev() {
+            mixPosition = Math.max(mixPosition - 1, 0);
+            loadMixPair();
+        }
+
+        // Load the current pair of tracks based on mixPosition
+        function loadMixPair() {
+            const indexA = mixPosition * 2;
+            const indexB = mixPosition * 2 + 1;
+
+            if (indexA < tracks.length) loadTrack('A', indexA);
+            if (indexB < tracks.length) loadTrack('B', indexB);
+
+            // Ensure AudioContext is running
+            if (ctx.state === 'suspended') ctx.resume();
+
+            // Always start playing both decks after loading
+            setTimeout(() => {
+                if (indexA < tracks.length) {
+                    deckA.audio.play().then(() => { deckA.isPlaying = true; isPlayingA = true; }).catch(e => console.log('Play A error:', e));
+                }
+                if (indexB < tracks.length) {
+                    deckB.audio.play().then(() => { deckB.isPlaying = true; isPlayingB = true; }).catch(e => console.log('Play B error:', e));
+                }
+                renderCrate();
+            }, 300);
+
+            const mixStatus = document.getElementById('mix-status');
+            if (mixStatus) mixStatus.innerText = 'Pair ' + (mixPosition + 1) + '/' + Math.ceil(tracks.length / 2);
+        }
+
+        function autoMatchBpm(deckToSync, masterDeck) {
+            const track = tracks[deckToSync.trackIdx];
+            const masterTrack = tracks[masterDeck.trackIdx];
+            if (!track.bpm || !masterTrack.bpm) return;
+
+            const ratio = masterTrack.bpm / track.bpm;
+            // Only sync if within reasonable range (e.g. +/- 8%)
+            if (ratio > 0.92 && ratio < 1.08) {
+                deckToSync.audio.playbackRate = ratio;
+                console.log(`Syncing ${track.title} to ${masterTrack.title} (Rate: ${ratio.toFixed(3)})`);
+            } else {
+                deckToSync.audio.playbackRate = 1.0;
+            }
+        }
+
+        // When a track ends in smart mix mode
+        function smartMixAdvance(endedDeck) {
+            if (!smartMixActive) return;
+
+            // Find the next track for the deck that ended
+            let nextIdx;
+            const currentIdx = (endedDeck === 'A') ? currentTrackA : currentTrackB;
+            const otherDeck = (endedDeck === 'A') ? deckB : deckA;
+
+            if (infiniteMode) {
+                // INTELLIGENT SELECTION
+                // Pick based on what's playing on the OTHER deck (the master)
+                const masterTrack = tracks[otherDeck.trackIdx];
+                nextIdx = pickHarmonicTrack(masterTrack);
+                document.getElementById('mix-status').innerText = 'RADIO: Auto-selecting...';
+            } else {
+                // SEQUENTIAL SELECTION
+                nextIdx = currentIdx + 2; // Skip to next pair position
+            }
+
+            if (nextIdx >= tracks.length || nextIdx < 0) {
+                // This deck has finished all its tracks (only in seq mode or empty crate)
+                // Check if the other deck is still playing
+                if (!otherDeck.isPlaying) {
+                    // Both done, stop
+                    smartMixStop();
+                    document.getElementById('mix-status').innerText = 'Complete!';
+                }
+                return;
+            }
+
+            // Load and play the next track on this deck
+            loadTrack(endedDeck, nextIdx);
+
+            // AUTO-SYNC (if in Radio Mode)
+            if (infiniteMode) {
+                const deck = (endedDeck === 'A') ? deckA : deckB;
+                autoMatchBpm(deck, otherDeck);
+            }
+
+            if (mixMode === 'blend') {
+                // Smooth crossfade - gradually bring in the new track
+                setTimeout(() => {
+                    const deck = (endedDeck === 'A') ? deckA : deckB;
+                    deck.audio.play().then(() => {
+                        deck.isPlaying = true;
+                        if (endedDeck === 'A') isPlayingA = true; else isPlayingB = true;
+                    });
+                }, 200);
+            } else {
+                // Jump mode - instant switch
+                setTimeout(() => {
+                    const deck = (endedDeck === 'A') ? deckA : deckB;
+                    deck.audio.play().then(() => {
+                        deck.isPlaying = true;
+                        if (endedDeck === 'A') isPlayingA = true; else isPlayingB = true;
+                    });
+                }, 100);
+            }
+
+            updateSmartMixUI();
+        }
+
+        function updateSmartMixUI() {
+            document.getElementById('smart-play-icon').innerText = '⏹';
+            document.getElementById('smart-play-label').innerText = 'STOP';
+            document.getElementById('mix-status').innerText = 'Playing ' + (currentTrackA + 1) + '+' + (currentTrackB + 1);
+            document.getElementById('track-position').innerText = Math.max(currentTrackA, currentTrackB) + 1;
+
+            renderCrate();
+        }
+
+        // Update progress bars periodically
+        setInterval(() => {
+            if (smartMixActive || isPlayingA || isPlayingB) {
+                // Deck A progress
+                const durA = audioA.duration || 1;
+                const progA = (audioA.currentTime / durA) * 100;
+                document.getElementById('progress-bar-a').style.width = progA + '%';
+                document.getElementById('progress-a-time').innerText = formatTime(audioA.currentTime);
+
+                // Deck B progress
+                const durB = audioB.duration || 1;
+                const progB = (audioB.currentTime / durB) * 100;
+                document.getElementById('progress-bar-b').style.width = progB + '%';
+                document.getElementById('progress-b-time').innerText = formatTime(audioB.currentTime);
+            }
+        }, 200);
+
+        function formatTime(secs) {
+            if (!secs || isNaN(secs)) return '0:00';
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return m + ':' + s.toString().padStart(2, '0');
+        }
+
+        function testAudioSystem() {
+            log('🧪 Testing audio system...');
+            const testAudio = new Audio();
+            testAudio.volume = 0;
+
+            // Check what formats are supported
+            const formats = {
+                mp3: testAudio.canPlayType('audio/mpeg'),
+                ogg: testAudio.canPlayType('audio/ogg'),
+                wav: testAudio.canPlayType('audio/wav'),
+                aac: testAudio.canPlayType('audio/aac')
+            };
+            log(`📻 Codec support: MP3=${formats.mp3 || 'no'} OGG=${formats.ogg || 'no'} WAV=${formats.wav || 'no'}`);
+            setStatus(`AUDIO: MP3=${formats.mp3 || 'NO'}`, 'info');
+        }
+
+        function loadTrack(deckId, i) {
+            const deck = (deckId === 'A') ? deckA : deckB;
+            const t = tracks[i];
+
+            // Update State
+            deck.trackIdx = i;
+            if (deckId === 'A') currentTrackA = i; else currentTrackB = i;
+
+            // Update UI
+            document.getElementById(`title-${deckId.toLowerCase()}`).innerText = t.title;
+            document.getElementById(`logic-${deckId.toLowerCase()}`).innerText = `${t.bpm} BPM • ${t.key}`;
+
+            // Load Audio
+            deck.audio.src = t.file;
+            deck.audio.load();
+
+            // Reset Rate/Pitch
+            updateRate(deckId, 100);
+
+            setStatus(`${deckId}: LOADED ${t.title}`, 'info');
+        }
+
+        function togglePlay(deckId) {
+            const deck = (deckId === 'A') ? deckA : deckB;
+            const btn = document.getElementById(`btn-play-${deckId.toLowerCase()}`);
+
+            // Ensure AudioContext is running
+            if (ctx.state === 'suspended') ctx.resume();
+
+            if (deck.isPlaying) {
+                deck.audio.pause();
+                deck.isPlaying = false;
+                if (deckId === 'A') isPlayingA = false; else isPlayingB = false;
+
+                btn.innerText = 'PLAY';
+                btn.classList.remove('orange');
+                setStatus(`${deckId}: PAUSED`, 'info');
+            } else {
+                deck.audio.play()
+                    .then(() => {
+                        deck.isPlaying = true;
+                        if (deckId === 'A') isPlayingA = true; else isPlayingB = true;
+
+                        btn.innerText = 'STOP';
+                        btn.classList.add('orange');
+                        setStatus(`${deckId}: PLAYING`, 'info');
+                    })
+                    .catch(e => {
+                        setStatus(`${deckId}: ERR ${e.message}`, 'error');
+                        console.error(e);
+                    });
+            }
+        }
+
+        // BPM Sync Function
+        function syncDeck(targetDeckId) {
+            const targetDeck = (targetDeckId === 'A') ? deckA : deckB;
+            const sourceDeck = (targetDeckId === 'A') ? deckB : deckA;
+
+            const targetTrack = tracks[targetDeck.trackIdx];
+            const sourceTrack = tracks[sourceDeck.trackIdx];
+
+            if (targetTrack.bpm > 0 && sourceTrack.bpm > 0) {
+                const rate = sourceTrack.bpm / targetTrack.bpm;
+                // Clamp to reasonable range
+                if (rate > 0.5 && rate < 2.0) {
+                    updateRate(targetDeckId, rate * 100);
+                    setStatus(`${targetDeckId}: SYNCED @ ${(targetTrack.bpm * rate).toFixed(1)} BPM`, 'info');
+                } else {
+                    setStatus(`${targetDeckId}: SYNC ERR (Rate ${rate.toFixed(2)})`, 'warn');
+                }
+            } else {
+                setStatus('SYNC ERROR: NO BPM DATA', 'error');
+            }
+        }
+
+        function nudge(deckId, amt) {
+            const deck = (deckId === 'A') ? deckA : deckB;
+            deck.audio.currentTime = Math.max(0, deck.audio.currentTime + amt);
+        }
+
+        function updateRate(deckId, val) {
+            const deck = (deckId === 'A') ? deckA : deckB;
+            const rate = val / 100;
+            deck.audio.playbackRate = rate;
+            document.getElementById(`pitch-${deckId.toLowerCase()}-val`).innerText = rate.toFixed(1) + 'X';
+
+            // Update BPM display if track has BPM
+            const t = tracks[deck.trackIdx];
+            if (t.bpm > 0) {
+                const currentBpm = (t.bpm * rate).toFixed(1);
+                document.getElementById(`logic-${deckId.toLowerCase()}`).innerText = `${t.bpm} BPM @ ${rate.toFixed(2)} = ${currentBpm}`;
+            }
+        }
+
+        function toggleShadow() {
+            shadowActive = !shadowActive;
+            document.body.style.filter = shadowActive ? 'grayscale(1) contrast(1.5) brightness(0.8)' : 'none';
+        }
+
+        document.getElementById('crossfader').addEventListener('input', (e) => {
+            const v = e.target.value / 100;
+            // Equal Power Crossfade
+            const gainA = Math.cos(v * 0.5 * Math.PI);
+            const gainB = Math.cos((1.0 - v) * 0.5 * Math.PI);
+
+            if (deckA.gain) deckA.gain.gain.value = gainA;
+            if (deckB.gain) deckB.gain.gain.value = gainB;
+        });
+
+        function renderCrate() {
+            const list = document.getElementById('crate-list');
+            document.getElementById('track-count').innerText = tracks.length;
+            document.getElementById('crate-info').innerText = `LATENT_303 • ${tracks.length} FILES`;
+
+            list.innerHTML = tracks.map((t, i) => {
+                const duration = trackDurations[i] || 0;
+                const durStr = duration > 0 ? `${Math.floor(duration / 60)}:${Math.floor(duration % 60).toString().padStart(2, '0')}` : '--:--';
+
+                // Determine if this track is currently playing on which deck
+                const isOnDeckA = (currentTrackA === i);
+                const isOnDeckB = (currentTrackB === i);
+                const isPlayingOnA = isOnDeckA && isPlayingA;
+                const isPlayingOnB = isOnDeckB && isPlayingB;
+                const isActive = isPlayingOnA || isPlayingOnB;
+
+                // Different colors for A vs B
+                let bgClass = 'hover:bg-zinc-100';
+                let indicator = '';
+                if (isPlayingOnA && isPlayingOnB) {
+                    bgClass = 'bg-purple-100 border-l-4 border-purple-500';
+                    indicator = '<span class="text-purple-600 font-bold">A+B</span>';
+                } else if (isPlayingOnA) {
+                    bgClass = 'bg-orange-100 border-l-4 border-te-orange';
+                    indicator = '<span class="text-te-orange font-bold">▶ A</span>';
+                } else if (isPlayingOnB) {
+                    bgClass = 'bg-blue-100 border-l-4 border-blue-500';
+                    indicator = '<span class="text-blue-500 font-bold">▶ B</span>';
+                } else if (isOnDeckA) {
+                    indicator = '<span class="text-orange-300 text-[7px]">A</span>';
+                } else if (isOnDeckB) {
+                    indicator = '<span class="text-blue-300 text-[7px]">B</span>';
+                }
+
+                const titleClass = isActive ? 'text-zinc-900 font-black' : 'text-zinc-700 group-hover:text-zinc-900';
+                const indicatorHtml = indicator ? '<span class="w-8 text-[8px] mono">' + indicator + '</span>' : '<span class="w-8"></span>';
+
+                return '<div id="track-row-' + i + '" class="p-2 border-b flex justify-between items-center cursor-pointer group ' + bgClass + '" onclick="previewTrack(' + i + ')">' +
+                    '<div class="flex items-center gap-2 flex-1">' +
+                    '<span class="mono text-[8px] text-zinc-400 w-5 text-right">' + String(i + 1).padStart(2, '0') + '</span>' +
+                    indicatorHtml +
+                    '<div class="flex-1 overflow-hidden">' +
+                    '<div class="text-[9px] font-bold uppercase truncate tracking-tight ' + titleClass + ' transition-colors">' + t.title + '</div>' +
+                    '<div class="mono text-[7px] text-zinc-400 uppercase flex gap-2">' +
+                    '<span>' + t.artist + '</span>' +
+                    '<span class="text-zinc-300">|</span>' +
+                    '<span class="font-bold text-zinc-500">' + (t.bpm > 0 ? t.bpm + ' BPM' : 'DRONE') + '</span>' +
+                    '<span class="font-bold text-zinc-500">' + t.key + '</span>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="flex items-center gap-2">' +
+                    '<span class="mono text-[8px] text-zinc-400">' + durStr + '</span>' +
+                    '<button onclick="event.stopPropagation(); haptic(); loadTrack(\'A\', ' + i + ')" class="px-2 py-1 text-[8px] font-bold rounded bg-orange-500 hover:bg-orange-600 text-white transition-colors">A</button>' +
+                    '<button onclick="event.stopPropagation(); haptic(); loadTrack(\'B\', ' + i + ')" class="px-2 py-1 text-[8px] font-bold rounded bg-blue-500 hover:bg-blue-600 text-white transition-colors">B</button>' +
+                    '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function previewTrack(i) {
+            log('Preview track ' + i + ': ' + tracks[i].title);
+        }
+
+        function haptic() { if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12); }
+
+        // === LOGGING & DIAGNOSTICS (Bret Victor: Surface the Invisible) ===
+
+        function log(msg) {
+            const ts = new Date().toISOString().substr(11, 8);
+            console.log(`[${ts}] ${msg} `);
+        }
+
+        function startDiagnostics() {
+            // Update diagnostic state every 200ms
+            setInterval(() => {
+                diag.aTime = audioA.currentTime;
+                diag.bTime = audioB.currentTime;
+                diag.aDuration = audioA.duration || 0;
+                diag.bDuration = audioB.duration || 0;
+                diag.aReadyState = audioA.readyState;
+                diag.bReadyState = audioB.readyState;
+                diag.aNetworkState = audioA.networkState;
+                diag.bNetworkState = audioB.networkState;
+            }, 200);
+        }
+
+        // REAL-TIME OSCILLOSCOPE (Web Audio API)
+        function startScopes() {
+            drawScope('scope-a', deckA);
+            drawScope('scope-b', deckB);
+        }
+
+        function drawScope(canvasId, deck) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = canvas.offsetWidth;
+            const h = canvas.height = canvas.offsetHeight;
+
+            // Scope Data Buffer
+            const bufferLength = deck.analyser ? deck.analyser.frequencyBinCount : 1024;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function animate() {
+                ctx.clearRect(0, 0, w, h);
+                ctx.beginPath();
+                ctx.strokeStyle = '#1e261c';
+                ctx.lineWidth = 1.5;
+
+                if (deck.analyser && deck.isPlaying) {
+                    deck.analyser.getByteTimeDomainData(dataArray);
+
+                    const sliceWidth = w * 1.0 / bufferLength;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const v = dataArray[i] / 128.0;
+                        const y = v * h / 2;
+
+                        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                        x += sliceWidth;
+                    }
+                } else {
+                    // Flatline
+                    ctx.moveTo(0, h / 2);
+                    ctx.lineTo(w, h / 2);
+                }
+                ctx.stroke();
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Time display and status update
+        setInterval(() => {
+            // Update times
+            if (isPlayingA) {
+                const timeA = document.getElementById('time-a');
+                if (timeA) timeA.innerText = format(audioA.currentTime);
+            }
+            if (isPlayingB) {
+                const timeB = document.getElementById('time-b');
+                if (timeB) timeB.innerText = format(audioB.currentTime);
+            }
+
+            // Update deck status
+            const deckAStatus = document.getElementById('deck-a-status');
+            const deckBStatus = document.getElementById('deck-b-status');
+            if (deckAStatus) {
+                if (isPlayingA) {
+                    const t = tracks[currentTrackA];
+                    deckAStatus.innerHTML = 'A: <span class="text-orange-400">' + t.title.substring(0, 12) + '</span>';
+                } else {
+                    deckAStatus.innerHTML = 'A: IDLE';
+                }
+            }
+            if (deckBStatus) {
+                if (isPlayingB) {
+                    const t = tracks[currentTrackB];
+                    deckBStatus.innerHTML = 'B: <span class="text-blue-400">' + t.title.substring(0, 12) + '</span>';
+                } else {
+                    deckBStatus.innerHTML = 'B: IDLE';
+                }
+            }
+        }, 100);
+
+        function format(s) {
+            if (!s || isNaN(s)) return '00:00:00';
+            const m = Math.floor(s / 60);
+            const sc = Math.floor(s % 60);
+            return `${m.toString().padStart(2, '0')}:${sc.toString().padStart(2, '0')}:00`;
+        }
+
+        // System status helpers
+        function setStatus(msg, type = 'info') {
+            const el = document.getElementById('sys-status');
+            if (!el) return; // Guard against missing element
+            const colors = { info: 'text-green-400', warn: 'text-yellow-400', error: 'text-red-400' };
+            el.className = colors[type] || colors.info;
+            el.innerHTML = (type === 'error' ? '✖ ' : '● ') + msg;
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-display');
+            el.classList.remove('hidden');
+            el.innerHTML = '⚠ ' + msg;
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        // Auto-advance on track end
+        audioA.addEventListener('ended', () => {
+            deckA.isPlaying = false;
+            isPlayingA = false;
+
+            // Smart Mix mode
+            if (smartMixActive) {
+                smartMixAdvance('A');
+                return;
+            }
+
+            // Legacy autoplay mode
+            if (autoplayActive) {
+                autoplayAdvance('A');
+                return;
+            }
+
+            // Normal auto-advance behavior
+            currentTrackA = (currentTrackA + 1) % tracks.length;
+            loadTrack('A', currentTrackA);
+            audioA.play().then(() => { deckA.isPlaying = true; isPlayingA = true; });
+        });
+
+        audioB.addEventListener('ended', () => {
+            deckB.isPlaying = false;
+            isPlayingB = false;
+
+            // Smart Mix mode
+            if (smartMixActive) {
+                smartMixAdvance('B');
+                return;
+            }
+
+            // Legacy autoplay mode
+            if (autoplayActive) {
+                autoplayAdvance('B');
+                return;
+            }
+
+            // Normal auto-advance behavior
+            currentTrackB = (currentTrackB + 1) % tracks.length;
+            loadTrack('B', currentTrackB);
+            audioB.play().then(() => { deckB.isPlaying = true; isPlayingB = true; });
+        });
+
+        // Comprehensive error handlers
+        audioA.addEventListener('error', (e) => {
+            const errors = {
+                1: 'ABORTED',
+                2: 'NETWORK ERROR',
+                3: 'DECODE ERROR',
+                4: 'SRC NOT SUPPORTED'
+            };
+            const code = audioA.error?.code || 0;
+            const msg = errors[code] || 'UNKNOWN';
+            console.error('Audio A error:', code, msg, audioA.error);
+            showError(`DECK A: ${msg} - ${tracks[currentTrackA]?.title || 'Unknown'} `);
+            setStatus('DECK A ERROR', 'error');
+        });
+
+        audioB.addEventListener('error', (e) => {
+            const errors = {
+                1: 'ABORTED',
+                2: 'NETWORK ERROR',
+                3: 'DECODE ERROR',
+                4: 'SRC NOT SUPPORTED'
+            };
+            const code = audioB.error?.code || 0;
+            const msg = errors[code] || 'UNKNOWN';
+            log(`❌ B ERROR: ${code} ${msg} `);
+            console.error('Audio B error:', code, msg, audioB.error);
+            showError(`DECK B: ${msg} - ${tracks[currentTrackB]?.title || 'Unknown'} `);
+            setStatus('DECK B ERROR', 'error');
+        });
+
+        // === COMPLETE AUDIO LIFECYCLE LOGGING ===
+        // (Bret Victor: Surface the Invisible - see EVERYTHING that happens)
+
+        // DECK A Events
+        audioA.addEventListener('loadstart', () => { log('📡 A: loadstart'); setStatus('A: LOADING...', 'warn'); diag.aLoaded = false; });
+        audioA.addEventListener('durationchange', () => { log(`📏 A: durationchange → ${audioA.duration?.toFixed(1)} s`); diag.aDuration = audioA.duration; });
+        audioA.addEventListener('loadedmetadata', () => { log(`📋 A: loadedmetadata(duration = ${audioA.duration?.toFixed(1)}s)`); });
+        audioA.addEventListener('loadeddata', () => { log('📦 A: loadeddata (first frame)'); diag.aLoaded = true; });
+        audioA.addEventListener('canplay', () => { log('✅ A: canplay (ready to play)'); setStatus('A: READY', 'info'); diag.aReady = true; });
+        audioA.addEventListener('canplaythrough', () => { log('✅ A: canplaythrough (fully buffered)'); });
+        audioA.addEventListener('playing', () => { log('▶️ A: playing'); setStatus('A: PLAYING', 'info'); });
+        audioA.addEventListener('pause', () => { log('⏸️ A: pause'); });
+        audioA.addEventListener('waiting', () => { log('⏳ A: waiting (buffering)'); setStatus('A: BUFFERING...', 'warn'); });
+        audioA.addEventListener('stalled', () => { log('⚠️ A: stalled'); setStatus('A: STALLED', 'error'); });
+        audioA.addEventListener('suspend', () => { log('💤 A: suspend'); });
+
+        // DECK B Events
+        audioB.addEventListener('loadstart', () => { log('📡 B: loadstart'); setStatus('B: LOADING...', 'warn'); diag.bLoaded = false; });
+        audioB.addEventListener('durationchange', () => { log(`📏 B: durationchange → ${audioB.duration?.toFixed(1)} s`); diag.bDuration = audioB.duration; });
+        audioB.addEventListener('loadedmetadata', () => { log(`📋 B: loadedmetadata(duration = ${audioB.duration?.toFixed(1)}s)`); });
+        audioB.addEventListener('loadeddata', () => { log('📦 B: loadeddata (first frame)'); diag.bLoaded = true; });
+        audioB.addEventListener('canplay', () => { log('✅ B: canplay (ready to play)'); setStatus('B: READY', 'info'); diag.bReady = true; });
+        audioB.addEventListener('canplaythrough', () => { log('✅ B: canplaythrough (fully buffered)'); });
+        audioB.addEventListener('playing', () => { log('▶️ B: playing'); setStatus('B: PLAYING', 'info'); });
+        audioB.addEventListener('pause', () => { log('⏸️ B: pause'); });
+        audioB.addEventListener('waiting', () => { log('⏳ B: waiting (buffering)'); setStatus('B: BUFFERING...', 'warn'); });
+        audioB.addEventListener('stalled', () => { log('⚠️ B: stalled'); setStatus('B: STALLED', 'error'); });
+        audioB.addEventListener('suspend', () => { log('💤 B: suspend'); });
+
+        // Initial system info
+        console.log('%c🎛️ LATENT RADIO OP-10 SPECTRAL', 'font-size: 20px; font-weight: bold; color: #ff4d00');
+        console.log('%c📦 ' + tracks.length + ' tracks in crate', 'color: #888');
+        console.log('%c▶️ Click ENGAGE POWER, then load a track and press PLAY', 'color: #0f0');
+        console.log('%c📊 Watch this console for audio lifecycle events', 'color: #0ff');
+        console.log('%c💡 Type "diag" in console to see current audio state', 'color: #ff0');
+
+        // Expose diag globally for console inspection
+        window.diag = diag;
+        window.audioA = audioA;
+        window.audioB = audioB;
+    </script>
+</body>
+
+</html>

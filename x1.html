@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>XENO-1 | Forager Synth</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        :root {
+            --bg-deep: #0a0a0f;
+            --bg-panel: #12121a;
+            --bg-module: #1a1a25;
+            --accent-orange: #ff6b35;
+            --accent-cyan: #00d4ff;
+            --accent-gold: #ffd93d;
+            --accent-purple: #9d4edd;
+            --accent-green: #39ff14;
+            --text-dim: #4a4a5a;
+            --text-main: #e0e0e8;
+            --text-bright: #ffffff;
+            --border-dim: #2a2a35;
+            --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.4);
+            --glow-orange: 0 0 20px rgba(255, 107, 53, 0.4);
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-deep);
+            font-family: 'Space Mono', monospace;
+            color: var(--text-main);
+        }
+
+        .app {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(157, 78, 221, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 100% 100%, rgba(0, 212, 255, 0.05) 0%, transparent 40%),
+                var(--bg-deep);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            letter-spacing: 4px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .status-text {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Main Area */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Keplerian Display */
+        .kepler-display {
+            padding: 16px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-dim);
+        }
+
+        .orbit-visual {
+            position: relative;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .orbit-ring {
+            position: absolute;
+            border: 1px solid var(--border-dim);
+            border-radius: 50%;
+            animation: orbit-spin linear infinite;
+        }
+
+        .orbit-ring:nth-child(1) {
+            width: 200px;
+            height: 200px;
+            animation-duration: 8s;
+        }
+
+        .orbit-ring:nth-child(2) {
+            width: 140px;
+            height: 140px;
+            animation-duration: 4s;
+            border-color: var(--accent-purple);
+            opacity: 0.5;
+        }
+
+        .orbit-ring:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            animation-duration: 2s;
+            border-color: var(--accent-cyan);
+            opacity: 0.3;
+        }
+
+        @keyframes orbit-spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            box-shadow: var(--glow-cyan);
+        }
+
+        .planet.ganymede {
+            width: 16px;
+            height: 16px;
+            background: var(--accent-cyan);
+            animation: orbit-ganymede 8s linear infinite;
+        }
+
+        .planet.europa {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-purple);
+            animation: orbit-europa 4s linear infinite;
+        }
+
+        .planet.io {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-orange);
+            animation: orbit-io 2s linear infinite;
+        }
+
+        @keyframes orbit-ganymede {
+            from {
+                transform: rotate(0deg) translateX(100px) rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg) translateX(100px) rotate(-360deg);
+            }
+        }
+
+        @keyframes orbit-europa {
+            from {
+                transform: rotate(0deg) translateX(70px) rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg) translateX(70px) rotate(-360deg);
+            }
+        }
+
+        @keyframes orbit-io {
+            from {
+                transform: rotate(0deg) translateX(40px) rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg) translateX(40px) rotate(-360deg);
+            }
+        }
+
+        .sun-core {
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, var(--accent-gold), var(--accent-orange));
+            border-radius: 50%;
+            box-shadow: 0 0 30px var(--accent-orange), 0 0 60px rgba(255, 107, 53, 0.3);
+            z-index: 10;
+        }
+
+        .kepler-readout {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .readout-item {
+            text-align: center;
+        }
+
+        .readout-label {
+            font-size: 8px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .readout-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: var(--accent-cyan);
+        }
+
+        /* Pad Grid */
+        .pad-section {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-dim);
+        }
+
+        .pad-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            flex: 1;
+        }
+
+        .pad {
+            aspect-ratio: 1;
+            background: var(--bg-module);
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pad::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, var(--pad-color, var(--accent-cyan)) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        .pad.active::before {
+            opacity: 0.3;
+        }
+
+        .pad.active {
+            transform: scale(0.95);
+            border-color: var(--pad-color, var(--accent-cyan));
+            box-shadow: 0 0 20px rgba(var(--pad-rgb, 0, 212, 255), 0.4);
+        }
+
+        .pad-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+            z-index: 1;
+        }
+
+        .pad-name {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            z-index: 1;
+        }
+
+        /* Color variants */
+        .pad[data-color="orange"] {
+            --pad-color: var(--accent-orange);
+            --pad-rgb: 255, 107, 53;
+        }
+
+        .pad[data-color="cyan"] {
+            --pad-color: var(--accent-cyan);
+            --pad-rgb: 0, 212, 255;
+        }
+
+        .pad[data-color="purple"] {
+            --pad-color: var(--accent-purple);
+            --pad-rgb: 157, 78, 221;
+        }
+
+        .pad[data-color="gold"] {
+            --pad-color: var(--accent-gold);
+            --pad-rgb: 255, 217, 61;
+        }
+
+        .pad[data-color="green"] {
+            --pad-color: var(--accent-green);
+            --pad-rgb: 57, 255, 20;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 16px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .knob-module {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .knob {
+            width: 56px;
+            height: 56px;
+            background: conic-gradient(from 135deg, var(--bg-module) 0deg, var(--accent-cyan) calc(var(--value, 50) * 2.7deg), var(--bg-module) calc(var(--value, 50) * 2.7deg));
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            border: 2px solid var(--border-dim);
+        }
+
+        .knob::before {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            background: var(--bg-module);
+            border-radius: 50%;
+        }
+
+        .knob::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%) rotate(calc(var(--value, 50) * 2.7deg - 135deg));
+            transform-origin: center 20px;
+            width: 3px;
+            height: 12px;
+            background: var(--accent-cyan);
+            border-radius: 2px;
+        }
+
+        .knob-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        .knob-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: var(--accent-cyan);
+        }
+
+        /* XY Pad */
+        .xy-section {
+            padding: 0 16px 16px;
+        }
+
+        .xy-pad {
+            height: 140px;
+            background: var(--bg-module);
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .xy-pad::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, transparent 49.5%, var(--border-dim) 49.5%, var(--border-dim) 50.5%, transparent 50.5%),
+                linear-gradient(0deg, transparent 49.5%, var(--border-dim) 49.5%, var(--border-dim) 50.5%, transparent 50.5%);
+        }
+
+        .xy-cursor {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--accent-orange);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            left: 50%;
+            top: 50%;
+            box-shadow: var(--glow-orange);
+            pointer-events: none;
+            transition: left 0.05s, top 0.05s;
+        }
+
+        .xy-cursor::before {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            background: var(--accent-orange);
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        .xy-labels {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            pointer-events: none;
+        }
+
+        .xy-label {
+            font-size: 8px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .xy-label.y-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+
+        /* Transport */
+        .transport {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            justify-content: center;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .transport-btn {
+            width: 56px;
+            height: 56px;
+            background: var(--bg-module);
+            border: 2px solid var(--border-dim);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            font-size: 20px;
+        }
+
+        .transport-btn:active {
+            transform: scale(0.95);
+        }
+
+        .transport-btn.play {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+
+        .transport-btn.play.active {
+            box-shadow: var(--glow-orange);
+        }
+
+        .transport-btn.rec {
+            color: #ff3333;
+        }
+
+        .transport-btn.rec.active {
+            background: #ff3333;
+            border-color: #ff3333;
+            color: white;
+            animation: rec-pulse 1s infinite;
+        }
+
+        @keyframes rec-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(255, 51, 51, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(255, 51, 51, 0.9);
+            }
+        }
+
+        /* Spectrum Analyzer */
+        .spectrum {
+            height: 40px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+            padding: 8px 16px;
+            background: var(--bg-panel);
+        }
+
+        .spectrum-bar {
+            width: 8px;
+            background: linear-gradient(to top, var(--accent-cyan), var(--accent-purple));
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        /* Mode Selector */
+        .mode-strip {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-deep);
+            scrollbar-width: none;
+        }
+
+        .mode-strip::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mode-btn {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            background: var(--bg-module);
+            border: 1px solid var(--border-dim);
+            border-radius: 20px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: var(--bg-deep);
+        }
+
+        /* Haptic feedback simulation */
+        @keyframes haptic {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-2px);
+            }
+
+            75% {
+                transform: translateX(2px);
+            }
+        }
+
+        .haptic {
+            animation: haptic 0.05s ease-in-out;
+        }
+
+        /* Alien Glyphs */
+        .glyph {
+            font-family: 'Orbitron', sans-serif;
+            opacity: 0.3;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-dim);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="logo">XENO-1</div>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span class="status-text">4:2:1 LOCK</span>
+            </div>
+        </header>
+
+        <div class="mode-strip">
+            <button class="mode-btn active" data-mode="kepler">KEPLER</button>
+            <button class="mode-btn" data-mode="begena">BEGENA</button>
+            <button class="mode-btn" data-mode="dust">DUST</button>
+            <button class="mode-btn" data-mode="gravity">GRAVITY</button>
+            <button class="mode-btn" data-mode="trappist">TRAPPIST-1</button>
+        </div>
+
+        <main class="main">
+            <div class="kepler-display">
+                <div class="orbit-visual">
+                    <div class="orbit-ring"></div>
+                    <div class="orbit-ring"></div>
+                    <div class="orbit-ring"></div>
+                    <div class="planet ganymede"></div>
+                    <div class="planet europa"></div>
+                    <div class="planet io"></div>
+                    <div class="sun-core"></div>
+                </div>
+                <div class="kepler-readout">
+                    <div class="readout-item">
+                        <div class="readout-label">Root Hz</div>
+                        <div class="readout-value" id="rootHz">136.1</div>
+                    </div>
+                    <div class="readout-item">
+                        <div class="readout-label">Tempo</div>
+                        <div class="readout-value" id="tempo">127.6</div>
+                    </div>
+                    <div class="readout-item">
+                        <div class="readout-label">Resonance</div>
+                        <div class="readout-value" id="resonance">4:2:1</div>
+                    </div>
+                    <div class="readout-item">
+                        <div class="readout-label">Scale</div>
+                        <div class="readout-value" id="scale">PELOG</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pad-section">
+                <div class="section-label">FORAGER PADS</div>
+                <div class="pad-grid">
+                    <div class="pad" data-color="cyan" data-note="begena" data-freq="136.1">
+                        <span class="pad-icon">𒀭</span>
+                        <span class="pad-name">Begena</span>
+                    </div>
+                    <div class="pad" data-color="purple" data-note="dungchen" data-freq="60">
+                        <span class="pad-icon">𒁹</span>
+                        <span class="pad-name">Dungchen</span>
+                    </div>
+                    <div class="pad" data-color="orange" data-note="inanga" data-freq="440">
+                        <span class="pad-icon">𒂗</span>
+                        <span class="pad-name">Inanga</span>
+                    </div>
+                    <div class="pad" data-color="gold" data-note="gamelan" data-freq="512">
+                        <span class="pad-icon">𒃻</span>
+                        <span class="pad-name">Gamelan</span>
+                    </div>
+                    <div class="pad" data-color="green" data-note="yidaki" data-freq="72">
+                        <span class="pad-icon">𒄑</span>
+                        <span class="pad-name">Yidaki</span>
+                    </div>
+                    <div class="pad" data-color="cyan" data-note="buzz" data-freq="2000">
+                        <span class="pad-icon">◎</span>
+                        <span class="pad-name">Buzz</span>
+                    </div>
+                    <div class="pad" data-color="purple" data-note="whisper" data-freq="8000">
+                        <span class="pad-icon">◌</span>
+                        <span class="pad-name">Whisper</span>
+                    </div>
+                    <div class="pad" data-color="orange" data-note="ombak" data-freq="105">
+                        <span class="pad-icon">≋</span>
+                        <span class="pad-name">Ombak</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="xy-section">
+                <div class="xy-pad" id="xyPad">
+                    <div class="xy-cursor" id="xyCursor"></div>
+                    <div class="xy-labels">
+                        <span class="xy-label y-label">GRAVITY</span>
+                        <span class="xy-label" style="align-self: flex-end;">ORBITAL VEL →</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div class="spectrum" id="spectrum">
+            <!-- Generated by JS -->
+        </div>
+
+        <div class="controls">
+            <div class="knob-module">
+                <div class="knob" id="knobDrone" style="--value: 50"></div>
+                <span class="knob-label">Drone</span>
+                <span class="knob-value">50%</span>
+            </div>
+            <div class="knob-module">
+                <div class="knob" id="knobBuzz" style="--value: 75"></div>
+                <span class="knob-label">Mirliton</span>
+                <span class="knob-value">75%</span>
+            </div>
+            <div class="knob-module">
+                <div class="knob" id="knobDust" style="--value: 30"></div>
+                <span class="knob-label">Dust</span>
+                <span class="knob-value">30%</span>
+            </div>
+            <div class="knob-module">
+                <div class="knob" id="knobDecay" style="--value: 60"></div>
+                <span class="knob-label">Decay</span>
+                <span class="knob-value">60%</span>
+            </div>
+        </div>
+
+        <div class="transport">
+            <button class="transport-btn" id="btnPrev">⏮</button>
+            <button class="transport-btn rec" id="btnRec">⏺</button>
+            <button class="transport-btn play" id="btnPlay">▶</button>
+            <button class="transport-btn" id="btnNext">⏭</button>
+        </div>
+    </div>
+
+    <script>
+        // Audio Context
+        let audioCtx = null;
+        let isPlaying = false;
+        let isRecording = false;
+        let activePads = new Set();
+        let oscillators = {};
+        let gainNodes = {};
+
+        // Keplerian constants
+        const EARTH_HZ = 136.1;
+        const TRAPPIST_RATIOS = [1, 8 / 5, 5 / 3, 3 / 2, 3 / 2, 4 / 3, 3 / 2];
+        const JUPITER_RESONANCE = [4, 2, 1];
+
+        // Initialize audio
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Haptic feedback
+        function haptic(intensity = 'light') {
+            if ('vibrate' in navigator) {
+                const durations = {
+                    light: 10,
+                    medium: 25,
+                    heavy: 50
+                };
+                navigator.vibrate(durations[intensity] || 10);
+            }
+        }
+
+        // Create oscillator for pad
+        function createPadSound(freq, type = 'sawtooth') {
+            initAudio();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            // Main oscillator
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            // Mirliton buzz via detune modulation
+            const buzzOsc = audioCtx.createOscillator();
+            const buzzGain = audioCtx.createGain();
+            buzzOsc.frequency.setValueAtTime(freq * 15, audioCtx.currentTime);
+            buzzGain.gain.setValueAtTime(freq * 0.5, audioCtx.currentTime);
+            buzzOsc.connect(buzzGain);
+            buzzGain.connect(osc.frequency);
+            buzzOsc.start();
+
+            // Filter for warmth
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+            filter.Q.setValueAtTime(2, audioCtx.currentTime);
+
+            // Envelope
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+
+            return { osc, gain, buzzOsc };
+        }
+
+        // Stop pad sound
+        function stopPadSound(id) {
+            if (oscillators[id]) {
+                const { osc, gain, buzzOsc } = oscillators[id];
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                setTimeout(() => {
+                    osc.stop();
+                    buzzOsc.stop();
+                }, 150);
+                delete oscillators[id];
+            }
+        }
+
+        // Pad events
+        document.querySelectorAll('.pad').forEach(pad => {
+            const handleStart = (e) => {
+                e.preventDefault();
+                const id = pad.dataset.note;
+                const freq = parseFloat(pad.dataset.freq);
+
+                pad.classList.add('active', 'haptic');
+                haptic('medium');
+
+                if (!oscillators[id]) {
+                    oscillators[id] = createPadSound(freq);
+                }
+
+                activePads.add(id);
+                updateSpectrum();
+
+                setTimeout(() => pad.classList.remove('haptic'), 50);
+            };
+
+            const handleEnd = (e) => {
+                e.preventDefault();
+                const id = pad.dataset.note;
+
+                pad.classList.remove('active');
+                haptic('light');
+
+                stopPadSound(id);
+                activePads.delete(id);
+                updateSpectrum();
+            };
+
+            pad.addEventListener('mousedown', handleStart);
+            pad.addEventListener('mouseup', handleEnd);
+            pad.addEventListener('mouseleave', handleEnd);
+            pad.addEventListener('touchstart', handleStart);
+            pad.addEventListener('touchend', handleEnd);
+        });
+
+        // XY Pad
+        const xyPad = document.getElementById('xyPad');
+        const xyCursor = document.getElementById('xyCursor');
+        let xyActive = false;
+
+        function updateXY(clientX, clientY) {
+            const rect = xyPad.getBoundingClientRect();
+            let x = (clientX - rect.left) / rect.width;
+            let y = (clientY - rect.top) / rect.height;
+
+            x = Math.max(0, Math.min(1, x));
+            y = Math.max(0, Math.min(1, y));
+
+            xyCursor.style.left = `${x * 100}%`;
+            xyCursor.style.top = `${y * 100}%`;
+
+            // Update audio parameters based on XY
+            // X = filter cutoff, Y = reverb/gravity
+            document.getElementById('rootHz').textContent = (EARTH_HZ * (0.5 + x)).toFixed(1);
+            document.getElementById('tempo').textContent = (80 + y * 80).toFixed(1);
+        }
+
+        xyPad.addEventListener('mousedown', (e) => {
+            xyActive = true;
+            updateXY(e.clientX, e.clientY);
+            haptic('light');
+        });
+
+        xyPad.addEventListener('mousemove', (e) => {
+            if (xyActive) updateXY(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseup', () => xyActive = false);
+
+        xyPad.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            xyActive = true;
+            updateXY(e.touches[0].clientX, e.touches[0].clientY);
+            haptic('light');
+        });
+
+        xyPad.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (xyActive) updateXY(e.touches[0].clientX, e.touches[0].clientY);
+        });
+
+        xyPad.addEventListener('touchend', () => xyActive = false);
+
+        // Transport buttons
+        const btnPlay = document.getElementById('btnPlay');
+        const btnRec = document.getElementById('btnRec');
+
+        btnPlay.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            btnPlay.classList.toggle('active', isPlaying);
+            btnPlay.textContent = isPlaying ? '⏸' : '▶';
+            haptic('heavy');
+            initAudio();
+        });
+
+        btnRec.addEventListener('click', () => {
+            isRecording = !isRecording;
+            btnRec.classList.toggle('active', isRecording);
+            haptic('heavy');
+        });
+
+        // Knob controls
+        document.querySelectorAll('.knob').forEach(knob => {
+            let startY = 0;
+            let startValue = 0;
+
+            const handleKnobStart = (e) => {
+                e.preventDefault();
+                startY = e.clientY || e.touches[0].clientY;
+                startValue = parseInt(knob.style.getPropertyValue('--value')) || 50;
+
+                const handleMove = (e) => {
+                    const currentY = e.clientY || e.touches[0].clientY;
+                    const delta = startY - currentY;
+                    const newValue = Math.max(0, Math.min(100, startValue + delta));
+
+                    knob.style.setProperty('--value', newValue);
+                    knob.parentElement.querySelector('.knob-value').textContent = `${Math.round(newValue)}%`;
+                };
+
+                const handleEnd = () => {
+                    document.removeEventListener('mousemove', handleMove);
+                    document.removeEventListener('mouseup', handleEnd);
+                    document.removeEventListener('touchmove', handleMove);
+                    document.removeEventListener('touchend', handleEnd);
+                    haptic('light');
+                };
+
+                document.addEventListener('mousemove', handleMove);
+                document.addEventListener('mouseup', handleEnd);
+                document.addEventListener('touchmove', handleMove);
+                document.addEventListener('touchend', handleEnd);
+            };
+
+            knob.addEventListener('mousedown', handleKnobStart);
+            knob.addEventListener('touchstart', handleKnobStart);
+        });
+
+        // Mode selector
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                haptic('medium');
+
+                // Update scale display based on mode
+                const scaleMap = {
+                    kepler: 'PELOG',
+                    begena: 'ETHIOP',
+                    dust: 'INANGA',
+                    gravity: 'MAQAM',
+                    trappist: 'RESO'
+                };
+                document.getElementById('scale').textContent = scaleMap[btn.dataset.mode] || 'PELOG';
+            });
+        });
+
+        // Spectrum analyzer
+        const spectrumEl = document.getElementById('spectrum');
+        const numBars = 24;
+
+        // Create spectrum bars
+        for (let i = 0; i < numBars; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'spectrum-bar';
+            bar.style.height = '4px';
+            spectrumEl.appendChild(bar);
+        }
+
+        function updateSpectrum() {
+            const bars = spectrumEl.querySelectorAll('.spectrum-bar');
+            bars.forEach((bar, i) => {
+                const baseHeight = activePads.size > 0 ? 4 + Math.random() * 20 : 4;
+                const height = Math.max(4, baseHeight + Math.sin(Date.now() / 200 + i) * 8);
+                bar.style.height = `${height}px`;
+            });
+        }
+
+        // Animate spectrum
+        setInterval(updateSpectrum, 50);
+
+        // Init
+        updateSpectrum();
+    </script>
+</body>
+
+</html>

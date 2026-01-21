@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>LATENT RADIO | Forager Broadcasts</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-void: #05050a;
+            --bg-panel: #0d0d14;
+            --bg-card: #14141f;
+            --accent-fire: #ff4500;
+            --accent-ember: #ff6b35;
+            --accent-glow: #00ff88;
+            --accent-ice: #00d4ff;
+            --accent-purple: #8b5cf6;
+            --text-ghost: #3a3a4a;
+            --text-dim: #6a6a7a;
+            --text-main: #c0c0cc;
+            --text-bright: #ffffff;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-void);
+            font-family: 'Space Mono', monospace;
+            color: var(--text-main);
+        }
+
+        .radio {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background:
+                radial-gradient(ellipse at 50% 100%, rgba(255, 69, 0, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 0% 0%, rgba(139, 92, 246, 0.05) 0%, transparent 40%),
+                var(--bg-void);
+        }
+
+        /* Header */
+        .header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .signal-icon {
+            width: 32px;
+            height: 32px;
+            position: relative;
+        }
+
+        .signal-wave {
+            position: absolute;
+            border: 2px solid var(--accent-fire);
+            border-radius: 50%;
+            animation: signal-pulse 2s ease-out infinite;
+        }
+
+        .signal-wave:nth-child(1) {
+            width: 8px;
+            height: 8px;
+            top: 12px;
+            left: 12px;
+            animation-delay: 0s;
+        }
+
+        .signal-wave:nth-child(2) {
+            width: 18px;
+            height: 18px;
+            top: 7px;
+            left: 7px;
+            animation-delay: 0.3s;
+        }
+
+        .signal-wave:nth-child(3) {
+            width: 28px;
+            height: 28px;
+            top: 2px;
+            left: 2px;
+            animation-delay: 0.6s;
+        }
+
+        @keyframes signal-pulse {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1.5);
+            }
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 22px;
+            letter-spacing: 6px;
+            color: var(--accent-fire);
+            text-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
+        }
+
+        .tagline {
+            font-size: 9px;
+            letter-spacing: 4px;
+            color: var(--text-ghost);
+            text-transform: uppercase;
+        }
+
+        /* Now Playing */
+        .now-playing {
+            padding: 24px 20px;
+            background: linear-gradient(180deg, var(--bg-panel) 0%, transparent 100%);
+        }
+
+        .np-label {
+            font-size: 8px;
+            letter-spacing: 3px;
+            color: var(--accent-glow);
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .np-label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent-glow);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .np-card {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .np-art {
+            width: 80px;
+            height: 80px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .np-art::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 50%, rgba(255, 69, 0, 0.1) 100%);
+        }
+
+        .np-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .np-track {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-artist {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .np-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 9px;
+            color: var(--text-ghost);
+        }
+
+        .np-tag {
+            padding: 3px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        /* Waveform */
+        .waveform {
+            height: 60px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: linear-gradient(to top, var(--accent-fire), var(--accent-ember));
+            border-radius: 2px;
+            transition: height 0.15s ease;
+        }
+
+        .wave-bar.past {
+            background: var(--text-ghost);
+        }
+
+        /* Progress */
+        .progress-section {
+            padding: 0 20px 20px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-card);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 35%;
+            background: linear-gradient(90deg, var(--accent-fire), var(--accent-ember));
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--text-ghost);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .ctrl-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 12px;
+        }
+
+        .ctrl-btn:hover,
+        .ctrl-btn:active {
+            color: var(--text-bright);
+            transform: scale(1.1);
+        }
+
+        .ctrl-btn.play {
+            width: 72px;
+            height: 72px;
+            background: var(--accent-fire);
+            border-radius: 50%;
+            color: var(--text-bright);
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 40px rgba(255, 69, 0, 0.4);
+        }
+
+        .ctrl-btn.play:active {
+            transform: scale(0.95);
+        }
+
+        /* Playlist */
+        .playlist-section {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .playlist-title {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--text-ghost);
+            text-transform: uppercase;
+        }
+
+        .setlist-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .setlist-tab {
+            padding: 4px 10px;
+            background: transparent;
+            border: 1px solid var(--text-ghost);
+            border-radius: 12px;
+            font-size: 9px;
+            color: var(--text-ghost);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .setlist-tab.active {
+            background: var(--accent-fire);
+            border-color: var(--accent-fire);
+            color: var(--text-bright);
+        }
+
+        .playlist {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 12px 20px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .track-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .track-item.active {
+            background: rgba(255, 69, 0, 0.1);
+            border-left: 3px solid var(--accent-fire);
+        }
+
+        .track-num {
+            width: 24px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: var(--text-ghost);
+            text-align: center;
+        }
+
+        .track-item.active .track-num {
+            color: var(--accent-fire);
+        }
+
+        .track-art {
+            width: 44px;
+            height: 44px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .track-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-name {
+            font-size: 13px;
+            color: var(--text-main);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-item.active .track-name {
+            color: var(--text-bright);
+        }
+
+        .track-artist {
+            font-size: 11px;
+            color: var(--text-ghost);
+        }
+
+        .track-function {
+            font-size: 9px;
+            color: var(--accent-purple);
+            margin-top: 2px;
+            opacity: 0.8;
+        }
+
+        .track-duration {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: var(--text-ghost);
+        }
+
+        /* YouTube Link */
+        .yt-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 0, 0, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #ff0000;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .yt-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Scrollbar */
+        .playlist::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .playlist::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .playlist::-webkit-scrollbar-thumb {
+            background: var(--text-ghost);
+            border-radius: 2px;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 12px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .freq {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            color: var(--accent-ember);
+        }
+
+        .source {
+            font-size: 9px;
+            color: var(--text-ghost);
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="radio">
+        <header class="header">
+            <div class="brand">
+                <div class="signal-icon">
+                    <div class="signal-wave"></div>
+                    <div class="signal-wave"></div>
+                    <div class="signal-wave"></div>
+                </div>
+                <div class="logo">LATENT RADIO</div>
+            </div>
+            <div class="tagline">Heavy Materiality • Xeno-Logic</div>
+        </header>
+
+        <section class="now-playing">
+            <div class="np-label">Now Transmitting</div>
+            <div class="np-card">
+                <div class="np-art" id="npArt">𒀭</div>
+                <div class="np-info">
+                    <div class="np-track" id="npTrack">Istana</div>
+                    <div class="np-artist" id="npArtist">Senyawa</div>
+                    <div class="np-meta">
+                        <span class="np-tag" id="npOperator">Seismic Anchor</span>
+                        <span class="np-tag" id="npBpm">145 BPM</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="waveform" id="waveform"></div>
+
+        <section class="progress-section">
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="time-row">
+                <span id="timeNow">2:34</span>
+                <span id="timeTotal">7:12</span>
+            </div>
+        </section>
+
+        <div class="controls">
+            <button class="ctrl-btn" id="btnShuffle">🔀</button>
+            <button class="ctrl-btn" id="btnPrev">⏮</button>
+            <button class="ctrl-btn play" id="btnPlay">▶</button>
+            <button class="ctrl-btn" id="btnNext">⏭</button>
+            <button class="ctrl-btn" id="btnLoop">🔁</button>
+        </div>
+
+        <section class="playlist-section">
+            <div class="playlist-header">
+                <span class="playlist-title">Transmission Queue</span>
+                <div class="setlist-tabs">
+                    <button class="setlist-tab active" data-set="1">I</button>
+                    <button class="setlist-tab" data-set="2">II</button>
+                    <button class="setlist-tab" data-set="3">III</button>
+                </div>
+            </div>
+            <div class="playlist" id="playlist"></div>
+        </section>
+
+        <footer class="footer">
+            <span class="freq">136.1 Hz</span>
+            <span class="source">FORAGER CRATE</span>
+        </footer>
+    </div>
+
+    <script>
+        // 120-Track Database - Generated by RLM
+        const categoryIcons = { lithic: "🪨", velocity: "🚀", atmospheric: "💨", cavern: "🕳️", geometric: "📐", biological: "🫁", ghost: "👻", ancient: "🏛️", glitch: "💾", mutant: "🧬" };
+        const tracks = [
+            { id: 1, setlist: 1, track: "Istana", artist: "Senyawa", operator: "Seismic Anchor", function: "lithic", icon: "🪨", duration: "7:12", yt: "Senyawa Istana" },
+            { id: 2, setlist: 1, track: "Hyper-Cenosis", artist: "Sote", operator: "Keplerian Speed-Run", function: "velocity", icon: "🚀", duration: "6:45", yt: "Sote Sacred Horror in Design" },
+            { id: 3, setlist: 1, track: "Agosto", artist: "Nicolás Jaar", operator: "Atmospheric Floor", function: "atmospheric", icon: "💨", duration: "8:23", yt: "Nicolas Jaar Agosto" },
+            { id: 4, setlist: 1, track: "Excavation", artist: "The Haxan Cloak", operator: "Deep Cavern", function: "cavern", icon: "🕳️", duration: "12:06", yt: "Haxan Cloak Excavation" },
+            { id: 5, setlist: 1, track: "Bird's Lament", artist: "Moondog", operator: "Geometric Pulse", function: "geometric", icon: "📐", duration: "2:48", yt: "Moondog Bird's Lament" },
+            { id: 6, setlist: 1, track: "Caregiver part 1", artist: "Oliver Coates", operator: "Biological Lung", function: "biological", icon: "🫁", duration: "5:32", yt: "Oliver Coates Caregiver" },
+            { id: 7, setlist: 1, track: "Seraphim", artist: "Lucrecia Dalt", operator: "Xeno-Pop Ghost", function: "ghost", icon: "👻", duration: "4:17", yt: "Lucrecia Dalt Seraphim" },
+            { id: 8, setlist: 1, track: "Abba Abba", artist: "Alemu Aga", operator: "Ancient Engine", function: "ancient", icon: "🏛️", duration: "6:54", yt: "Alemu Aga Begena" },
+            { id: 9, setlist: 1, track: "Test Pattern", artist: "Ryoji Ikeda", operator: "Binary Barcode", function: "glitch", icon: "💾", duration: "4:00", yt: "Ryoji Ikeda Test Pattern" },
+            { id: 10, setlist: 1, track: "AS Chaos", artist: "Amnesia Scanner", operator: "Deconstructed Club", function: "glitch", icon: "💾", duration: "3:42", yt: "Amnesia Scanner AS Chaos" },
+            { id: 11, setlist: 1, track: "Ponyboy", artist: "SOPHIE", operator: "Hyper-Synthetic", function: "mutant", icon: "🧬", duration: "3:08", yt: "SOPHIE Ponyboy" },
+            { id: 12, setlist: 1, track: "Mutant", artist: "Arca", operator: "Mutant Landscape", function: "mutant", icon: "🧬", duration: "5:21", yt: "Arca Mutant" },
+            { id: 13, setlist: 2, track: "Alkisah", artist: "Senyawa", operator: "Decentralized Mass", function: "lithic", icon: "🪨", duration: "5:42", yt: "Senyawa Alkisah" },
+            { id: 14, setlist: 2, track: "Muntur", artist: "Senyawa", operator: "Vocal Materiality", function: "lithic", icon: "🪨", duration: "4:18", yt: "Senyawa Muntur" },
+            { id: 15, setlist: 2, track: "Parallel Persia", artist: "Sote", operator: "Santur Accelerator", function: "velocity", icon: "🚀", duration: "7:22", yt: "Sote Parallel Persia" },
+            { id: 16, setlist: 2, track: "Shahr Farang", artist: "Sote", operator: "FM Velocity", function: "velocity", icon: "🚀", duration: "6:11", yt: "Sote Shahr Farang" },
+            { id: 17, setlist: 2, track: "Cenizas", artist: "Nicolás Jaar", operator: "Ash Field", function: "atmospheric", icon: "💨", duration: "9:45", yt: "Nicolas Jaar Cenizas" },
+            { id: 18, setlist: 2, track: "Space Is Only Noise", artist: "Nicolás Jaar", operator: "Vacuum Texture", function: "atmospheric", icon: "💨", duration: "4:33", yt: "Nicolas Jaar Space Is Only Noise" },
+            { id: 19, setlist: 2, track: "Mara", artist: "The Haxan Cloak", operator: "Sleep Paralysis", function: "cavern", icon: "🕳️", duration: "8:17", yt: "Haxan Cloak Mara" },
+            { id: 20, setlist: 2, track: "The Drop", artist: "The Haxan Cloak", operator: "Vertical Descent", function: "cavern", icon: "🕳️", duration: "5:55", yt: "Haxan Cloak The Drop" },
+            { id: 21, setlist: 2, track: "Aghartha", artist: "Sunn O)))", operator: "Tectonic Drone", function: "cavern", icon: "🕳️", duration: "22:14", yt: "Sunn O Aghartha" },
+            { id: 22, setlist: 2, track: "Alice", artist: "Sunn O)))", operator: "Amplifier Worship", function: "cavern", icon: "🕳️", duration: "18:42", yt: "Sunn O Alice" },
+            { id: 23, setlist: 2, track: "Seven Angels", artist: "Earth", operator: "Geological Tempo", function: "lithic", icon: "🪨", duration: "12:06", yt: "Earth Seven Angels" },
+            { id: 24, setlist: 2, track: "Teeth of Lions", artist: "Earth", operator: "Erosion Rate", function: "lithic", icon: "🪨", duration: "7:28", yt: "Earth Teeth of Lions" },
+            { id: 25, setlist: 3, track: "Flood", artist: "Boris", operator: "Hydraulic Pressure", function: "lithic", icon: "🪨", duration: "17:33", yt: "Boris Flood" },
+            { id: 26, setlist: 3, track: "Absolutego", artist: "Boris", operator: "Infinite Descent", function: "cavern", icon: "🕳️", duration: "65:35", yt: "Boris Absolutego" },
+            { id: 27, setlist: 3, track: "So Black Is Myself", artist: "Keiji Haino", operator: "Vocal Friction", function: "lithic", icon: "🪨", duration: "11:24", yt: "Keiji Haino So Black Is Myself" },
+            { id: 28, setlist: 3, track: "Pulse Demon", artist: "Merzbow", operator: "Noise Wall", function: "glitch", icon: "💾", duration: "8:55", yt: "Merzbow Pulse Demon" },
+            { id: 29, setlist: 3, track: "Woodpecker No. 1", artist: "Merzbow", operator: "Percussive Static", function: "glitch", icon: "💾", duration: "6:17", yt: "Merzbow Woodpecker" },
+            { id: 30, setlist: 3, track: "Bestial Burden", artist: "Pharmakon", operator: "Organ Failure", function: "biological", icon: "🫁", duration: "5:22", yt: "Pharmakon Bestial Burden" },
+            { id: 31, setlist: 3, track: "Crawling on Bruised Knees", artist: "Pharmakon", operator: "Body Horror", function: "biological", icon: "🫁", duration: "4:44", yt: "Pharmakon Crawling" },
+            { id: 32, setlist: 3, track: "Frozen Niagara Falls", artist: "Prurient", operator: "Ice Core", function: "cavern", icon: "🕳️", duration: "14:28", yt: "Prurient Frozen Niagara Falls" },
+            { id: 33, setlist: 3, track: "I Shall Die Here", artist: "The Body", operator: "Terminal Mass", function: "cavern", icon: "🕳️", duration: "8:11", yt: "The Body I Shall Die Here" },
+            { id: 34, setlist: 3, track: "Midnight Radio", artist: "Bohren", operator: "Noir Dust", function: "atmospheric", icon: "💨", duration: "9:33", yt: "Bohren Midnight Radio" },
+            { id: 35, setlist: 3, track: "Prowler", artist: "Bohren", operator: "Slow Jazz Doom", function: "atmospheric", icon: "💨", duration: "7:42", yt: "Bohren Prowler" },
+            { id: 36, setlist: 3, track: "Musick to Play in the Dark", artist: "Coil", operator: "Nocturnal Logic", function: "ghost", icon: "👻", duration: "8:15", yt: "Coil Musick to Play in the Dark" },
+            { id: 37, setlist: 4, track: "Time Machines", artist: "Coil", operator: "Drone Trance", function: "ghost", icon: "👻", duration: "18:33", yt: "Coil Time Machines" },
+            { id: 38, setlist: 4, track: "Soliloquy for Lilith", artist: "Nurse With Wound", operator: "Spectral Loop", function: "ghost", icon: "👻", duration: "22:17", yt: "Nurse With Wound Soliloquy" },
+            { id: 39, setlist: 4, track: "Sleep Has His House", artist: "Current 93", operator: "Dream Logic", function: "ghost", icon: "👻", duration: "7:48", yt: "Current 93 Sleep Has His House" },
+            { id: 40, setlist: 4, track: "Heresy", artist: "Lustmord", operator: "Dark Ambient Core", function: "cavern", icon: "🕳️", duration: "12:44", yt: "Lustmord Heresy" },
+            { id: 41, setlist: 4, track: "Tryptych", artist: "Demdike Stare", operator: "Hauntology", function: "ghost", icon: "👻", duration: "6:55", yt: "Demdike Stare Tryptych" },
+            { id: 42, setlist: 4, track: "Testpressing", artist: "Demdike Stare", operator: "Vinyl Decay", function: "glitch", icon: "💾", duration: "5:32", yt: "Demdike Stare Testpressing" },
+            { id: 43, setlist: 4, track: "Quarter Turns", artist: "Raime", operator: "Industrial Dread", function: "cavern", icon: "🕳️", duration: "6:18", yt: "Raime Quarter Turns" },
+            { id: 44, setlist: 4, track: "The Drought", artist: "Puce Mary", operator: "Dehydration", function: "biological", icon: "🫁", duration: "4:55", yt: "Puce Mary The Drought" },
+            { id: 45, setlist: 4, track: "Caligula", artist: "Lingua Ignota", operator: "Operatic Violence", function: "biological", icon: "🫁", duration: "7:33", yt: "Lingua Ignota Caligula" },
+            { id: 46, setlist: 4, track: "All Bitches Die", artist: "Lingua Ignota", operator: "Vocal Trauma", function: "biological", icon: "🫁", duration: "5:24", yt: "Lingua Ignota All Bitches Die" },
+            { id: 47, setlist: 4, track: "Eternal Home", artist: "Fire-Toolz", operator: "Genre Collapse", function: "mutant", icon: "🧬", duration: "8:17", yt: "Fire-Toolz Eternal Home" },
+            { id: 48, setlist: 4, track: "WLFGRL", artist: "Machine Girl", operator: "Breakcore Slingshot", function: "velocity", icon: "🚀", duration: "3:48", yt: "Machine Girl WLFGRL" },
+            { id: 49, setlist: 5, track: "Beaches & Canyons", artist: "Black Dice", operator: "Noise Topology", function: "lithic", icon: "🪨", duration: "9:42", yt: "Black Dice Beaches Canyons" },
+            { id: 50, setlist: 5, track: "Wonderful Rainbow", artist: "Lightning Bolt", operator: "Rhythmic Overload", function: "velocity", icon: "🚀", duration: "5:22", yt: "Lightning Bolt Wonderful Rainbow" },
+            { id: 51, setlist: 5, track: "Under the Skin", artist: "Mica Levi", operator: "Alien Seduction", function: "ghost", icon: "👻", duration: "4:15", yt: "Mica Levi Under the Skin" },
+            { id: 52, setlist: 5, track: "Jackie OST", artist: "Mica Levi", operator: "Grief Dissonance", function: "ghost", icon: "👻", duration: "3:44", yt: "Mica Levi Jackie" },
+            { id: 53, setlist: 5, track: "Chernobyl OST", artist: "Hildur Guðnadóttir", operator: "Radioactive Drone", function: "cavern", icon: "🕳️", duration: "6:33", yt: "Hildur Gudnadottir Chernobyl" },
+            { id: 54, setlist: 5, track: "Joker OST", artist: "Hildur Guðnadóttir", operator: "Cello Descent", function: "biological", icon: "🫁", duration: "5:18", yt: "Hildur Gudnadottir Joker" },
+            { id: 55, setlist: 5, track: "A U R O R A", artist: "Ben Frost", operator: "Glacial Violence", function: "velocity", icon: "🚀", duration: "7:42", yt: "Ben Frost A U R O R A" },
+            { id: 56, setlist: 5, track: "Dark OST", artist: "Ben Frost", operator: "Temporal Loop", function: "ghost", icon: "👻", duration: "4:55", yt: "Ben Frost Dark OST" },
+            { id: 57, setlist: 5, track: "Virgins", artist: "Tim Hecker", operator: "Organ Decay", function: "atmospheric", icon: "💨", duration: "8:33", yt: "Tim Hecker Virgins" },
+            { id: 58, setlist: 5, track: "Ravedeath, 1972", artist: "Tim Hecker", operator: "Church Destruction", function: "atmospheric", icon: "💨", duration: "9:17", yt: "Tim Hecker Ravedeath 1972" },
+            { id: 59, setlist: 5, track: "Konoyo", artist: "Tim Hecker", operator: "Gagaku Ghost", function: "ancient", icon: "🏛️", duration: "7:48", yt: "Tim Hecker Konoyo" },
+            { id: 60, setlist: 5, track: "Ruins", artist: "Grouper", operator: "Piano Dust", function: "atmospheric", icon: "💨", duration: "5:24", yt: "Grouper Ruins" },
+            { id: 61, setlist: 6, track: "Dragging a Dead Deer", artist: "Grouper", operator: "Spectral Folk", function: "ghost", icon: "👻", duration: "4:32", yt: "Grouper Dragging Dead Deer" },
+            { id: 62, setlist: 6, track: "Endless Summer", artist: "Fennesz", operator: "Glitch Beach", function: "atmospheric", icon: "💨", duration: "6:55", yt: "Fennesz Endless Summer" },
+            { id: 63, setlist: 6, track: "Xerrox Vol. 3", artist: "Alva Noto", operator: "Xerox Copy", function: "glitch", icon: "💾", duration: "7:12", yt: "Alva Noto Xerrox" },
+            { id: 64, setlist: 6, track: "Vrioon", artist: "Alva Noto + Sakamoto", operator: "Minimal Collision", function: "glitch", icon: "💾", duration: "5:44", yt: "Alva Noto Sakamoto Vrioon" },
+            { id: 65, setlist: 6, track: "Confield", artist: "Autechre", operator: "Algorithmic Maze", function: "glitch", icon: "💾", duration: "8:33", yt: "Autechre Confield" },
+            { id: 66, setlist: 6, track: "elseq 1-5", artist: "Autechre", operator: "Machine Learning", function: "glitch", icon: "💾", duration: "12:17", yt: "Autechre elseq" },
+            { id: 67, setlist: 6, track: "SAW Vol. II", artist: "Aphex Twin", operator: "Dream State", function: "ghost", icon: "👻", duration: "6:42", yt: "Aphex Twin Selected Ambient Works 2" },
+            { id: 68, setlist: 6, track: "Drukqs", artist: "Aphex Twin", operator: "Prepared Piano", function: "velocity", icon: "🚀", duration: "4:55", yt: "Aphex Twin Drukqs" },
+            { id: 69, setlist: 6, track: "MHTRTC", artist: "Boards of Canada", operator: "Analog Nostalgia", function: "ghost", icon: "👻", duration: "5:33", yt: "Boards of Canada Music Has the Right" },
+            { id: 70, setlist: 6, track: "Geogaddi", artist: "Boards of Canada", operator: "Subliminal Dread", function: "ghost", icon: "👻", duration: "7:18", yt: "Boards of Canada Geogaddi" },
+            { id: 71, setlist: 6, track: "Replica", artist: "Oneohtrix Point Never", operator: "Sample Loop", function: "glitch", icon: "💾", duration: "4:22", yt: "Oneohtrix Point Never Replica" },
+            { id: 72, setlist: 6, track: "Garden of Delete", artist: "Oneohtrix Point Never", operator: "Alien Pop", function: "mutant", icon: "🧬", duration: "5:48", yt: "Oneohtrix Point Never Garden of Delete" },
+            { id: 73, setlist: 7, track: "Age Of", artist: "Oneohtrix Point Never", operator: "AI Opera", function: "mutant", icon: "🧬", duration: "6:33", yt: "Oneohtrix Point Never Age Of" },
+            { id: 74, setlist: 7, track: "R.I.P.", artist: "Actress", operator: "Ghost Techno", function: "ghost", icon: "👻", duration: "5:17", yt: "Actress R.I.P." },
+            { id: 75, setlist: 7, track: "Ghettoville", artist: "Actress", operator: "Urban Decay", function: "atmospheric", icon: "💨", duration: "4:42", yt: "Actress Ghettoville" },
+            { id: 76, setlist: 7, track: "Untrue", artist: "Burial", operator: "London Fog", function: "atmospheric", icon: "💨", duration: "5:55", yt: "Burial Untrue" },
+            { id: 77, setlist: 7, track: "Rival Dealer", artist: "Burial", operator: "Night Bus", function: "ghost", icon: "👻", duration: "6:33", yt: "Burial Rival Dealer" },
+            { id: 78, setlist: 7, track: "Faith in Strangers", artist: "Andy Stott", operator: "Dub Abyss", function: "cavern", icon: "🕳️", duration: "7:18", yt: "Andy Stott Faith in Strangers" },
+            { id: 79, setlist: 7, track: "Too Many Voices", artist: "Andy Stott", operator: "Voice Sample", function: "ghost", icon: "👻", duration: "5:42", yt: "Andy Stott Too Many Voices" },
+            { id: 80, setlist: 7, track: "Everywhere at the End of Time", artist: "The Caretaker", operator: "Memory Decay", function: "ghost", icon: "👻", duration: "12:33", yt: "The Caretaker Everywhere End of Time" },
+            { id: 81, setlist: 7, track: "Disintegration Loops", artist: "William Basinski", operator: "Tape Decay", function: "atmospheric", icon: "💨", duration: "18:42", yt: "William Basinski Disintegration Loops" },
+            { id: 82, setlist: 7, track: "Sadly, the Future", artist: "Leyland Kirby", operator: "Melancholic Static", function: "ghost", icon: "👻", duration: "8:17", yt: "Leyland Kirby Sadly the Future" },
+            { id: 83, setlist: 7, track: "Permafrost", artist: "Thomas Köner", operator: "Arctic Drone", function: "cavern", icon: "🕳️", duration: "14:25", yt: "Thomas Koner Permafrost" },
+            { id: 84, setlist: 7, track: "Substrata", artist: "Biosphere", operator: "Polar Ambient", function: "atmospheric", icon: "💨", duration: "7:33", yt: "Biosphere Substrata" },
+            { id: 85, setlist: 8, track: "Submers", artist: "Loscil", operator: "Underwater", function: "atmospheric", icon: "💨", duration: "6:55", yt: "Loscil Submers" },
+            { id: 86, setlist: 8, track: "And Their Refinement", artist: "Stars of the Lid", operator: "String Drone", function: "atmospheric", icon: "💨", duration: "9:42", yt: "Stars of the Lid And Their Refinement" },
+            { id: 87, setlist: 8, track: "Location Momentum", artist: "Eleh", operator: "Pure Sine", function: "cavern", icon: "🕳️", duration: "15:33", yt: "Eleh Location Momentum" },
+            { id: 88, setlist: 8, track: "Touch Three", artist: "Phill Niblock", operator: "Microtonal Mass", function: "lithic", icon: "🪨", duration: "22:17", yt: "Phill Niblock Touch Three" },
+            { id: 89, setlist: 8, track: "Well-Tuned Piano", artist: "La Monte Young", operator: "Just Intonation", function: "ancient", icon: "🏛️", duration: "32:44", yt: "La Monte Young Well-Tuned Piano" },
+            { id: 90, setlist: 8, track: "In C", artist: "Terry Riley", operator: "Modular Loop", function: "geometric", icon: "📐", duration: "42:33", yt: "Terry Riley In C" },
+            { id: 91, setlist: 8, track: "Music for 18 Musicians", artist: "Steve Reich", operator: "Phasing Pulse", function: "geometric", icon: "📐", duration: "11:18", yt: "Steve Reich Music for 18 Musicians" },
+            { id: 92, setlist: 8, track: "Evil Nigger", artist: "Julius Eastman", operator: "Militant Minimalism", function: "geometric", icon: "📐", duration: "8:55", yt: "Julius Eastman Evil Nigger" },
+            { id: 93, setlist: 8, track: "Tabula Rasa", artist: "Arvo Pärt", operator: "Tintinnabuli", function: "ancient", icon: "🏛️", duration: "9:33", yt: "Arvo Part Tabula Rasa" },
+            { id: 94, setlist: 8, track: "Fratres", artist: "Arvo Pärt", operator: "Sacred Geometry", function: "ancient", icon: "🏛️", duration: "7:42", yt: "Arvo Part Fratres" },
+            { id: 95, setlist: 8, track: "Atmosphères", artist: "Gyorgy Ligeti", operator: "Cluster Canon", function: "atmospheric", icon: "💨", duration: "8:55", yt: "Ligeti Atmospheres" },
+            { id: 96, setlist: 8, track: "Lux Aeterna", artist: "Gyorgy Ligeti", operator: "Choral Mass", function: "ghost", icon: "👻", duration: "6:17", yt: "Ligeti Lux Aeterna" },
+            { id: 97, setlist: 9, track: "Deep Listening", artist: "Pauline Oliveros", operator: "Cistern Reverb", function: "cavern", icon: "🕳️", duration: "18:44", yt: "Pauline Oliveros Deep Listening" },
+            { id: 98, setlist: 9, track: "Trilogie de la Mort", artist: "Éliane Radigue", operator: "ARP Drone", function: "ancient", icon: "🏛️", duration: "25:33", yt: "Eliane Radigue Trilogie Mort" },
+            { id: 99, setlist: 9, track: "Creator Master Plan", artist: "Pharoah Sanders", operator: "Spiritual Jazz", function: "ancient", icon: "🏛️", duration: "14:22", yt: "Pharoah Sanders Creator Master Plan" },
+            { id: 100, setlist: 9, track: "Journey in Satchidananda", artist: "Alice Coltrane", operator: "Harp Ascension", function: "ancient", icon: "🏛️", duration: "9:17", yt: "Alice Coltrane Journey Satchidananda" },
+            { id: 101, setlist: 9, track: "Organic Music Society", artist: "Don Cherry", operator: "Global Ritual", function: "ancient", icon: "🏛️", duration: "11:42", yt: "Don Cherry Organic Music Society" },
+            { id: 102, setlist: 9, track: "World Spirituality", artist: "Waziri Oshomah", operator: "Nigerian Prayer", function: "ancient", icon: "🏛️", duration: "7:55", yt: "Waziri Oshomah World Spirituality" },
+            { id: 103, setlist: 9, track: "Lala Belu", artist: "Hailu Mergia", operator: "Ethiopian Keys", function: "ancient", icon: "🏛️", duration: "6:33", yt: "Hailu Mergia Lala Belu" },
+            { id: 104, setlist: 9, track: "Ethiopiques Vol. 4", artist: "Mulatu Astatke", operator: "Ethio-Jazz", function: "ancient", icon: "🏛️", duration: "5:18", yt: "Mulatu Astatke Ethiopiques" },
+            { id: 105, setlist: 9, track: "Nafs at Peace", artist: "Jaubi", operator: "Lahore Jazz", function: "ancient", icon: "🏛️", duration: "8:42", yt: "Jaubi Nafs at Peace" },
+            { id: 106, setlist: 9, track: "Wisdom of Elders", artist: "Shabaka Hutchings", operator: "UK Spiritual", function: "ancient", icon: "🏛️", duration: "7:17", yt: "Shabaka Hutchings Wisdom of Elders" },
+            { id: 107, setlist: 9, track: "Your Queen Is a Reptile", artist: "Sons of Kemet", operator: "Tuba Polyrhythm", function: "velocity", icon: "🚀", duration: "5:55", yt: "Sons of Kemet Queen Reptile" },
+            { id: 108, setlist: 9, track: "Universal Beings", artist: "Makaya McCraven", operator: "Beat Science", function: "geometric", icon: "📐", duration: "6:33", yt: "Makaya McCraven Universal Beings" },
+            { id: 109, setlist: 10, track: "Source", artist: "Nubya Garcia", operator: "Breath Saxophone", function: "biological", icon: "🫁", duration: "7:18", yt: "Nubya Garcia Source" },
+            { id: 110, setlist: 10, track: "The Oracle", artist: "Angel Bat Dawid", operator: "Clarinet Prophecy", function: "ancient", icon: "🏛️", duration: "8:55", yt: "Angel Bat Dawid The Oracle" },
+            { id: 111, setlist: 10, track: "Veteran", artist: "JPEGMAFIA", operator: "Noise Rap", function: "glitch", icon: "💾", duration: "3:22", yt: "JPEGMAFIA Veteran" },
+            { id: 112, setlist: 10, track: "The Money Store", artist: "Death Grips", operator: "Industrial Rap", function: "velocity", icon: "🚀", duration: "4:17", yt: "Death Grips Money Store" },
+            { id: 113, setlist: 10, track: "Splendor & Misery", artist: "clipping.", operator: "Afrofuturist Noise", function: "glitch", icon: "💾", duration: "5:44", yt: "clipping Splendor Misery" },
+            { id: 114, setlist: 10, track: "Absence", artist: "Dälek", operator: "Shoegaze Rap", function: "cavern", icon: "🕳️", duration: "6:33", yt: "Dalek Absence" },
+            { id: 115, setlist: 10, track: "Black Up", artist: "Shabazz Palaces", operator: "Astral Hip-Hop", function: "ghost", icon: "👻", duration: "4:18", yt: "Shabazz Palaces Black Up" },
+            { id: 116, setlist: 10, track: "Cosmogramma", artist: "Flying Lotus", operator: "Jazz Warp", function: "velocity", icon: "🚀", duration: "5:22", yt: "Flying Lotus Cosmogramma" },
+            { id: 117, setlist: 10, track: "You're Dead!", artist: "Flying Lotus", operator: "Death Suite", function: "mutant", icon: "🧬", duration: "6:17", yt: "Flying Lotus You're Dead" },
+            { id: 118, setlist: 10, track: "Drunk", artist: "Thundercat", operator: "Bass Organism", function: "biological", icon: "🫁", duration: "4:42", yt: "Thundercat Drunk" },
+            { id: 119, setlist: 10, track: "Lifetime", artist: "Klein", operator: "Voice Mutation", function: "mutant", icon: "🧬", duration: "5:33", yt: "Klein Lifetime" },
+            { id: 120, setlist: 10, track: "Phoenix", artist: "Eartheater", operator: "Operatic Glitch", function: "mutant", icon: "🧬", duration: "6:55", yt: "Eartheater Phoenix Flames" }
+        ];
+
+        // Audio file mapping for available MP3s
+        const audioFiles = {
+            1: "audio/Istana.mp3",
+            2: "audio/Sote - Holy Error [Opal Tapes].mp3",
+            3: "audio/Nicolas Jaar - Agosto.mp3",
+            4: "audio/Excavation (Part 1).mp3",
+            5: "audio/Moondog - Lament I, Bird's Lament.mp3",
+            6: "audio/Caregiver part 1 (breathing).mp3",
+            7: "audio/Lucrecia Dalt - No tiempo [Official Video].mp3",
+            8: "audio/Alemu Aga Besmeab - Abatachin Hoy, playing the Begenna, the Harp of David from Ethiopia.mp3",
+            9: "audio/test pattern #1011 [d4CX6B4soJM].mp3",
+            10: "audio/Amnesia Scanner - AS Chaos feat. Pan Daijing (Lyric Video).mp3",
+            11: "audio/SOPHIE  Ponyboy (Official Video).mp3"
+        };
+
+        let currentTrack = 0;
+        let currentSetlist = 1;
+        let isPlaying = false;
+        let progress = 0;
+        let progressInterval = null;
+
+        // Audio element
+        const audio = new Audio();
+        audio.volume = 0.8;
+
+        // DOM elements
+        const npArt = document.getElementById('npArt');
+        const npTrack = document.getElementById('npTrack');
+        const npArtist = document.getElementById('npArtist');
+        const npOperator = document.getElementById('npOperator');
+        const npBpm = document.getElementById('npBpm');
+        const progressFill = document.getElementById('progressFill');
+        const timeNow = document.getElementById('timeNow');
+        const timeTotal = document.getElementById('timeTotal');
+        const playlist = document.getElementById('playlist');
+        const btnPlay = document.getElementById('btnPlay');
+        const waveform = document.getElementById('waveform');
+
+        // Initialize waveform bars
+        const numBars = 48;
+        for (let i = 0; i < numBars; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'wave-bar';
+            bar.style.height = '4px';
+            waveform.appendChild(bar);
+        }
+
+        // Render playlist
+        function renderPlaylist() {
+            const filtered = tracks.filter(t => t.setlist === currentSetlist);
+            playlist.innerHTML = filtered.map((t, i) => `
+                <div class="track-item ${t.id === tracks[currentTrack].id ? 'active' : ''}" data-index="${tracks.indexOf(t)}">
+                    <span class="track-num">${String(t.id).padStart(2, '0')}</span>
+                    <div class="track-art">${t.icon}</div>
+                    <div class="track-details">
+                        <div class="track-name">${t.track}</div>
+                        <div class="track-artist">${t.artist}</div>
+                        <div class="track-function">${t.function}</div>
+                    </div>
+                    <span class="track-duration">${t.duration}</span>
+                    <button class="yt-btn" data-yt="${t.yt}">▶</button>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            playlist.querySelectorAll('.track-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('yt-btn')) return;
+                    currentTrack = parseInt(item.dataset.index);
+                    updateNowPlaying();
+                    renderPlaylist();
+                    startPlaying();
+                });
+            });
+
+            // YouTube buttons
+            playlist.querySelectorAll('.yt-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const query = encodeURIComponent(btn.dataset.yt);
+                    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+                });
+            });
+        }
+
+        // Update now playing
+        function updateNowPlaying() {
+            const t = tracks[currentTrack];
+            npArt.textContent = t.icon;
+            npTrack.textContent = t.track;
+            npArtist.textContent = t.artist;
+            npOperator.textContent = t.operator;
+            npBpm.textContent = t.bpm ? `${t.bpm} BPM` : 'Variable';
+            timeTotal.textContent = t.duration;
+            progress = 0;
+            updateProgress();
+        }
+
+        // Update progress
+        function updateProgress() {
+            progressFill.style.width = `${progress}%`;
+            const t = tracks[currentTrack];
+            const [min, sec] = t.duration.split(':').map(Number);
+            const totalSec = min * 60 + sec;
+            const currentSec = Math.floor(totalSec * (progress / 100));
+            const currentMin = Math.floor(currentSec / 60);
+            const currentSecRem = currentSec % 60;
+            timeNow.textContent = `${currentMin}:${String(currentSecRem).padStart(2, '0')}`;
+        }
+
+        // Animate waveform
+        function animateWaveform() {
+            const bars = waveform.querySelectorAll('.wave-bar');
+            bars.forEach((bar, i) => {
+                const isPast = (i / bars.length) * 100 < progress;
+                bar.classList.toggle('past', isPast);
+
+                if (isPlaying) {
+                    const height = isPast ?
+                        4 + Math.random() * 8 :
+                        8 + Math.random() * 32 + Math.sin(Date.now() / 150 + i * 0.3) * 10;
+                    bar.style.height = `${height}px`;
+                } else {
+                    bar.style.height = '4px';
+                }
+            });
+        }
+
+        // Start playing
+        function startPlaying() {
+            const t = tracks[currentTrack];
+            const audioFile = audioFiles[t.id];
+
+            if (audioFile) {
+                // Has audio file - play it
+                if (audio.src !== audioFile && !audio.src.endsWith(encodeURIComponent(audioFile.split('/').pop()))) {
+                    audio.src = audioFile;
+                }
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            }
+
+            isPlaying = true;
+            btnPlay.textContent = '⏸';
+        }
+
+        // Stop playing
+        function stopPlaying() {
+            isPlaying = false;
+            btnPlay.textContent = '▶';
+            audio.pause();
+        }
+
+        // Audio event handlers
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                progress = (audio.currentTime / audio.duration) * 100;
+                updateProgress();
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            nextTrack();
+            startPlaying();
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            const mins = Math.floor(audio.duration / 60);
+            const secs = Math.floor(audio.duration % 60);
+            timeTotal.textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+        });
+
+        // Next track
+        function nextTrack() {
+            audio.pause();
+            currentTrack = (currentTrack + 1) % tracks.length;
+            currentSetlist = tracks[currentTrack].setlist;
+            updateTabs();
+            updateNowPlaying();
+            renderPlaylist();
+        }
+
+        // Prev track
+        function prevTrack() {
+            audio.pause();
+            currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
+            currentSetlist = tracks[currentTrack].setlist;
+            updateTabs();
+            updateNowPlaying();
+            renderPlaylist();
+        }
+
+        // Update tabs
+        function updateTabs() {
+            document.querySelectorAll('.setlist-tab').forEach(tab => {
+                tab.classList.toggle('active', parseInt(tab.dataset.set) === currentSetlist);
+            });
+        }
+
+        // Event listeners
+        btnPlay.addEventListener('click', () => {
+            if (isPlaying) {
+                stopPlaying();
+            } else {
+                startPlaying();
+            }
+        });
+
+        document.getElementById('btnNext').addEventListener('click', () => {
+            nextTrack();
+            if (isPlaying) startPlaying();
+        });
+
+        document.getElementById('btnPrev').addEventListener('click', () => {
+            prevTrack();
+            if (isPlaying) startPlaying();
+        });
+
+        document.querySelectorAll('.setlist-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                currentSetlist = parseInt(tab.dataset.set);
+                updateTabs();
+                renderPlaylist();
+            });
+        });
+
+        document.getElementById('progressBar').addEventListener('click', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            const pct = ((e.clientX - rect.left) / rect.width);
+            if (audio.duration) {
+                audio.currentTime = pct * audio.duration;
+            }
+            progress = pct * 100;
+            updateProgress();
+        });
+
+        // Animation loop
+        setInterval(animateWaveform, 50);
+
+        // Init
+        updateNowPlaying();
+        renderPlaylist();
+    </script>
+</body>
+
+</html>

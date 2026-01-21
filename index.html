@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LATENT AUDIO SUITE</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎛️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg: #050505;
+            --card-bg: #111;
+            --border: #222;
+            --accent: #f5a623;
+            --text-main: #e0e0e0;
+            --text-dim: #666;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .hero-text {
+            background: linear-gradient(180deg, #fff 0%, #666 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tool-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px -10px rgba(245, 166, 35, 0.15);
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+
+<body class="p-6 md:p-12">
+    <div class="scanline"></div>
+
+    <header class="flex justify-between items-end mb-16 border-b border-white/10 pb-6">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="status-dot"></span>
+                <span class="mono text-xs text-green-500 tracking-widest">SYSTEM ONLINE</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-bold tracking-tighter hero-text">LATENT AUDIO SUITE</h1>
+        </div>
+        <div class="text-right hidden md:block">
+            <div class="mono text-xs text-zinc-500 mb-1">VERSION 2.4.0</div>
+            <div class="mono text-xs text-zinc-500">LOCAL MP3 CORE ACTIVE</div>
+        </div>
+    </header>
+
+    <main class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto w-full flex-1">
+
+        <!-- OP-1 -->
+        <a href="op1.html" class="tool-card p-6 flex flex-col justify-between group h-full">
+            <div>
+                <div class="flex justify-between items-start mb-8">
+                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">01
+                        // OP-10 SPECTRAL</span>
+                    <span
+                        class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">RECORDER</span>
+                </div>
+                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+                    Dual-deck spectral analyzer and variable-speed tape recorder. Features real-time visualization and
+                    pitch control.
+                </p>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 20 MP3 Tracks
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Observable State
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <span
+                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                    LAUNCH INTERFACE ->
+                </span>
+            </div>
+        </a>
+
+        <!-- MANDALA / ORBITAL LOOM -->
+        <a href="mandala.html" class="tool-card p-6 flex flex-col justify-between group h-full">
+            <div>
+                <div class="flex justify-between items-start mb-8">
+                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">02
+                        // ORBITAL LOOM</span>
+                    <span
+                        class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">SEQUENCER</span>
+                </div>
+                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+                    Keplerian orbital sequencer with 3-ring polyphony. Mix radio, drone synthesis, and local MP3s with
+                    beat matching.
+                </p>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Auto Beat-Match
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> MP3 Crate Browser
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <span
+                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                    LAUNCH INTERFACE ->
+                </span>
+            </div>
+        </a>
+
+        <!-- EL DESIERTO / KOPE-04 -->
+        <a href="kope-04.html" class="tool-card p-6 flex flex-col justify-between group h-full">
+            <div>
+                <div class="flex justify-between items-start mb-8">
+                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">03
+                        // EL DESIERTO</span>
+                    <span class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">SAMPLER</span>
+                </div>
+                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+                    A cinematic 4-track sampler for audio collage. Load full MP3 crates, trim samples, and perform live
+                    mixes with haptic feedback.
+                </p>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 4-Track Mixing
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Type-Aware Loading
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <span
+                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                    LAUNCH INTERFACE ->
+                </span>
+            </div>
+        </a>
+
+        <!-- XENO-1 / SYNTH -->
+        <a href="x1.html" class="tool-card p-6 flex flex-col justify-between group h-full">
+            <div>
+                <div class="flex justify-between items-start mb-8">
+                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">04
+                        // XENO-1</span>
+                    <span class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">SYNTH</span>
+                </div>
+                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+                    Keplerian orbital synthesizer based on 4:2:1 resonance. Features microtonal pads and solar wind
+                    modulation.
+                </p>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Orbital Mechanics
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Microtonal Scale
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <span
+                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                    LAUNCH INTERFACE ->
+                </span>
+            </div>
+        </a>
+
+        <!-- LATENT RADIO / BROADCAST -->
+        <a href="x2.html" class="tool-card p-6 flex flex-col justify-between group h-full">
+            <div>
+                <div class="flex justify-between items-start mb-8">
+                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">05
+                        // RADIO</span>
+                    <span
+                        class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">BROADCAST</span>
+                </div>
+                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
+                    Infinite broadcast stream from the latent noise floor. Features 120+ tracks and visual signal
+                    analysis.
+                </p>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 120 Track Database
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
+                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Waveform Visuals
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <span
+                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                    LAUNCH INTERFACE ->
+                </span>
+            </div>
+        </a>
+
+    </main>
+
+    <footer class="mt-12 pt-6 border-t border-white/10 flex justify-between items-center text-zinc-600 text-xs mono">
+        <div>AUDIO ENGINE: WEBAUDIO + HTML5</div>
+        <div>LATENT SPACE CORP © 2026</div>
+    </footer>
+
+</body>
+
+</html>

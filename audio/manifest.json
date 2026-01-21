@@ -1,0 +1,96 @@
+{
+    "audio_folder": "audio",
+    "tracks": [
+        {
+            "id": 1,
+            "artist": "Senyawa",
+            "track": "Istana",
+            "file": "Istana.mp3",
+            "status": "available"
+        },
+        {
+            "id": 2,
+            "artist": "Sote",
+            "track": "Hyper-Cenosis",
+            "file": "Sote - Holy Error [Opal Tapes].mp3",
+            "note": "Holy Error used as substitute",
+            "status": "available"
+        },
+        {
+            "id": 3,
+            "artist": "Nicolás Jaar",
+            "track": "Agosto",
+            "file": "Nicolas Jaar - Agosto.mp3",
+            "status": "available"
+        },
+        {
+            "id": 4,
+            "artist": "The Haxan Cloak",
+            "track": "Excavation (Part 1)",
+            "file": "Excavation (Part 1).mp3",
+            "status": "available"
+        },
+        {
+            "id": 5,
+            "artist": "Moondog",
+            "track": "Bird's Lament",
+            "file": "Moondog - Lament I, Bird's Lament.mp3",
+            "status": "available"
+        },
+        {
+            "id": 6,
+            "artist": "Oliver Coates",
+            "track": "Caregiver part 1",
+            "file": "Caregiver part 1 (breathing).mp3",
+            "status": "available"
+        },
+        {
+            "id": 7,
+            "artist": "Lucrecia Dalt",
+            "track": "Seraphim",
+            "file": "Lucrecia Dalt - No tiempo [Official Video].mp3",
+            "note": "No tiempo used as substitute",
+            "status": "available"
+        },
+        {
+            "id": 8,
+            "artist": "Alemu Aga",
+            "track": "Abba Abba",
+            "file": "Alemu Aga Besmeab - Abatachin Hoy, playing the Begenna, the Harp of David from Ethiopia.mp3",
+            "status": "available"
+        },
+        {
+            "id": 9,
+            "artist": "Ryoji Ikeda",
+            "track": "Test Pattern",
+            "file": "test pattern #1011 [d4CX6B4soJM].mp3",
+            "status": "available"
+        },
+        {
+            "id": 10,
+            "artist": "Amnesia Scanner",
+            "track": "AS Chaos",
+            "file": "Amnesia Scanner - AS Chaos feat. Pan Daijing (Lyric Video).mp3",
+            "status": "available"
+        },
+        {
+            "id": 11,
+            "artist": "SOPHIE",
+            "track": "Ponyboy",
+            "file": "SOPHIE  Ponyboy (Official Video).mp3",
+            "status": "available"
+        },
+        {
+            "id": 12,
+            "artist": "Arca",
+            "track": "Mutant",
+            "file": null,
+            "status": "missing"
+        }
+    ],
+    "stats": {
+        "total": 12,
+        "available": 11,
+        "missing": 1
+    }
+}

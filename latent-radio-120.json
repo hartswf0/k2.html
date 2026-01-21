@@ -1,0 +1,979 @@
+{
+    "project": "LATENT RADIO 120",
+    "description": "The Complete Forager's Crate - Heavy Materiality & Xeno-Logic",
+    "generated": "2026-01-18",
+    "categories": {
+        "lithic": "Stone/Wood/Earth - Physical friction and acoustic mass",
+        "velocity": "Acceleration, polyrhythm, orbital mechanics",
+        "atmospheric": "Dust, air, spectral space, room tone",
+        "cavern": "Sub-bass, dread, geological time",
+        "geometric": "Non-Western rhythm, base-8, celestial timing",
+        "biological": "Breath, body, organic synthesis",
+        "ghost": "Microtonal, spectral, liminal",
+        "ancient": "Pre-industrial, ritual, drone traditions",
+        "glitch": "Data, failure modes, system seizure",
+        "mutant": "Fluid, grotesque, post-human synthesis"
+    },
+    "tracks": [
+        {
+            "id": 1,
+            "artist": "Senyawa",
+            "track": "Istana",
+            "category": "lithic",
+            "function": "Seismic Anchor",
+            "yt": "Senyawa Istana"
+        },
+        {
+            "id": 2,
+            "artist": "Sote",
+            "track": "Hyper-Cenosis",
+            "category": "velocity",
+            "function": "Keplerian Speed-Run",
+            "yt": "Sote Sacred Horror in Design"
+        },
+        {
+            "id": 3,
+            "artist": "Nicolás Jaar",
+            "track": "Agosto",
+            "category": "atmospheric",
+            "function": "Material Dust",
+            "yt": "Nicolas Jaar Agosto"
+        },
+        {
+            "id": 4,
+            "artist": "The Haxan Cloak",
+            "track": "Excavation (Part 1)",
+            "category": "cavern",
+            "function": "Seismic Dread",
+            "yt": "Haxan Cloak Excavation"
+        },
+        {
+            "id": 5,
+            "artist": "Moondog",
+            "track": "Bird's Lament",
+            "category": "geometric",
+            "function": "Base-8 Geometry",
+            "yt": "Moondog Bird's Lament"
+        },
+        {
+            "id": 6,
+            "artist": "Oliver Coates",
+            "track": "Caregiver part 1",
+            "category": "biological",
+            "function": "Respiratory Rate",
+            "yt": "Oliver Coates Caregiver"
+        },
+        {
+            "id": 7,
+            "artist": "Lucrecia Dalt",
+            "track": "Seraphim",
+            "category": "ghost",
+            "function": "Microtonal Gravity",
+            "yt": "Lucrecia Dalt Seraphim"
+        },
+        {
+            "id": 8,
+            "artist": "Alemu Aga",
+            "track": "Abba Abba",
+            "category": "ancient",
+            "function": "The Rattle",
+            "yt": "Alemu Aga Begena"
+        },
+        {
+            "id": 9,
+            "artist": "Ryoji Ikeda",
+            "track": "Test Pattern [no.11]",
+            "category": "glitch",
+            "function": "Binary Barcode",
+            "yt": "Ryoji Ikeda Test Pattern"
+        },
+        {
+            "id": 10,
+            "artist": "Amnesia Scanner",
+            "track": "AS Chaos",
+            "category": "glitch",
+            "function": "Sentient Server",
+            "yt": "Amnesia Scanner AS Chaos"
+        },
+        {
+            "id": 11,
+            "artist": "SOPHIE",
+            "track": "Ponyboy",
+            "category": "mutant",
+            "function": "Polymer Skin",
+            "yt": "SOPHIE Ponyboy"
+        },
+        {
+            "id": 12,
+            "artist": "Arca",
+            "track": "Mutant",
+            "category": "mutant",
+            "function": "Fluid Morphology",
+            "yt": "Arca Mutant"
+        },
+        {
+            "id": 13,
+            "artist": "Senyawa",
+            "track": "Alkisah",
+            "category": "lithic",
+            "function": "Decentralized Mass",
+            "yt": "Senyawa Alkisah"
+        },
+        {
+            "id": 14,
+            "artist": "Senyawa",
+            "track": "Muntur",
+            "category": "lithic",
+            "function": "Vocal Materiality",
+            "yt": "Senyawa Muntur"
+        },
+        {
+            "id": 15,
+            "artist": "Sote",
+            "track": "Parallel Persia",
+            "category": "velocity",
+            "function": "Santur Accelerator",
+            "yt": "Sote Parallel Persia"
+        },
+        {
+            "id": 16,
+            "artist": "Sote",
+            "track": "Shahr Farang",
+            "category": "velocity",
+            "function": "FM Velocity",
+            "yt": "Sote Shahr Farang"
+        },
+        {
+            "id": 17,
+            "artist": "Nicolás Jaar",
+            "track": "Cenizas",
+            "category": "atmospheric",
+            "function": "Ash Field",
+            "yt": "Nicolas Jaar Cenizas"
+        },
+        {
+            "id": 18,
+            "artist": "Nicolás Jaar",
+            "track": "Space Is Only Noise",
+            "category": "atmospheric",
+            "function": "Vacuum Texture",
+            "yt": "Nicolas Jaar Space Is Only Noise"
+        },
+        {
+            "id": 19,
+            "artist": "The Haxan Cloak",
+            "track": "Mara",
+            "category": "cavern",
+            "function": "Sleep Paralysis",
+            "yt": "Haxan Cloak Mara"
+        },
+        {
+            "id": 20,
+            "artist": "The Haxan Cloak",
+            "track": "The Drop",
+            "category": "cavern",
+            "function": "Vertical Descent",
+            "yt": "Haxan Cloak The Drop"
+        },
+        {
+            "id": 21,
+            "artist": "Sunn O)))",
+            "track": "Aghartha",
+            "category": "cavern",
+            "function": "Tectonic Drone",
+            "yt": "Sunn O Aghartha"
+        },
+        {
+            "id": 22,
+            "artist": "Sunn O)))",
+            "track": "Alice",
+            "category": "cavern",
+            "function": "Amplifier Worship",
+            "yt": "Sunn O Alice"
+        },
+        {
+            "id": 23,
+            "artist": "Earth",
+            "track": "Seven Angels",
+            "category": "lithic",
+            "function": "Geological Tempo",
+            "yt": "Earth Seven Angels"
+        },
+        {
+            "id": 24,
+            "artist": "Earth",
+            "track": "Teeth of Lions",
+            "category": "lithic",
+            "function": "Erosion Rate",
+            "yt": "Earth Teeth of Lions"
+        },
+        {
+            "id": 25,
+            "artist": "Boris",
+            "track": "Flood",
+            "category": "lithic",
+            "function": "Hydraulic Pressure",
+            "yt": "Boris Flood"
+        },
+        {
+            "id": 26,
+            "artist": "Boris",
+            "track": "Absolutego",
+            "category": "cavern",
+            "function": "Infinite Descent",
+            "yt": "Boris Absolutego"
+        },
+        {
+            "id": 27,
+            "artist": "Keiji Haino",
+            "track": "So Black Is Myself",
+            "category": "lithic",
+            "function": "Vocal Friction",
+            "yt": "Keiji Haino So Black Is Myself"
+        },
+        {
+            "id": 28,
+            "artist": "Merzbow",
+            "track": "Pulse Demon",
+            "category": "glitch",
+            "function": "Noise Wall",
+            "yt": "Merzbow Pulse Demon"
+        },
+        {
+            "id": 29,
+            "artist": "Merzbow",
+            "track": "Woodpecker No. 1",
+            "category": "glitch",
+            "function": "Percussive Static",
+            "yt": "Merzbow Woodpecker"
+        },
+        {
+            "id": 30,
+            "artist": "Pharmakon",
+            "track": "Bestial Burden",
+            "category": "biological",
+            "function": "Organ Failure",
+            "yt": "Pharmakon Bestial Burden"
+        },
+        {
+            "id": 31,
+            "artist": "Pharmakon",
+            "track": "Crawling on Bruised Knees",
+            "category": "biological",
+            "function": "Body Horror",
+            "yt": "Pharmakon Crawling"
+        },
+        {
+            "id": 32,
+            "artist": "Prurient",
+            "track": "Frozen Niagara Falls",
+            "category": "cavern",
+            "function": "Ice Core",
+            "yt": "Prurient Frozen Niagara Falls"
+        },
+        {
+            "id": 33,
+            "artist": "The Body",
+            "track": "I Shall Die Here",
+            "category": "cavern",
+            "function": "Terminal Mass",
+            "yt": "The Body I Shall Die Here"
+        },
+        {
+            "id": 34,
+            "artist": "Bohren & der Club of Gore",
+            "track": "Midnight Radio",
+            "category": "atmospheric",
+            "function": "Noir Dust",
+            "yt": "Bohren Midnight Radio"
+        },
+        {
+            "id": 35,
+            "artist": "Bohren & der Club of Gore",
+            "track": "Prowler",
+            "category": "atmospheric",
+            "function": "Slow Jazz Doom",
+            "yt": "Bohren Prowler"
+        },
+        {
+            "id": 36,
+            "artist": "Coil",
+            "track": "Musick to Play in the Dark",
+            "category": "ghost",
+            "function": "Nocturnal Logic",
+            "yt": "Coil Musick to Play in the Dark"
+        },
+        {
+            "id": 37,
+            "artist": "Coil",
+            "track": "Time Machines",
+            "category": "ghost",
+            "function": "Drone Trance",
+            "yt": "Coil Time Machines"
+        },
+        {
+            "id": 38,
+            "artist": "Nurse With Wound",
+            "track": "Soliloquy for Lilith",
+            "category": "ghost",
+            "function": "Spectral Loop",
+            "yt": "Nurse With Wound Soliloquy"
+        },
+        {
+            "id": 39,
+            "artist": "Current 93",
+            "track": "Sleep Has His House",
+            "category": "ghost",
+            "function": "Dream Logic",
+            "yt": "Current 93 Sleep Has His House"
+        },
+        {
+            "id": 40,
+            "artist": "Lustmord",
+            "track": "Heresy",
+            "category": "cavern",
+            "function": "Dark Ambient Core",
+            "yt": "Lustmord Heresy"
+        },
+        {
+            "id": 41,
+            "artist": "Demdike Stare",
+            "track": "Tryptych",
+            "category": "ghost",
+            "function": "Hauntology",
+            "yt": "Demdike Stare Tryptych"
+        },
+        {
+            "id": 42,
+            "artist": "Demdike Stare",
+            "track": "Testpressing",
+            "category": "glitch",
+            "function": "Vinyl Decay",
+            "yt": "Demdike Stare Testpressing"
+        },
+        {
+            "id": 43,
+            "artist": "Raime",
+            "track": "Quarter Turns Over a Living Line",
+            "category": "cavern",
+            "function": "Industrial Dread",
+            "yt": "Raime Quarter Turns"
+        },
+        {
+            "id": 44,
+            "artist": "Puce Mary",
+            "track": "The Drought",
+            "category": "biological",
+            "function": "Dehydration",
+            "yt": "Puce Mary The Drought"
+        },
+        {
+            "id": 45,
+            "artist": "Lingua Ignota",
+            "track": "Caligula",
+            "category": "biological",
+            "function": "Operatic Violence",
+            "yt": "Lingua Ignota Caligula"
+        },
+        {
+            "id": 46,
+            "artist": "Lingua Ignota",
+            "track": "All Bitches Die",
+            "category": "biological",
+            "function": "Vocal Trauma",
+            "yt": "Lingua Ignota All Bitches Die"
+        },
+        {
+            "id": 47,
+            "artist": "Fire-Toolz",
+            "track": "Eternal Home",
+            "category": "mutant",
+            "function": "Genre Collapse",
+            "yt": "Fire-Toolz Eternal Home"
+        },
+        {
+            "id": 48,
+            "artist": "Machine Girl",
+            "track": "WLFGRL",
+            "category": "velocity",
+            "function": "Breakcore Slingshot",
+            "yt": "Machine Girl WLFGRL"
+        },
+        {
+            "id": 49,
+            "artist": "Black Dice",
+            "track": "Beaches & Canyons",
+            "category": "lithic",
+            "function": "Noise Topology",
+            "yt": "Black Dice Beaches Canyons"
+        },
+        {
+            "id": 50,
+            "artist": "Lightning Bolt",
+            "track": "Wonderful Rainbow",
+            "category": "velocity",
+            "function": "Rhythmic Overload",
+            "yt": "Lightning Bolt Wonderful Rainbow"
+        },
+        {
+            "id": 51,
+            "artist": "Mica Levi",
+            "track": "Under the Skin OST",
+            "category": "ghost",
+            "function": "Alien Seduction",
+            "yt": "Mica Levi Under the Skin"
+        },
+        {
+            "id": 52,
+            "artist": "Mica Levi",
+            "track": "Jackie OST",
+            "category": "ghost",
+            "function": "Grief Dissonance",
+            "yt": "Mica Levi Jackie"
+        },
+        {
+            "id": 53,
+            "artist": "Hildur Guðnadóttir",
+            "track": "Chernobyl OST",
+            "category": "cavern",
+            "function": "Radioactive Drone",
+            "yt": "Hildur Gudnadottir Chernobyl"
+        },
+        {
+            "id": 54,
+            "artist": "Hildur Guðnadóttir",
+            "track": "Joker OST",
+            "category": "biological",
+            "function": "Cello Descent",
+            "yt": "Hildur Gudnadottir Joker"
+        },
+        {
+            "id": 55,
+            "artist": "Ben Frost",
+            "track": "A U R O R A",
+            "category": "velocity",
+            "function": "Glacial Violence",
+            "yt": "Ben Frost A U R O R A"
+        },
+        {
+            "id": 56,
+            "artist": "Ben Frost",
+            "track": "Dark OST",
+            "category": "ghost",
+            "function": "Temporal Loop",
+            "yt": "Ben Frost Dark OST"
+        },
+        {
+            "id": 57,
+            "artist": "Tim Hecker",
+            "track": "Virgins",
+            "category": "atmospheric",
+            "function": "Organ Decay",
+            "yt": "Tim Hecker Virgins"
+        },
+        {
+            "id": 58,
+            "artist": "Tim Hecker",
+            "track": "Ravedeath, 1972",
+            "category": "atmospheric",
+            "function": "Church Destruction",
+            "yt": "Tim Hecker Ravedeath 1972"
+        },
+        {
+            "id": 59,
+            "artist": "Tim Hecker",
+            "track": "Konoyo",
+            "category": "ancient",
+            "function": "Gagaku Ghost",
+            "yt": "Tim Hecker Konoyo"
+        },
+        {
+            "id": 60,
+            "artist": "Grouper",
+            "track": "Ruins",
+            "category": "atmospheric",
+            "function": "Piano Dust",
+            "yt": "Grouper Ruins"
+        },
+        {
+            "id": 61,
+            "artist": "Grouper",
+            "track": "Dragging a Dead Deer",
+            "category": "ghost",
+            "function": "Spectral Folk",
+            "yt": "Grouper Dragging Dead Deer"
+        },
+        {
+            "id": 62,
+            "artist": "Fennesz",
+            "track": "Endless Summer",
+            "category": "atmospheric",
+            "function": "Glitch Beach",
+            "yt": "Fennesz Endless Summer"
+        },
+        {
+            "id": 63,
+            "artist": "Alva Noto",
+            "track": "Xerrox Vol. 3",
+            "category": "glitch",
+            "function": "Xerox Copy",
+            "yt": "Alva Noto Xerrox"
+        },
+        {
+            "id": 64,
+            "artist": "Alva Noto + Ryuichi Sakamoto",
+            "track": "Vrioon",
+            "category": "glitch",
+            "function": "Minimal Collision",
+            "yt": "Alva Noto Sakamoto Vrioon"
+        },
+        {
+            "id": 65,
+            "artist": "Autechre",
+            "track": "Confield",
+            "category": "glitch",
+            "function": "Algorithmic Maze",
+            "yt": "Autechre Confield"
+        },
+        {
+            "id": 66,
+            "artist": "Autechre",
+            "track": "elseq 1-5",
+            "category": "glitch",
+            "function": "Machine Learning",
+            "yt": "Autechre elseq"
+        },
+        {
+            "id": 67,
+            "artist": "Aphex Twin",
+            "track": "Selected Ambient Works Vol. II",
+            "category": "ghost",
+            "function": "Dream State",
+            "yt": "Aphex Twin Selected Ambient Works 2"
+        },
+        {
+            "id": 68,
+            "artist": "Aphex Twin",
+            "track": "Drukqs",
+            "category": "velocity",
+            "function": "Prepared Piano Chaos",
+            "yt": "Aphex Twin Drukqs"
+        },
+        {
+            "id": 69,
+            "artist": "Boards of Canada",
+            "track": "Music Has the Right to Children",
+            "category": "ghost",
+            "function": "Analog Nostalgia",
+            "yt": "Boards of Canada Music Has the Right"
+        },
+        {
+            "id": 70,
+            "artist": "Boards of Canada",
+            "track": "Geogaddi",
+            "category": "ghost",
+            "function": "Subliminal Dread",
+            "yt": "Boards of Canada Geogaddi"
+        },
+        {
+            "id": 71,
+            "artist": "Oneohtrix Point Never",
+            "track": "Replica",
+            "category": "glitch",
+            "function": "Sample Loop",
+            "yt": "Oneohtrix Point Never Replica"
+        },
+        {
+            "id": 72,
+            "artist": "Oneohtrix Point Never",
+            "track": "Garden of Delete",
+            "category": "mutant",
+            "function": "Alien Pop",
+            "yt": "Oneohtrix Point Never Garden of Delete"
+        },
+        {
+            "id": 73,
+            "artist": "Oneohtrix Point Never",
+            "track": "Age Of",
+            "category": "mutant",
+            "function": "AI Opera",
+            "yt": "Oneohtrix Point Never Age Of"
+        },
+        {
+            "id": 74,
+            "artist": "Actress",
+            "track": "R.I.P.",
+            "category": "ghost",
+            "function": "Ghost Techno",
+            "yt": "Actress R.I.P."
+        },
+        {
+            "id": 75,
+            "artist": "Actress",
+            "track": "Ghettoville",
+            "category": "atmospheric",
+            "function": "Urban Decay",
+            "yt": "Actress Ghettoville"
+        },
+        {
+            "id": 76,
+            "artist": "Burial",
+            "track": "Untrue",
+            "category": "atmospheric",
+            "function": "London Fog",
+            "yt": "Burial Untrue"
+        },
+        {
+            "id": 77,
+            "artist": "Burial",
+            "track": "Rival Dealer",
+            "category": "ghost",
+            "function": "Night Bus",
+            "yt": "Burial Rival Dealer"
+        },
+        {
+            "id": 78,
+            "artist": "Andy Stott",
+            "track": "Faith in Strangers",
+            "category": "cavern",
+            "function": "Dub Abyss",
+            "yt": "Andy Stott Faith in Strangers"
+        },
+        {
+            "id": 79,
+            "artist": "Andy Stott",
+            "track": "Too Many Voices",
+            "category": "ghost",
+            "function": "Voice Sample",
+            "yt": "Andy Stott Too Many Voices"
+        },
+        {
+            "id": 80,
+            "artist": "The Caretaker",
+            "track": "Everywhere at the End of Time",
+            "category": "ghost",
+            "function": "Memory Decay",
+            "yt": "The Caretaker Everywhere End of Time"
+        },
+        {
+            "id": 81,
+            "artist": "William Basinski",
+            "track": "The Disintegration Loops",
+            "category": "atmospheric",
+            "function": "Tape Decay",
+            "yt": "William Basinski Disintegration Loops"
+        },
+        {
+            "id": 82,
+            "artist": "Leyland Kirby",
+            "track": "Sadly, the Future",
+            "category": "ghost",
+            "function": "Melancholic Static",
+            "yt": "Leyland Kirby Sadly the Future"
+        },
+        {
+            "id": 83,
+            "artist": "Thomas Köner",
+            "track": "Permafrost",
+            "category": "cavern",
+            "function": "Arctic Drone",
+            "yt": "Thomas Koner Permafrost"
+        },
+        {
+            "id": 84,
+            "artist": "Biosphere",
+            "track": "Substrata",
+            "category": "atmospheric",
+            "function": "Polar Ambient",
+            "yt": "Biosphere Substrata"
+        },
+        {
+            "id": 85,
+            "artist": "Loscil",
+            "track": "Submers",
+            "category": "atmospheric",
+            "function": "Underwater",
+            "yt": "Loscil Submers"
+        },
+        {
+            "id": 86,
+            "artist": "Stars of the Lid",
+            "track": "And Their Refinement",
+            "category": "atmospheric",
+            "function": "String Drone",
+            "yt": "Stars of the Lid And Their Refinement"
+        },
+        {
+            "id": 87,
+            "artist": "Eleh",
+            "track": "Location Momentum",
+            "category": "cavern",
+            "function": "Pure Sine",
+            "yt": "Eleh Location Momentum"
+        },
+        {
+            "id": 88,
+            "artist": "Phill Niblock",
+            "track": "Touch Three",
+            "category": "lithic",
+            "function": "Microtonal Mass",
+            "yt": "Phill Niblock Touch Three"
+        },
+        {
+            "id": 89,
+            "artist": "La Monte Young",
+            "track": "The Well-Tuned Piano",
+            "category": "ancient",
+            "function": "Just Intonation",
+            "yt": "La Monte Young Well-Tuned Piano"
+        },
+        {
+            "id": 90,
+            "artist": "Terry Riley",
+            "track": "In C",
+            "category": "geometric",
+            "function": "Modular Loop",
+            "yt": "Terry Riley In C"
+        },
+        {
+            "id": 91,
+            "artist": "Steve Reich",
+            "track": "Music for 18 Musicians",
+            "category": "geometric",
+            "function": "Phasing Pulse",
+            "yt": "Steve Reich Music for 18 Musicians"
+        },
+        {
+            "id": 92,
+            "artist": "Julius Eastman",
+            "track": "Evil Nigger",
+            "category": "geometric",
+            "function": "Militant Minimalism",
+            "yt": "Julius Eastman Evil Nigger"
+        },
+        {
+            "id": 93,
+            "artist": "Arvo Pärt",
+            "track": "Tabula Rasa",
+            "category": "ancient",
+            "function": "Tintinnabuli",
+            "yt": "Arvo Part Tabula Rasa"
+        },
+        {
+            "id": 94,
+            "artist": "Arvo Pärt",
+            "track": "Fratres",
+            "category": "ancient",
+            "function": "Sacred Geometry",
+            "yt": "Arvo Part Fratres"
+        },
+        {
+            "id": 95,
+            "artist": "Gyorgy Ligeti",
+            "track": "Atmosphères",
+            "category": "atmospheric",
+            "function": "Cluster Canon",
+            "yt": "Ligeti Atmospheres"
+        },
+        {
+            "id": 96,
+            "artist": "Gyorgy Ligeti",
+            "track": "Lux Aeterna",
+            "category": "ghost",
+            "function": "Choral Mass",
+            "yt": "Ligeti Lux Aeterna"
+        },
+        {
+            "id": 97,
+            "artist": "Pauline Oliveros",
+            "track": "Deep Listening",
+            "category": "cavern",
+            "function": "Cistern Reverb",
+            "yt": "Pauline Oliveros Deep Listening"
+        },
+        {
+            "id": 98,
+            "artist": "Éliane Radigue",
+            "track": "Trilogie de la Mort",
+            "category": "ancient",
+            "function": "ARP Drone",
+            "yt": "Eliane Radigue Trilogie Mort"
+        },
+        {
+            "id": 99,
+            "artist": "Pharoah Sanders",
+            "track": "The Creator Has a Master Plan",
+            "category": "ancient",
+            "function": "Spiritual Jazz",
+            "yt": "Pharoah Sanders Creator Master Plan"
+        },
+        {
+            "id": 100,
+            "artist": "Alice Coltrane",
+            "track": "Journey in Satchidananda",
+            "category": "ancient",
+            "function": "Harp Ascension",
+            "yt": "Alice Coltrane Journey Satchidananda"
+        },
+        {
+            "id": 101,
+            "artist": "Don Cherry",
+            "track": "Organic Music Society",
+            "category": "ancient",
+            "function": "Global Ritual",
+            "yt": "Don Cherry Organic Music Society"
+        },
+        {
+            "id": 102,
+            "artist": "Alhaji Waziri Oshomah",
+            "track": "World Spirituality Classics",
+            "category": "ancient",
+            "function": "Nigerian Prayer",
+            "yt": "Waziri Oshomah World Spirituality"
+        },
+        {
+            "id": 103,
+            "artist": "Hailu Mergia",
+            "track": "Lala Belu",
+            "category": "ancient",
+            "function": "Ethiopian Keys",
+            "yt": "Hailu Mergia Lala Belu"
+        },
+        {
+            "id": 104,
+            "artist": "Mulatu Astatke",
+            "track": "Ethiopiques Vol. 4",
+            "category": "ancient",
+            "function": "Ethio-Jazz",
+            "yt": "Mulatu Astatke Ethiopiques"
+        },
+        {
+            "id": 105,
+            "artist": "Jaubi",
+            "track": "Nafs at Peace",
+            "category": "ancient",
+            "function": "Lahore Jazz",
+            "yt": "Jaubi Nafs at Peace"
+        },
+        {
+            "id": 106,
+            "artist": "Shabaka Hutchings",
+            "track": "Wisdom of Elders",
+            "category": "ancient",
+            "function": "UK Spiritual",
+            "yt": "Shabaka Hutchings Wisdom of Elders"
+        },
+        {
+            "id": 107,
+            "artist": "Sons of Kemet",
+            "track": "Your Queen Is a Reptile",
+            "category": "velocity",
+            "function": "Tuba Polyrhythm",
+            "yt": "Sons of Kemet Queen Reptile"
+        },
+        {
+            "id": 108,
+            "artist": "Makaya McCraven",
+            "track": "Universal Beings",
+            "category": "geometric",
+            "function": "Beat Science",
+            "yt": "Makaya McCraven Universal Beings"
+        },
+        {
+            "id": 109,
+            "artist": "Nubya Garcia",
+            "track": "Source",
+            "category": "biological",
+            "function": "Breath Saxophone",
+            "yt": "Nubya Garcia Source"
+        },
+        {
+            "id": 110,
+            "artist": "Angel Bat Dawid",
+            "track": "The Oracle",
+            "category": "ancient",
+            "function": "Clarinet Prophecy",
+            "yt": "Angel Bat Dawid The Oracle"
+        },
+        {
+            "id": 111,
+            "artist": "JPEGMAFIA",
+            "track": "Veteran",
+            "category": "glitch",
+            "function": "Noise Rap",
+            "yt": "JPEGMAFIA Veteran"
+        },
+        {
+            "id": 112,
+            "artist": "Death Grips",
+            "track": "The Money Store",
+            "category": "velocity",
+            "function": "Industrial Rap",
+            "yt": "Death Grips Money Store"
+        },
+        {
+            "id": 113,
+            "artist": "clipping.",
+            "track": "Splendor & Misery",
+            "category": "glitch",
+            "function": "Afrofuturist Noise",
+            "yt": "clipping Splendor Misery"
+        },
+        {
+            "id": 114,
+            "artist": "Dälek",
+            "track": "Absence",
+            "category": "cavern",
+            "function": "Shoegaze Rap",
+            "yt": "Dalek Absence"
+        },
+        {
+            "id": 115,
+            "artist": "Shabazz Palaces",
+            "track": "Black Up",
+            "category": "ghost",
+            "function": "Astral Hip-Hop",
+            "yt": "Shabazz Palaces Black Up"
+        },
+        {
+            "id": 116,
+            "artist": "Flying Lotus",
+            "track": "Cosmogramma",
+            "category": "velocity",
+            "function": "Jazz Warp",
+            "yt": "Flying Lotus Cosmogramma"
+        },
+        {
+            "id": 117,
+            "artist": "Flying Lotus",
+            "track": "You're Dead!",
+            "category": "mutant",
+            "function": "Death Suite",
+            "yt": "Flying Lotus You're Dead"
+        },
+        {
+            "id": 118,
+            "artist": "Thundercat",
+            "track": "Drunk",
+            "category": "biological",
+            "function": "Bass Organism",
+            "yt": "Thundercat Drunk"
+        },
+        {
+            "id": 119,
+            "artist": "Klein",
+            "track": "Lifetime",
+            "category": "mutant",
+            "function": "Voice Mutation",
+            "yt": "Klein Lifetime"
+        },
+        {
+            "id": 120,
+            "artist": "Eartheater",
+            "track": "Phoenix: Flames Are Dew Upon My Skin",
+            "category": "mutant",
+            "function": "Operatic Glitch",
+            "yt": "Eartheater Phoenix Flames"
+        }
+    ]
+}

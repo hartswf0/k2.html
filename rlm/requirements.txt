@@ -1,0 +1,9 @@
+# RLM - Recursive Language Model Environment
+# Core dependencies
+
+openai>=1.0.0        # LLM API client
+python-dotenv>=1.0   # Environment variable loading
+
+# Optional but recommended
+rich>=13.0           # Pretty terminal output
+httpx>=0.25          # Async HTTP client (used by openai)

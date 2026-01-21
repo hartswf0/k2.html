@@ -1,0 +1,223 @@
+{
+  "project": "Latent Radio",
+  "description": "The Archive of Heavy Materiality and Xeno-Logic",
+  "sources": ["L1.md", "L2.md"],
+  "tracks": [
+    {
+      "id": 1,
+      "artist": "Senyawa",
+      "track": "Istana",
+      "album": "Alkisah",
+      "function": "Lithic Resonance / Structural Stress",
+      "operator": "The Seismic Anchor",
+      "setlist": 1,
+      "youtube_search": "Senyawa Istana",
+      "bpm": 145,
+      "key": "F/Eb Major (microtonal)",
+      "mp3_path": null
+    },
+    {
+      "id": 2,
+      "artist": "Sote",
+      "track": "Hyper-Cenosis",
+      "album": "Sacred Horror in Design / Parallel Persia",
+      "function": "Variable Velocity / Orbital Slingshot",
+      "operator": "The Keplerian Speed-Run",
+      "setlist": 1,
+      "youtube_search": "Sote Sacred Horror in Design",
+      "bpm": null,
+      "key": null,
+      "mp3_path": null
+    },
+    {
+      "id": 3,
+      "artist": "Nicolás Jaar",
+      "track": "Agosto",
+      "album": "Cenizas",
+      "function": "Material Dust / High-Vertical Filtering",
+      "operator": "The Atmospheric Floor",
+      "setlist": 1,
+      "youtube_search": "Nicolas Jaar Agosto",
+      "bpm": 100,
+      "key": null,
+      "mp3_path": null
+    },
+    {
+      "id": 4,
+      "artist": "The Haxan Cloak",
+      "track": "Excavation (Part 1)",
+      "album": "Excavation",
+      "function": "Seismic Dread / The Zimmer Scale",
+      "operator": "The Deep Cavern",
+      "setlist": 1,
+      "youtube_search": "Haxan Cloak Excavation Part 1",
+      "bpm": 78,
+      "key": "Eb/E minor",
+      "mp3_path": null
+    },
+    {
+      "id": 5,
+      "artist": "Moondog",
+      "track": "Bird's Lament",
+      "album": "Moondog",
+      "function": "Base-8 Geometry / Celestial Timing",
+      "operator": "The Geometric Pulse",
+      "setlist": 2,
+      "youtube_search": "Moondog Bird's Lament",
+      "bpm": null,
+      "key": "D (Open Key 3d)",
+      "mp3_path": null
+    },
+    {
+      "id": 6,
+      "artist": "Oliver Coates",
+      "track": "Caregiver part 1 (breathing)",
+      "album": "skins n slime",
+      "function": "Respiratory Rate / Bio-Logic",
+      "operator": "The Biological Lung",
+      "setlist": 2,
+      "youtube_search": "Oliver Coates Caregiver",
+      "bpm": 65,
+      "key": null,
+      "mp3_path": null
+    },
+    {
+      "id": 7,
+      "artist": "Lucrecia Dalt",
+      "track": "Seraphim",
+      "album": null,
+      "function": "Tidally Locked Harmony / Microtonal Gravity",
+      "operator": "The Xeno-Pop Ghost",
+      "setlist": 2,
+      "youtube_search": "Lucrecia Dalt Seraphim",
+      "bpm": null,
+      "key": "Fm (9m)",
+      "mp3_path": null
+    },
+    {
+      "id": 8,
+      "artist": "Alemu Aga",
+      "track": "Abba Abba",
+      "album": "Bägänna Of Ethiopia, The Harp Of King David",
+      "function": "The Rattle / The Ancient Unstable",
+      "operator": "The Ancient Engine (Master Root)",
+      "setlist": 2,
+      "youtube_search": "Alemu Aga Begena",
+      "bpm": 137,
+      "key": null,
+      "mp3_path": null
+    },
+    {
+      "id": 9,
+      "artist": "Ryoji Ikeda",
+      "track": "Test Pattern [no.11]",
+      "album": "test pattern",
+      "function": "Data Sonification / Threshold Limit",
+      "operator": "The Binary Barcode",
+      "setlist": 3,
+      "youtube_search": "Ryoji Ikeda Test Pattern",
+      "bpm": null,
+      "key": null,
+      "mp3_path": null
+    },
+    {
+      "id": 10,
+      "artist": "Amnesia Scanner",
+      "track": "AS Chaos",
+      "album": "Another Life",
+      "function": "The Sentient Server / Memetic Feedback",
+      "operator": "The Deconstructed Club",
+      "setlist": 3,
+      "youtube_search": "Amnesia Scanner AS Chaos",
+      "bpm": 137,
+      "key": "F# Minor",
+      "mp3_path": null
+    },
+    {
+      "id": 11,
+      "artist": "SOPHIE",
+      "track": "Ponyboy",
+      "album": "Oil of Every Pearl's Un-Insides",
+      "function": "Polymer Synthesis / The Plastic Real",
+      "operator": "The Hyper-Synthetic Self",
+      "setlist": 3,
+      "youtube_search": "SOPHIE Ponyboy",
+      "bpm": 108,
+      "key": "Db Major (3B)",
+      "mp3_path": null
+    },
+    {
+      "id": 12,
+      "artist": "Arca",
+      "track": "Mutant",
+      "album": "Mutant",
+      "function": "Fluid Morphology / The Grotesque",
+      "operator": "The Mutant Landscape",
+      "setlist": 3,
+      "youtube_search": "Arca Mutant",
+      "bpm": null,
+      "key": null,
+      "mp3_path": null
+    }
+  ],
+  "non_music_sources": [
+    {
+      "id": "nm_1",
+      "name": "Lincolnshire Poacher (Numbers Station)",
+      "category": "Dead Channel",
+      "frequency_range": "3-30 MHz (shortwave)",
+      "audio_profile": "Spy signal + ionospheric static",
+      "youtube_search": "Lincolnshire Poacher numbers station"
+    },
+    {
+      "id": "nm_2",
+      "name": "Black Smoker (Hydrothermal Vent)",
+      "category": "Hydro-Thermal",
+      "frequency_range": "10-250 Hz",
+      "audio_profile": "Broadband roar + resonant drone",
+      "youtube_search": "Black smoker hydrothermal vent sounds"
+    },
+    {
+      "id": "nm_3",
+      "name": "IBM Selectric Typewriter",
+      "category": "Micro-Mechanical",
+      "frequency_range": null,
+      "audio_profile": "Slowed 800% = log drum cathedral",
+      "youtube_search": "IBM Selectric typewriter sound"
+    },
+    {
+      "id": "nm_4",
+      "name": "Parker Solar Probe",
+      "category": "Solar Wind",
+      "frequency_range": ">10 kHz (sonified)",
+      "audio_profile": "Whistler waves + Langmuir oscillations",
+      "youtube_search": "Parker Solar Probe sounds NASA"
+    },
+    {
+      "id": "nm_5",
+      "name": "1950s Relay Computer",
+      "category": "Electromechanical",
+      "frequency_range": null,
+      "audio_profile": "Metallic clacking, skeletal rhythm",
+      "youtube_search": "Relay computer clicking sounds"
+    },
+    {
+      "id": "nm_6",
+      "name": "LFAS Sonar",
+      "category": "Underwater Acoustics",
+      "frequency_range": "100-500 Hz",
+      "audio_profile": "Long HFM sweeps, glissando of dread",
+      "youtube_search": "Low frequency active sonar LFAS"
+    }
+  ],
+  "transition_logic": [
+    { "from": 1, "to": 2, "name": "The Slingshot", "note": "Friction ignites velocity" },
+    { "from": 2, "to": 3, "name": "The Drop", "note": "Loss of velocity creates vacuum" },
+    { "from": 3, "to": 4, "name": "The Descent", "note": "Floor collapses into cavern" },
+    { "from": 4, "to": 5, "name": "The Sunrise", "note": "Geometric pulse clears dread" },
+    { "from": 5, "to": 6, "name": "The Breath", "note": "Machine gains a lung" },
+    { "from": 6, "to": 7, "name": "The Ghost", "note": "Biological lung exhales a ghost" },
+    { "from": 7, "to": 8, "name": "The Source", "note": "Xeno-Future reveals Ancient Past" },
+    { "from": 8, "to": 9, "name": "The Hard Reset", "note": "Organic glitch → digital glitch" }
+  ]
+}
