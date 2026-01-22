@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBITAL LOOM</title>
     <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔮</text></svg>">
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%2300ffff' stroke-width='2'/><circle cx='50' cy='50' r='30' fill='none' stroke='%23ff00ff' stroke-width='2'/><circle cx='50' cy='50' r='15' fill='none' stroke='%23ffff00' stroke-width='2'/><circle cx='50' cy='50' r='5' fill='%2300ffff'/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
@@ -143,16 +143,15 @@
         /* --- HUD --- */
         #status-bar {
             position: absolute;
-            top: -50px;
-            /* Hidden initially */
+            top: max(15px, env(safe-area-inset-top));
             left: 20px;
             z-index: 20;
             pointer-events: none;
-            transition: top 1s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
         #status-bar.visible {
-            top: 20px;
+            /* Already visible */
+            opacity: 1;
         }
 
         .status-row {
@@ -206,19 +205,21 @@
         /* --- CONTROLS --- */
         .controls-container {
             position: absolute;
-            bottom: -100px;
-            /* Hidden initially */
+            bottom: max(20px, env(safe-area-inset-bottom) + 10px);
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
             display: flex;
-            gap: 15px;
-            pointer-events: none;
-            transition: bottom 1s cubic-bezier(0.19, 1, 0.22, 1);
+            flex-direction: column;
+            gap: 8px;
+            /* Mobile Fixes */
+            width: 95%;
+            max-width: 500px;
         }
 
         .controls-container.visible {
-            bottom: 30px;
+            /* Keeps pointer events active */
+            pointer-events: auto;
         }
 
         .control-panel {
@@ -230,6 +231,8 @@
             flex-direction: column;
             align-items: center;
             backdrop-filter: blur(4px);
+            /* Mobile Sizing */
+            flex: 1 1 120px;
         }
 
         input[type=range] {
@@ -322,110 +325,10 @@
                 box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
             }
         }
-
-        /* --- TUTORIAL OVERLAY --- */
-        #tutorial-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 150;
-            display: none;
-            backdrop-filter: blur(8px);
-        }
-
-        .tut-card {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            text-align: center;
-            border: 1px solid #00ffff;
-            background: #050505;
-            padding: 30px;
-            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
-        }
-
-        .tut-title {
-            color: #00ffff;
-            font-size: 14px;
-            letter-spacing: 4px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
-
-        .tut-body {
-            color: #ccc;
-            font-size: 11px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .tut-icon-large {
-            transform: scale(2);
-            margin-bottom: 15px;
-            display: inline-block;
-        }
-
-        /* --- HELP & IO --- */
-        #help-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 30px;
-            height: 30px;
-            border: 1px solid #333;
-            color: #666;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            z-index: 30;
-            background: rgba(0, 0, 0, 0.5);
-            font-size: 12px;
-            transition: 0.3s;
-        }
-
-        #help-btn:hover {
-            border-color: #00ffff;
-            color: #00ffff;
-        }
-
-        #io-modal {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 320px;
-            background: #111;
-            border: 1px solid #00ffff;
-            padding: 20px;
-            z-index: 200;
-            display: none;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
-        }
-
-        textarea {
-            width: 100%;
-            height: 80px;
-            background: #1a1a1a;
-            color: #00ffff;
-            border: 1px solid #333;
-            font-family: monospace;
-            font-size: 10px;
-            margin: 10px 0;
-            padding: 5px;
-            outline: none;
-        }
     </style>
 </head>
 
 <body>
-
     <div class="scanline"></div>
 
     <div id="overlay">
@@ -434,23 +337,49 @@
             <div class="w-24 h-[1px] bg-white mx-auto"></div>
         </div>
         <button id="init-btn" class="btn-init">INITIALIZE</button>
-        <div id="loading-status" class="mt-6 text-[10px] text-[#00ffff] animate-pulse hidden">BOOT SEQUENCE INITIATED...
+        <div id="loading-status" class="mt-6 text-[10px] text-[#00ffff] animate-pulse hidden">BOOT SEQUENCE
+            INITIATED...
         </div>
     </div>
 
-    <!-- HUD -->
-    <div id="status-bar">
-        <div class="status-row items-center">
-            <div id="dot-beat" class="status-dot"></div>
-            <div class="text-white tracking-widest font-bold">ORBITAL LOOM v18</div>
+    <!-- TOP CONTROL STRIP - Fitts' Law compliant (44px min touch targets) -->
+    <div id="top-strip"
+        style="position:absolute; top:max(0px, env(safe-area-inset-top)); left:0; right:0; z-index:25; display:flex; align-items:stretch; background:rgba(0,0,0,0.95); border-bottom:1px solid #333;">
+        <!-- BPM SECTION -->
+        <div style="display:flex; align-items:center; padding:0 8px; gap:6px; border-right:1px solid #333;">
+            <div id="dot-beat" class="status-dot" style="width:10px; height:10px;"></div>
+            <input type="range" id="bpm-slider" min="60" max="180" value="120" style="width:50px; height:24px;">
+            <div id="bpm-val" style="font-size:12px; color:#0f0; font-weight:bold; min-width:28px;">120</div>
         </div>
-        <div class="status-row">
-            <span class="text-gray-500">MODE:</span>
-            <span id="active-status" class="text-white">STANDBY</span>
+        <!-- MODE SECTION -->
+        <div style="display:flex; border-right:1px solid #333;">
+            <button id="mode-mp3"
+                style="background:rgba(0,255,0,0.2); border:none; color:#0f0; font-size:9px; font-weight:bold; min-width:40px; min-height:44px; cursor:pointer;">MP3</button>
+            <button id="mode-radio"
+                style="background:none; border:none; border-left:1px solid #333; color:#888; font-size:9px; font-weight:bold; min-width:40px; min-height:44px; cursor:pointer;">RAD</button>
+            <button id="mode-drone"
+                style="background:none; border:none; border-left:1px solid #333; color:#888; font-size:9px; font-weight:bold; min-width:40px; min-height:44px; cursor:pointer;">DRN</button>
+        </div>
+        <!-- CRATE SECTION -->
+        <div style="flex:1; display:flex; align-items:center; padding:0 4px;">
+            <button id="crate-prev"
+                style="background:none; border:none; color:#888; font-size:18px; min-width:40px; min-height:44px; cursor:pointer; display:flex; align-items:center; justify-content:center;">◀</button>
+            <div id="crate-track"
+                style="flex:1; font-size:11px; color:#0f0; font-weight:bold; text-align:center; overflow:hidden; white-space:nowrap; padding:0 4px;">
+                --</div>
+            <button id="crate-next"
+                style="background:none; border:none; color:#888; font-size:18px; min-width:40px; min-height:44px; cursor:pointer; display:flex; align-items:center; justify-content:center;">▶</button>
+        </div>
+        <!-- LOAD SECTION -->
+        <div style="display:flex; border-left:1px solid #333;">
+            <button id="load-high"
+                style="background:rgba(255,255,0,0.15); border:none; border-right:1px solid #333; color:#FF0; font-size:10px; font-weight:bold; min-width:40px; min-height:44px; cursor:pointer;">HI</button>
+            <button id="load-mid"
+                style="background:rgba(0,255,255,0.15); border:none; border-right:1px solid #333; color:#0FF; font-size:10px; font-weight:bold; min-width:40px; min-height:44px; cursor:pointer;">MD</button>
+            <button id="load-low"
+                style="background:rgba(255,0,255,0.15); border:none; color:#F0F; font-size:10px; font-weight:bold; min-width:40px; min-height:44px; cursor:pointer;">LO</button>
         </div>
     </div>
-
-    <button id="help-btn">?</button>
 
     <!-- NOTIFICATIONS -->
     <div id="toast-container">
@@ -462,59 +391,18 @@
         <button id="rec-trigger" class="rec-btn">HOLD<br>REC</button>
     </div>
 
-    <!-- MAIN CONTROLS -->
+    <!-- BOTTOM CONTROLS -->
     <div id="controls-bar" class="controls-container">
-        <div class="control-panel">
-            <div class="label-sm">TEMPO</div>
-            <input type="range" id="bpm-slider" min="60" max="180" value="120">
-            <div id="bpm-val" class="val-lg">120 BPM</div>
+        <div style="display:flex; width:100%; gap:8px;">
+            <button id="help-btn" class="control-panel btn-ctrl"
+                style="flex:1; padding:10px; text-align:center; border-color:#00ffff; color:#00ffff;">?</button>
+            <button id="clear-btn" class="control-panel btn-ctrl"
+                style="flex:1; padding:10px; text-align:center;">CLEAR</button>
+            <button id="io-btn" class="control-panel btn-ctrl"
+                style="flex:1; padding:10px; text-align:center;">DATA</button>
+            <button onclick="window.location.href='index.html'" class="control-panel btn-ctrl"
+                style="flex:1; padding:10px; text-align:center; border-color:#666; color:#888;">HOME</button>
         </div>
-
-        <!-- MP3 CRATE BROWSER -->
-        <div class="control-panel"
-            style="min-width: 160px; border-color: #00ffff; box-shadow: 0 0 10px rgba(0,255,255,0.1);">
-            <div class="label-sm" style="color:#00ffff; text-align:center; margin-bottom:4px;">MP3 CRATE DATABASE</div>
-            <div
-                style="display:flex; gap:4px; margin-top:2px; align-items:center; background:#000; padding:2px; border:1px solid #333;">
-                <button id="crate-prev" class="btn-ctrl" style="padding:6px 10px; border:none; color:#666;">◀</button>
-                <div id="crate-track"
-                    style="flex:1; text-align:center; font-family:'Courier New', monospace; font-size:10px; color:#fff; font-weight:bold; letter-spacing:0.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    ISTANA</div>
-                <button id="crate-next" class="btn-ctrl" style="padding:6px 10px; border:none; color:#666;">▶</button>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px; margin-top:8px;">
-                <button id="load-high" class="btn-ctrl"
-                    style="padding:6px 0; font-size:8px; font-weight:bold; background:rgba(255,255,0,0.1); color:#FFFF00; border:1px solid #FFFF00;">HIGH</button>
-                <button id="load-mid" class="btn-ctrl"
-                    style="padding:6px 0; font-size:8px; font-weight:bold; background:rgba(0,255,255,0.1); color:#00FFFF; border:1px solid #00FFFF;">MID</button>
-                <button id="load-low" class="btn-ctrl"
-                    style="padding:6px 0; font-size:8px; font-weight:bold; background:rgba(255,0,255,0.1); color:#FF00FF; border:1px solid #FF00FF;">LOW</button>
-            </div>
-            <div style="text-align:center; font-size:7px; color:#555; margin-top:4px; letter-spacing:1px;">
-                AUTO-BEATMATCH ENGAGED</div>
-        </div>
-
-        <div class="control-panel flex-row gap-2">
-            <button id="clear-btn" class="btn-ctrl" style="height:100%">CLEAR</button>
-            <button id="io-btn" class="btn-ctrl" style="height:100%">DATA</button>
-            <button onclick="window.location.href='index.html'" class="btn-ctrl"
-                style="height:100%; border-color:#666; color:#aaa;">HOME</button>
-        </div>
-        <div style="display:flex; gap:2px; margin-top:6px;">
-            <button id="load-high" class="btn-ctrl"
-                style="flex:1; padding:3px 0; font-size:7px; color:#FFFF00; border-color:#FFFF00;">HIGH</button>
-            <button id="load-mid" class="btn-ctrl"
-                style="flex:1; padding:3px 0; font-size:7px; color:#00FFFF; border-color:#00FFFF;">MID</button>
-            <button id="load-low" class="btn-ctrl"
-                style="flex:1; padding:3px 0; font-size:7px; color:#FF00FF; border-color:#FF00FF;">LOW</button>
-        </div>
-    </div>
-
-    <div class="control-panel flex-row gap-2">
-        <button id="clear-btn" class="btn-ctrl">CLEAR</button>
-        <button id="io-btn" class="btn-ctrl">DATA</button>
-    </div>
     </div>
 
     <!-- TUTORIAL OVERLAY -->
@@ -524,7 +412,8 @@
             <div class="tut-title">STEP 1: TUNING</div>
             <div class="tut-body">
                 <div class="mb-4"><span class="icon-diamond"></span></div>
-                Drag the <strong>DIAMOND HANDLE</strong> around the ring to tune frequencies (Radio Stations or Synth
+                Drag the <strong>DIAMOND HANDLE</strong> around the ring to tune frequencies (Radio Stations or
+                Synth
                 Pitch).<br><br>
                 <strong>Double-Tap</strong> it to switch sources (Radio/Drone/Sampler/MP3).
             </div>
@@ -536,7 +425,8 @@
             <div class="tut-title">STEP 2: MIXING</div>
             <div class="tut-body">
                 <div class="mb-4"><span class="icon-circle"></span></div>
-                Drag the <strong>CIRCLE HANDLE</strong> (at the bottom) IN or OUT to adjust the ring size and volume.
+                Drag the <strong>CIRCLE HANDLE</strong> (at the bottom) IN or OUT to adjust the ring size and
+                volume.
             </div>
             <button class="btn-ctrl" onclick="nextTutorial(3)">NEXT >></button>
         </div>
@@ -546,7 +436,8 @@
             <div class="tut-title">STEP 3: SHAPING</div>
             <div class="tut-body">
                 <div class="mb-4"><span class="icon-square"></span></div>
-                Drag the <strong>SQUARE HANDLE</strong> (at the left) UP or DOWN to set note duration (Staccato vs
+                Drag the <strong>SQUARE HANDLE</strong> (at the left) UP or DOWN to set note duration (Staccato
+                vs
                 Drone).
             </div>
             <button class="btn-ctrl" onclick="nextTutorial(4)">NEXT >></button>
@@ -582,8 +473,23 @@
     <script>
         // --- DATA & CONFIG ---
         // === DATA & CONFIG ===
-        // Note: Gold Stations removed due to CORS/403 issues. Using local MP3s.
-        const GOLD_STATIONS = [];
+        // Note: Gold Stations may return 403 due to CORS. Using local MP3s by default.
+        const orbitalLink = new BroadcastChannel('orbital_link');
+        console.log('[LOOM] Orbital Link channel initialized.');
+
+        const GOLD_STATIONS = [
+            { name: "GROOVE SALAD", url: "https://ice6.somafm.com/groovesalad-256-mp3" },
+            { name: "DRONE ZONE", url: "https://ice6.somafm.com/dronezone-256-mp3" },
+            { name: "DEF CON", url: "https://ice6.somafm.com/defcon-256-mp3" },
+            { name: "SPACE STATION", url: "https://ice6.somafm.com/spacestation-128-mp3" },
+            { name: "SECRET AGENT", url: "https://ice6.somafm.com/secretagent-128-mp3" },
+            { name: "SUBURBS OF GOA", url: "https://ice6.somafm.com/suburbsofgoa-128-mp3" },
+            { name: "MISSION CONTROL", url: "https://ice6.somafm.com/missioncontrol-128-mp3" },
+            { name: "DEEP SPACE ONE", url: "https://ice6.somafm.com/deepspaceone-128-mp3" },
+            { name: "BEAT BLENDER", url: "https://ice6.somafm.com/beatblender-128-mp3" },
+            { name: "CLIQHOP", url: "https://ice6.somafm.com/cliqhop-128-mp3" },
+            { name: "FLUID", url: "https://ice6.somafm.com/fluid-128-mp3" }
+        ];
 
         // === LOCAL MP3 CRATE (for file:// or localhost use) ===
         const LOCAL_MP3_CRATE = [
@@ -595,7 +501,7 @@
             { name: "CAREGIVER", file: "audio/Caregiver part 1 (breathing).mp3", bpm: 60, key: "G" },
             { name: "NO TIEMPO", file: "audio/Lucrecia Dalt - No tiempo [Official Video].mp3", bpm: 115, key: "Bb" },
             { name: "BEGENA", file: "audio/Alemu Aga Besmeab - Abatachin Hoy, playing the Begenna, the Harp of David from Ethiopia.mp3", bpm: 65, key: "E" },
-            { name: "TEST PATTERN", file: "audio/test pattern #1011 [d4CX6B4soJM].mp3", bpm: 140, key: "?" },
+            { name: "TEST PATTERN", file: "audio/test pattern_1011.mp3", bpm: 140, key: "?" },
             { name: "AS CHAOS", file: "audio/Amnesia Scanner - AS Chaos feat. Pan Daijing (Lyric Video).mp3", bpm: 135, key: "Gm" },
             { name: "PONYBOY", file: "audio/SOPHIE  Ponyboy (Official Video).mp3", bpm: 128, key: "F#m" },
             { name: "MUTANT", file: "audio/Mutant [2NV_zHmgw3U].mp3", bpm: 100, key: "Cm" },
@@ -663,6 +569,7 @@
             }
 
             async init() {
+                console.log('[LOOM] Initializing Audio Engine...');
                 const AC = window.AudioContext || window.webkitAudioContext;
                 this.ctx = new AC();
 
@@ -731,7 +638,7 @@
                     t.gate.connect(t.volume);
                     t.volume.connect(this.crispFilter);
 
-                    // t.audio.crossOrigin = "anonymous"; // REMOVED: Blocks local files!
+                    t.audio.crossOrigin = "anonymous";
                     t.audio.loop = true;
                     // Only create source if not already created to avoid errors? 
                     // Actually, createMediaElementSource can generally be called once.
@@ -741,11 +648,13 @@
                     this.setMode(idx, 'MP3'); // Default to local MP3s instead of blocked radio streams
                 });
 
+                console.log('[LOOM] Audio Engine Ready. Tracks:', this.tracks.length);
                 await this.fetchStations();
                 await this.ctx.resume();
             }
 
             async fetchStations() {
+                console.log('[LOOM] Fetching radio stations from API...');
                 try {
                     const res = await fetch('https://de1.api.radio-browser.info/json/stations/search?limit=60&order=votes&hidebroken=true&is_https=true');
                     const data = await res.json();
@@ -755,8 +664,11 @@
                             url: s.url_resolved
                         }));
                         STATION_LIST = [...GOLD_STATIONS, ...newStations];
+                        console.log(`[LOOM] Loaded ${STATION_LIST.length} radio stations.`);
                     }
-                } catch (e) { }
+                } catch (e) {
+                    console.warn('[LOOM] Radio API fetch failed, using gold stations only.');
+                }
             }
 
             setMode(idx, mode) {
@@ -792,7 +704,12 @@
                     this.tuneDrone(idx, t.pitchIdx);
                 }
                 else if (mode === 'SAMPLER') {
-                    if (t.buffer) this.startSampleLoop(idx);
+                    if (t.buffer) {
+                        this.startSampleLoop(idx);
+                    } else {
+                        console.log(`[LOOM] ${t.cfg.name}: SAMPLER mode - no sample recorded yet`);
+                        showToast(`${t.cfg.name}: USE REC BUTTON`);
+                    }
                 }
                 else if (mode === 'MP3') {
                     // Create separate MP3 audio element if not exists
@@ -806,6 +723,7 @@
                     this.tuneMP3(idx, t.mp3Idx);
                 }
 
+                console.log(`[LOOM] ${t.cfg.name} mode changed: ${prevMode} -> ${mode}`);
                 showToast(`${t.cfg.name} MODE: ${mode}`);
             }
 
@@ -844,26 +762,42 @@
 
                 if (t.mode === 'MP3' && t.mp3Audio) {
                     const mp3 = LOCAL_MP3_CRATE[mp3Idx];
-                    const wasPlaying = !t.mp3Audio.paused;
-                    t.mp3Audio.src = mp3.file;
+                    const currentSrc = t.mp3Audio.src;
+                    const newSrc = mp3.file;
 
-                    // Auto beat-match to sequencer BPM if track has BPM data
-                    if (mp3.bpm > 0 && window.seqInstance) {
-                        const rate = calcBeatMatchRate(mp3.bpm, window.seqInstance.bpm);
-                        t.mp3Audio.playbackRate = Math.max(0.5, Math.min(2.0, rate));
-                        showToast(`${mp3.name} @ ${(rate * 100).toFixed(0)}%`);
-                    } else {
-                        t.mp3Audio.playbackRate = 1.0;
+                    // Only change if different file
+                    if (!currentSrc.endsWith(newSrc)) {
+                        console.log(`[LOOM] ${t.cfg.name}: Loading "${mp3.name}" (${mp3.bpm}bpm)`);
+
+                        // Error handler for load failures
+                        const handleError = (e) => {
+                            console.error(`[LOOM] ${t.cfg.name}: FAILED to load "${mp3.name}" - ${e.type || e.message}`);
+                            showToast(`ERROR: ${mp3.name} NOT FOUND`);
+                            t.mp3Audio.removeEventListener('error', handleError);
+                        };
+                        t.mp3Audio.addEventListener('error', handleError, { once: true });
+
+                        // Set src
+                        t.mp3Audio.src = newSrc;
+
+                        // Auto beat-match
+                        if (mp3.bpm > 0 && window.seqInstance) {
+                            const rate = calcBeatMatchRate(mp3.bpm, window.seqInstance.bpm);
+                            const clampedRate = Math.max(0.75, Math.min(1.5, rate));
+                            t.mp3Audio.playbackRate = clampedRate;
+                            console.log(`[LOOM] ${t.cfg.name}: Beatmatch ${mp3.bpm}→${window.seqInstance.bpm}bpm = ${(clampedRate * 100).toFixed(0)}%`);
+                        } else {
+                            t.mp3Audio.playbackRate = 1.0;
+                        }
+
+                        // Auto-play after load
+                        t.mp3Audio.play().catch(e => {
+                            if (e.name !== 'AbortError') {
+                                console.warn(`[LOOM] ${t.cfg.name}: Play failed - ${e.message}`);
+                            }
+                        });
+
                         showToast(`${t.cfg.name}: ${mp3.name}`);
-                    }
-
-                    if (wasPlaying) {
-                        t.mp3Audio.play()
-                            .then(() => console.log(`[MP3] Resuming ${mp3.name}`))
-                            .catch(e => {
-                                console.error(`[MP3] Playback Error:`, e);
-                                showToast(`ERR: ${e.message}`);
-                            });
                     }
                 }
             }
@@ -875,7 +809,8 @@
                         const mp3 = LOCAL_MP3_CRATE[t.mp3Idx];
                         if (mp3.bpm > 0) {
                             const rate = calcBeatMatchRate(mp3.bpm, targetBpm);
-                            t.mp3Audio.playbackRate = Math.max(0.5, Math.min(2.0, rate));
+                            const clampedRate = Math.max(0.75, Math.min(1.5, rate));
+                            t.mp3Audio.playbackRate = clampedRate;
                         }
                     }
                 });
@@ -887,10 +822,19 @@
                 if (stIdx < 0) stIdx = STATION_LIST.length - 1;
                 t.stationIdx = stIdx;
                 if (t.mode === 'RADIO') {
-                    const wasPlaying = !t.isPaused;
-                    t.audio.src = STATION_LIST[stIdx].url;
-                    if (wasPlaying) t.audio.play().catch(e => { });
-                    showToast(`${t.cfg.name}: ${STATION_LIST[stIdx].name}`);
+                    const station = STATION_LIST[stIdx];
+                    console.log(`[LOOM] Tuning RADIO: ${station.name}`);
+                    t.audio.src = station.url;
+                    t.audio.play()
+                        .then(() => {
+                            t.isPaused = false;
+                            console.log(`[LOOM] RADIO playing: ${station.name}`);
+                        })
+                        .catch(e => {
+                            console.warn(`[LOOM] RADIO blocked (CORS): ${station.name} - ${e.message}`);
+                            showToast(`RADIO BLOCKED - try MP3`);
+                        });
+                    showToast(`${t.cfg.name}: ${station.name}`);
                 }
             }
 
@@ -1346,9 +1290,10 @@
 
         document.getElementById('bpm-slider').addEventListener('input', e => {
             seq.bpm = parseInt(e.target.value);
-            document.getElementById('bpm-val').innerText = seq.bpm + " BPM";
+            document.getElementById('bpm-val').innerText = seq.bpm;
             // Beat match all MP3 tracks to new BPM
             if (audio) audio.beatMatchAll(seq.bpm);
+            console.log(`[LOOM] BPM: ${seq.bpm}`);
         });
 
         // --- CRATE BROWSER LOGIC ---
@@ -1357,51 +1302,110 @@
             const track = LOCAL_MP3_CRATE[currentCrateIdx];
             document.getElementById('crate-track').innerText = `${currentCrateIdx + 1}. ${track.name}`;
             document.getElementById('crate-track').style.color = track.bpm > 0 ? '#10b981' : '#ccc';
+            console.log(`[LOOM] Crate: ${currentCrateIdx + 1}/${LOCAL_MP3_CRATE.length} - "${track.name}" (${track.bpm}bpm)`);
         };
 
+        // Haptic helper
+        const haptic = (pattern = 10) => { if (navigator.vibrate) navigator.vibrate(pattern); };
+
         document.getElementById('crate-prev').addEventListener('click', () => {
+            haptic();
             currentCrateIdx = (currentCrateIdx - 1 + LOCAL_MP3_CRATE.length) % LOCAL_MP3_CRATE.length;
             updateCrateDisplay();
         });
 
         document.getElementById('crate-next').addEventListener('click', () => {
+            haptic();
             currentCrateIdx = (currentCrateIdx + 1) % LOCAL_MP3_CRATE.length;
             updateCrateDisplay();
         });
 
         const loadToTrack = (trackIdx) => {
+            haptic([15, 30, 15]); // Double tap feel
+            console.log(`[LOOM] Loading track ${currentCrateIdx + 1} to ${['HIGH', 'MID', 'LOW'][trackIdx]}`);
             audio.tuneMP3(trackIdx, currentCrateIdx);
             audio.setMode(trackIdx, 'MP3');
-            showToast(`LOADED TO ${audio.tracks[trackIdx].cfg.name}`);
         };
 
         document.getElementById('load-high').addEventListener('click', () => loadToTrack(0));
         document.getElementById('load-mid').addEventListener('click', () => loadToTrack(1));
         document.getElementById('load-low').addEventListener('click', () => loadToTrack(2));
 
+        // --- MODE SELECTOR ---
+        let currentMode = 'MP3';
+        const updateModeButtons = (mode) => {
+            currentMode = mode;
+            const mp3Btn = document.getElementById('mode-mp3');
+            const radBtn = document.getElementById('mode-radio');
+            const drnBtn = document.getElementById('mode-drone');
+            mp3Btn.style.background = mode === 'MP3' ? 'rgba(0,255,0,0.2)' : 'none';
+            mp3Btn.style.color = mode === 'MP3' ? '#0f0' : '#888';
+            radBtn.style.background = mode === 'RADIO' ? 'rgba(0,255,255,0.2)' : 'none';
+            radBtn.style.color = mode === 'RADIO' ? '#0ff' : '#888';
+            drnBtn.style.background = mode === 'DRONE' ? 'rgba(255,0,255,0.2)' : 'none';
+            drnBtn.style.color = mode === 'DRONE' ? '#f0f' : '#888';
+        };
+
+        document.getElementById('mode-mp3').addEventListener('click', () => {
+            haptic();
+            for (let i = 0; i < 3; i++) audio.setMode(i, 'MP3');
+            updateModeButtons('MP3');
+            updateActiveStatus();
+            console.log('[LOOM] All tracks set to MP3 mode');
+        });
+
+        document.getElementById('mode-radio').addEventListener('click', () => {
+            haptic();
+            for (let i = 0; i < 3; i++) audio.setMode(i, 'RADIO');
+            updateModeButtons('RADIO');
+            updateActiveStatus();
+            console.log('[LOOM] All tracks set to RADIO mode');
+        });
+
+        document.getElementById('mode-drone').addEventListener('click', () => {
+            haptic();
+            for (let i = 0; i < 3; i++) audio.setMode(i, 'DRONE');
+            updateModeButtons('DRONE');
+            updateActiveStatus();
+            console.log('[LOOM] All tracks set to DRONE mode');
+        });
+
         // Init display
         setTimeout(updateCrateDisplay, 500);
 
         document.getElementById('clear-btn').addEventListener('click', () => {
+            haptic([20, 20, 20]);
             for (let i = 0; i < 3; i++) seq.grid[i].fill(false);
+            console.log('[LOOM] Pattern cleared');
             showToast("PATTERN CLEARED");
         });
 
         // Help
-        document.getElementById('help-btn').addEventListener('click', () => startTutorial());
+        document.getElementById('help-btn').addEventListener('click', () => {
+            haptic();
+            console.log('[LOOM] Opening tutorial');
+            startTutorial();
+        });
 
         // IO
         const ioModal = document.getElementById('io-modal');
         const ioText = document.getElementById('io-text');
         document.getElementById('io-btn').addEventListener('click', () => {
+            haptic();
             ioText.value = seq.serialize();
             ioModal.style.display = 'block';
+            console.log('[LOOM] Data modal opened');
         });
-        document.getElementById('close-io-btn').addEventListener('click', () => ioModal.style.display = 'none');
+        document.getElementById('close-io-btn').addEventListener('click', () => {
+            haptic();
+            ioModal.style.display = 'none';
+        });
         document.getElementById('import-btn').addEventListener('click', () => {
+            haptic([20, 50, 20]);
             if (seq.deserialize(ioText.value)) {
                 ioModal.style.display = 'none';
                 updateActiveStatus();
+                console.log('[LOOM] Pattern imported successfully');
             }
         });
 
@@ -1412,7 +1416,9 @@
 
         function updateActiveStatus() {
             const types = audio.tracks.map(t => t.mode[0]).join('/');
-            document.getElementById('active-status').innerText = types;
+            const el = document.getElementById('active-status');
+            if (el) el.innerText = types;
+            console.log(`[LOOM] Active modes: ${types}`);
         }
 
         const canvas = document.getElementById('main-canvas');

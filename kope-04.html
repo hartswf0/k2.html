@@ -1523,6 +1523,22 @@
     <input type="file" id="file-input" accept="audio/*, .mp3, .wav, .json" style="display: none;" />
 
     <script>
+        const orbitalLink = new BroadcastChannel('orbital_link');
+        console.log('[KOPE] Orbital Link channel initialized.');
+        orbitalLink.onmessage = (e) => {
+            if (e.data.type === 'LOAD_TRACK' && e.data.track) {
+                const t = e.data.track;
+                console.log('[KOPE] Received from Orbital Link:', t);
+                // Determine target - check if SampleEditor is open, otherwise use track type
+                let target = t.type;
+                if (SampleEditor.activeTrack) target = SampleEditor.activeTrack;
+                else if (!['rhythm', 'lead', 'swell', 'perc'].includes(target)) target = 'rhythm'; // fallback
+
+                console.log(`[KOPE] Routing "${t.name}" to ${target}`);
+                State.loadMP3Direct(target, t);
+            }
+        };
+
         const $ = id => document.getElementById(id);
         const Toast = msg => {
             const t = $('toast');
@@ -2310,6 +2326,12 @@
             async loadMP3FromCrate(trackId, mp3Index) {
                 if (!Audio.ctx) { Toast("INIT AUDIO FIRST"); return; }
                 const mp3 = LOCAL_MP3_CRATE[mp3Index % LOCAL_MP3_CRATE.length];
+                await this.loadMP3Direct(trackId, mp3);
+            },
+
+            // Load MP3 from object directly (for Broadcast/DragDrop)
+            async loadMP3Direct(trackId, mp3) {
+                if (!Audio.ctx) Audio.init();
                 Toast(`LOADING: ${mp3.name}`);
                 console.log(`[KOPE] Loading ${mp3.name} for ${trackId}...`);
 
