@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>SAMPLE CRATE: EXPERIMENTAL</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel: #111;
+            --border: #222;
+            --accent: #a37df5; /* Changed accent to purple for experimental vibe */
+            --accent2: #00ff88;
+            --text: #e8e8e8;
+            --dim: #666;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'SF Mono', 'Monaco', monospace;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .app {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            background: #080808;
+        }
+
+        .brand {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        .mode-pills {
+            display: flex;
+            gap: 4px;
+        }
+
+        .pill {
+            padding: 4px 8px;
+            font-size: 8px;
+            border-radius: 10px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            cursor: pointer;
+        }
+
+        .pill.on {
+            background: var(--accent2);
+            color: #000;
+            border-color: var(--accent2);
+        }
+
+        .video-section {
+            flex-shrink: 0;
+            background: #000;
+        }
+
+        .video-wrap {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            background: #000;
+            overflow: hidden;
+        }
+
+        .video-wrap iframe,
+        #player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .now-playing {
+            padding: 10px 12px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .np-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .np-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .np-artist {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-track {
+            font-size: 10px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .tag.cat {
+            background: rgba(163, 125, 245, 0.2);
+            color: var(--accent);
+        }
+
+        .tag.sonic {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent2);
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tag.year {
+            color: var(--dim);
+            border: 1px solid var(--border);
+            display: none; /* Hidden since we don't have year data */
+        }
+
+        .controls {
+            display: flex;
+            gap: 6px;
+            padding: 10px 12px;
+            background: #080808;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ctrl {
+            flex: 1;
+            padding: 12px 8px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .ctrl:active {
+            transform: scale(0.95);
+        }
+
+        .ctrl.primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .ctrl.on {
+            background: var(--accent2);
+            color: #000;
+            border-color: var(--accent2);
+        }
+
+        .cat-bar {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+            overflow-x: auto;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .cat-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-chip {
+            flex-shrink: 0;
+            padding: 5px 10px;
+            font-size: 9px;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--dim);
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+
+        .cat-chip.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .cat-chip span {
+            opacity: 0.6;
+            margin-left: 2px;
+        }
+
+        .track-list {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .track {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .track:active {
+            background: rgba(163, 125, 245, 0.1);
+        }
+
+        .track.playing {
+            background: rgba(0, 255, 136, 0.08);
+            border-left: 2px solid var(--accent2);
+        }
+
+        .t-num {
+            width: 20px;
+            font-size: 9px;
+            color: var(--dim);
+            text-align: center;
+        }
+
+        .t-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .t-artist {
+            font-size: 10px;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-title {
+            font-size: 9px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-meta {
+            font-size: 8px;
+            color: var(--dim);
+            text-align: right;
+            min-width: 50px;
+        }
+
+        .t-cat {
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 12px;
+            background: #080808;
+            border-top: 1px solid var(--border);
+            font-size: 9px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-val {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .stat-lbl {
+            color: var(--dim);
+            font-size: 7px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="header">
+            <span class="brand">CRATE: EXPERIMENTAL</span>
+            <div class="mode-pills">
+                <div class="pill on" id="p-auto">AUTO</div>
+                <div class="pill" id="p-shuf">SHUF</div>
+                <div class="pill" id="p-loop">LOOP</div>
+            </div>
+        </div>
+        <div class="video-section">
+            <div class="video-wrap">
+                <div id="player"></div>
+            </div>
+        </div>
+        <div class="now-playing">
+            <div class="np-row">
+                <div class="np-main">
+                    <div class="np-artist" id="np-artist">Select a track</div>
+                    <div class="np-track" id="np-track">--</div>
+                </div>
+            </div>
+            <div class="np-tags">
+                <span class="tag cat" id="np-cat">--</span>
+                <span class="tag year" id="np-year">--</span>
+                <span class="tag sonic" id="np-sonic">--</span>
+            </div>
+        </div>
+        <div class="controls">
+            <button class="ctrl" id="btn-prev">PREV</button>
+            <button class="ctrl primary" id="btn-next">NEXT</button>
+            <button class="ctrl" id="btn-rand">RND</button>
+        </div>
+        <div class="cat-bar" id="cats"></div>
+        <div class="track-list" id="list"></div>
+        <div class="footer">
+            <div class="stat"><span class="stat-val" id="s-total">0</span><br><span class="stat-lbl">TOTAL</span></div>
+            <div class="stat"><span class="stat-val" id="s-show">0</span><br><span class="stat-lbl">SHOWING</span></div>
+            <div class="stat"><span class="stat-val" id="s-played">0</span><br><span class="stat-lbl">PLAYED</span>
+            </div>
+            <div class="stat"><span class="stat-val" id="s-idx">0</span><br><span class="stat-lbl">INDEX</span></div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            // New Mapped Data
+            const A = [
+                { a: "Brian Eno", t: "Discreet Music", c: "Ambient", s: "tape saturation/looped texture, drone/longform sustain", u: "https://www.youtube.com/watch?v=tLZtnadL1s0" },
+                { a: "Harold Budd", t: "The Pavilion of Dreams", c: "Ambient", s: "room tone/spatial ambience, drone/longform sustain", u: "https://www.youtube.com/results?search_query=Harold+Budd+The+Pavilion+of+Dreams" },
+                { a: "Gavin Bryars", t: "Jesus’ Blood Never Failed Me Yet", c: "Ambient", s: "voice as primary material, tape saturation/looped texture", u: "https://www.youtube.com/watch?v=FmkC_leNM7M" },
+                { a: "Gavin Bryars", t: "The Sinking of the Titanic", c: "Ambient", s: "room tone/spatial ambience, tape saturation/looped texture", u: "https://www.youtube.com/results?search_query=Gavin+Bryars+The+Sinking+of+the+Titanic" },
+                { a: "Michael Nyman", t: "Decay Music (1)", c: "Ambient", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/watch?v=vSqbWv52RdQ" },
+                { a: "Penguin Cafe Orchestra", t: "Perpetuum Mobile", c: "Ambient", s: "pulse/ostinato drive, percussion-forward timbre", u: "https://www.youtube.com/watch?v=NPpRJoYISSQ" },
+                { a: "David Toop / Max Eastley", t: "New & Rediscovered Musical Instruments (Excerpt)", c: "Ambient", s: "metallic resonances, oddity/unstable texture", u: "https://www.youtube.com/watch?v=tqT4jAjg3R4" },
+                { a: "Steve Reich", t: "Come Out", c: "Ambient", s: "voice as primary material, pulse/ostinato drive", u: "https://www.youtube.com/watch?v=2dFHV-zzQzM" },
+                { a: "Steve Reich", t: "It’s Gonna Rain (Pt. 1)", c: "Ambient", s: "voice as primary material, tape saturation/looped texture", u: "https://www.youtube.com/watch?v=vugqRAX7xQE" },
+                { a: "Alvin Lucier", t: "I Am Sitting in a Room", c: "Ambient", s: "room tone/spatial ambience, process/system piece", u: "https://www.youtube.com/watch?v=DwPMv53k-a8" },
+                { a: "Pauline Oliveros", t: "Bye Bye Butterfly", c: "Ambient", s: "tape saturation/looped texture, drone/longform sustain", u: "https://www.youtube.com/watch?v=i_2wQea5W8w" },
+                { a: "Terry Riley", t: "A Rainbow in Curved Air", c: "Ambient", s: "pulse/ostinato drive, tape saturation/looped texture", u: "https://www.youtube.com/watch?v=hy3W-3HPMWg" },
+                { a: "Pierre Schaeffer", t: "Étude aux chemins de fer", c: "Concrète", s: "metallic resonances, pulse/ostinato drive", u: "https://www.youtube.com/watch?v=N9pOq8u6-bA" },
+                { a: "Pierre Henry", t: "Variations pour une porte et un soupir: La Porte", c: "Concrète", s: "sharp transients/percussive hits, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=aHgKZgNtsEk" },
+                { a: "Pierre Henry", t: "Psyché Rock", c: "Concrète", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/watch?v=fDmqyjiF_NA" },
+                { a: "Bernard Parmegiani", t: "De Natura Sonorum: La Création du Monde", c: "Concrète", s: "sharp transients/percussive hits, drone/longform sustain", u: "https://www.youtube.com/watch?v=c_JHjUFfOs8" },
+                { a: "Luc Ferrari", t: "Presque Rien n°1", c: "Concrète", s: "room tone/spatial ambience, field-recording realism", u: "https://www.youtube.com/watch?v=8C6XlF_2VrQ" },
+                { a: "Iannis Xenakis", t: "Bohor", c: "Concrète", s: "drone/longform sustain, metallic resonances", u: "https://www.youtube.com/watch?v=MQ2QPudTzSo" },
+                { a: "Ilhan Mimaroğlu", t: "Agony", c: "Concrète", s: "tape saturation/looped texture, oddity/unstable texture", u: "https://www.youtube.com/watch?v=SPD5WEW6RGU" },
+                { a: "Tod Dockstader", t: "Quatermass", c: "Concrète", s: "pulse/ostinato drive, oddity/unstable texture", u: "https://www.youtube.com/watch?v=YDaxxOfvUf0" },
+                { a: "Delia Derbyshire", t: "Blue Veils and Golden Sands", c: "Concrète", s: "tape saturation/looped texture, pulse/ostinato drive", u: "https://www.youtube.com/watch?v=fSc4baQZ6tI" },
+                { a: "Laurie Spiegel", t: "The Expanding Universe", c: "Concrète", s: "drone/longform sustain, pulse/ostinato drive", u: "https://www.youtube.com/watch?v=wdco10xj5mQ" },
+                { a: "Maryanne Amacher", t: "Sound Characters (Excerpt)", c: "Concrète", s: "room tone/spatial ambience, oddity/unstable texture", u: "https://www.youtube.com/watch?v=gohgM0ztJZY" },
+                { a: "Halim El-Dabh", t: "Wire Recorder Piece", c: "Concrète", s: "tape saturation/looped texture, oddity/unstable texture", u: "https://www.youtube.com/watch?v=uDrAISZZF1I" },
+                { a: "Jon Hassell & Brian Eno", t: "Chemistry", c: "4th World", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=-vURQ8wiWBg" },
+                { a: "Jon Hassell & Brian Eno", t: "Delta Rain Dream", c: "4th World", s: "drone/longform sustain, pulse/ostinato drive", u: "https://www.youtube.com/watch?v=yXnJCA_x10A" },
+                { a: "Jon Hassell & Brian Eno", t: "Griot (Over “Contagious Magic”)", c: "4th World", s: "pulse/ostinato drive, voice as primary material", u: "https://www.youtube.com/watch?v=ZvCVOa0IiaQ" },
+                { a: "Jon Hassell & Brian Eno", t: "Ba-Benzélé", c: "4th World", s: "percussion-forward timbre, voice as primary material", u: "https://www.youtube.com/watch?v=3kZz0oYgmNk" },
+                { a: "Jon Hassell & Brian Eno", t: "Rising Thermal", c: "4th World", s: "drone/longform sustain, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=GW3tj5FdqaE" },
+                { a: "Jon Hassell & Brian Eno", t: "Charm (Over “Burundi Cloud”)", c: "4th World", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=reShHjHOMWs" },
+                { a: "Don Cherry", t: "Brown Rice", c: "4th World", s: "pulse/ostinato drive, percussion-forward timbre", u: "https://www.youtube.com/watch?v=8BgZnyxD-bk" },
+                { a: "Laraaji", t: "Meditation #1", c: "4th World", s: "drone/longform sustain, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=X6DxwTi2FNU" },
+                { a: "Alice Coltrane", t: "Turiya and Ramakrishna", c: "4th World", s: "drone/longform sustain, voice as primary material", u: "https://www.youtube.com/watch?v=jOkBpSItuP8" },
+                { a: "Nana Vasconcelos", t: "Dança das Cabeças (Excerpt)", c: "4th World", s: "percussion-forward timbre, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=tQzFLu8lyBA" },
+                { a: "Mulatu Astatke", t: "Tezeta", c: "4th World", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=Wy-v-FgiUD8" },
+                { a: "Nusrat Fateh Ali Khan / Michael Brook", t: "My Heart, My Life", c: "4th World", s: "voice as primary material, drone/longform sustain", u: "https://www.youtube.com/watch?v=cdVYElcQtuE" },
+                { a: "Satoshi Ashikawa", t: "Still Space", c: "Kankyō", s: "room tone/spatial ambience, drone/longform sustain", u: "https://www.youtube.com/watch?v=M_8eRDmn9PI" },
+                { a: "Yoshio Ojima", t: "Glass Chattering", c: "Kankyō", s: "sharp transients/percussive hits, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=gF0Y0GBPjCQ" },
+                { a: "Yoshiaki Ochi", t: "Ear Dreamin", c: "Kankyō", s: "room tone/spatial ambience, pulse/ostinato drive", u: "https://www.youtube.com/watch?v=3xfDy36y7ts" },
+                { a: "Toshi Tsuchitori", t: "Ishiura (Abridged)", c: "Kankyō", s: "percussion-forward timbre, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=eCK-LvmG8Ko" },
+                { a: "Masashi Kitamura + Phonogenix", t: "Variation III", c: "Kankyō", s: "pulse/ostinato drive, oddity/unstable texture", u: "https://www.youtube.com/watch?v=lngq8kiatRg" },
+                { a: "Yasuaki Shimizu", t: "Seiko 3", c: "Kankyō", s: "sharp transients/percussive hits, pulse/ostinato drive", u: "https://www.youtube.com/watch?v=0I82ojf8fzc" },
+                { a: "Hiroshi Yoshimura", t: "Blink", c: "Kankyō", s: "room tone/spatial ambience, drone/longform sustain", u: "https://www.youtube.com/watch?v=Z3m7HXeiHpg" },
+                { a: "Fumio Miyashita", t: "See the Light (Abridged)", c: "Kankyō", s: "drone/longform sustain, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=AQlf4wbBaJU" },
+                { a: "Akira Ito", t: "Praying for Mother / Earth Pt. 1", c: "Kankyō", s: "drone/longform sustain, voice as primary material", u: "https://www.youtube.com/watch?v=WReoOnkbmdo" },
+                { a: "Masahiro Sugaya", t: "Umi No Sunatsubu", c: "Kankyō", s: "sharp transients/percussive hits, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=l8Omh3cbSoQ" },
+                { a: "Haruomi Hosono", t: "Watering a Flower", c: "Kankyō", s: "room tone/spatial ambience, drone/longform sustain", u: "https://www.youtube.com/watch?v=_4Lbc6QwZ0Q" },
+                { a: "Midori Takada", t: "Mr. Henri Rousseau’s Dream", c: "Kankyō", s: "percussion-forward timbre, room tone/spatial ambience", u: "https://www.youtube.com/watch?v=uNamd6IraVo" },
+                { a: "Alain Goraguer", t: "Ten Et Tiwa Dorment", c: "Library", s: "sharp transients/percussive hits, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Alain+Goraguer+Ten+Et+Tiwa+Dorment" },
+                { a: "François de Roubaix", t: "Dernier Domicile Connu (Theme)", c: "Library", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Fran%C3%A7ois+de+Roubaix+Dernier+Domicile+Connu+Theme" },
+                { a: "Michel Colombier", t: "L’Enfant", c: "Library", s: "sharp transients/percussive hits, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Michel+Colombier+L%E2%80%99Enfant" },
+                { a: "Piero Piccioni", t: "Mambo Del Giubileo", c: "Library", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Piero+Piccioni+Mambo+Del+Giubileo" },
+                { a: "Armando Trovajoli", t: "Sessomatto (Main Theme)", c: "Library", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Armando+Trovajoli+Sessomatto+Main+Theme" },
+                { a: "Bruno Nicolai", t: "Sequence (Giallo Cue)", c: "Library", s: "metallic resonances, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Bruno+Nicolai+Sequence+Giallo+Cue" },
+                { a: "Stelvio Cipriani", t: "Stella’s Theme", c: "Library", s: "room tone/spatial ambience, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Stelvio+Cipriani+Stella%E2%80%99s+Theme" },
+                { a: "Riz Ortolani", t: "Cannibal Holocaust (Main Theme)", c: "Library", s: "oddity/unstable texture, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Riz+Ortolani+Cannibal+Holocaust+Main+Theme" },
+                { a: "Krzysztof Komeda", t: "Rosemary’s Baby (Lullaby)", c: "Library", s: "voice as primary material, drone/longform sustain", u: "https://www.youtube.com/results?search_query=Krzysztof+Komeda+Rosemary%E2%80%99s+Baby+Lullaby" },
+                { a: "Angelo Badalamenti", t: "Twin Peaks Theme", c: "Library", s: "room tone/spatial ambience, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Angelo+Badalamenti+Twin+Peaks+Theme" },
+                { a: "John Carpenter", t: "Vortex", c: "Library", s: "pulse/ostinato drive, drone/longform sustain", u: "https://www.youtube.com/results?search_query=John+Carpenter+Vortex" },
+                { a: "Vangelis", t: "La Petite Fille de la Mer", c: "Library", s: "drone/longform sustain, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Vangelis+La+Petite+Fille+de+la+Mer" },
+                { a: "Throbbing Gristle", t: "Hot on the Heels of Love", c: "Synth", s: "pulse/ostinato drive, oddity/unstable texture", u: "https://www.youtube.com/results?search_query=Throbbing+Gristle+Hot+on+the+Heels+of+Love" },
+                { a: "Cabaret Voltaire", t: "Nag Nag Nag", c: "Synth", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Cabaret+Voltaire+Nag+Nag+Nag" },
+                { a: "Suicide", t: "Cheree", c: "Synth", s: "pulse/ostinato drive, voice as primary material", u: "https://www.youtube.com/results?search_query=Suicide+Cheree" },
+                { a: "Chris & Cosey", t: "October (Love Song)", c: "Synth", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Chris+%26+Cosey+October+Love+Song" },
+                { a: "Coil", t: "Where Are You?", c: "Synth", s: "drone/longform sustain, oddity/unstable texture", u: "https://www.youtube.com/results?search_query=Coil+Where+Are+You%3F" },
+                { a: "This Heat", t: "Horizontal Hold", c: "Synth", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=This+Heat+Horizontal+Hold" },
+                { a: "Severed Heads", t: "Dead Eyes Opened", c: "Synth", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Severed+Heads+Dead+Eyes+Opened" },
+                { a: "A Certain Ratio", t: "Shack Up", c: "Synth", s: "bassline-centric, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=A+Certain+Ratio+Shack+Up" },
+                { a: "Liquid Liquid", t: "Optimo", c: "Synth", s: "bassline-centric, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Liquid+Liquid+Optimo" },
+                { a: "ESG", t: "Moody", c: "Synth", s: "percussion-forward timbre, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=ESG+Moody" },
+                { a: "Arthur Russell", t: "This Is How We Walk on the Moon", c: "Synth", s: "room tone/spatial ambience, voice as primary material", u: "https://www.youtube.com/results?search_query=Arthur+Russell+This+Is+How+We+Walk+on+the+Moon" },
+                { a: "Yello", t: "Bostich", c: "Synth", s: "sharp transients/percussive hits, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Yello+Bostich" },
+                { a: "Meredith Monk", t: "Dolmen Music (Excerpt)", c: "Voice", s: "voice as primary material, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Meredith+Monk+Dolmen+Music+Excerpt" },
+                { a: "Joan La Barbara", t: "Voice Piece: One-Note Internal Resonance", c: "Voice", s: "voice as primary material, oddity/unstable texture", u: "https://www.youtube.com/results?search_query=Joan+La+Barbara+Voice+Piece+One-Note+Internal+Resonance" },
+                { a: "Diamanda Galás", t: "Wild Women With Steak Knives (Excerpt)", c: "Voice", s: "voice as primary material, oddity/unstable texture", u: "https://www.youtube.com/results?search_query=Diamanda+Gal%C3%A1s+Wild+Women+With+Steak+Knives+Excerpt" },
+                { a: "Philomel (Milton Babbitt)", t: "Philomel (Excerpt)", c: "Voice", s: "voice as primary material, tape saturation/looped texture", u: "https://www.youtube.com/results?search_query=Milton+Babbitt+Philomel+Excerpt" },
+                { a: "Steve Reich", t: "Different Trains (Speech Fragments)", c: "Voice", s: "voice as primary material, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Steve+Reich+Different+Trains+Speech+Fragments" },
+                { a: "The Bulgarian State Television Female Choir", t: "Kaval Sviri", c: "Voice", s: "voice as primary material, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Bulgarian+State+Television+Female+Choir+Kaval+Sviri" },
+                { a: "Le Mystère des Voix Bulgares", t: "Pilentze Pee", c: "Voice", s: "voice as primary material, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Le+Myst%C3%A8re+des+Voix+Bulgares+Pilentze+Pee" },
+                { a: "Nusrat Fateh Ali Khan", t: "Mustt Mustt (Traditional Qawwali take)", c: "Voice", s: "voice as primary material, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Nusrat+Fateh+Ali+Khan+Mustt+Mustt+Qawwali" },
+                { a: "Yma Sumac", t: "Gopher Mambo", c: "Voice", s: "voice as primary material, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Yma+Sumac+Gopher+Mambo" },
+                { a: "Moondog", t: "Bird’s Lament", c: "Voice", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Moondog+Bird%E2%80%99s+Lament" },
+                { a: "Alan Watts", t: "The Dream of Life (Excerpt)", c: "Voice", s: "voice as primary material, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Alan+Watts+The+Dream+of+Life+Excerpt" },
+                { a: "Gil Scott-Heron", t: "We Almost Lost Detroit", c: "Voice", s: "voice as primary material, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Gil+Scott-Heron+We+Almost+Lost+Detroit" },
+                { a: "Midori Takada", t: "Crossing", c: "Percussion", s: "percussion-forward timbre, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Midori+Takada+Crossing" },
+                { a: "Steve Reich", t: "Drumming (Part I)", c: "Percussion", s: "percussion-forward timbre, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Steve+Reich+Drumming+Part+I" },
+                { a: "James Mtume", t: "Taiso", c: "Percussion", s: "percussion-forward timbre, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=James+Mtume+Taiso" },
+                { a: "Babatunde Olatunji", t: "Jin-Go-Lo-Ba", c: "Percussion", s: "percussion-forward timbre, voice as primary material", u: "https://www.youtube.com/results?search_query=Babatunde+Olatunji+Jin-Go-Lo-Ba" },
+                { a: "Stomu Yamash’ta", t: "Sapporo", c: "Percussion", s: "metallic resonances, percussion-forward timbre", u: "https://www.youtube.com/results?search_query=Stomu+Yamash%27ta+Sapporo" },
+                { a: "Evelyn Glennie", t: "Prism (Excerpt)", c: "Percussion", s: "sharp transients/percussive hits, metallic resonances", u: "https://www.youtube.com/results?search_query=Evelyn+Glennie+Prism+Excerpt" },
+                { a: "Milford Graves", t: "Babi", c: "Percussion", s: "percussion-forward timbre, oddity/unstable texture", u: "https://www.youtube.com/results?search_query=Milford+Graves+Babi" },
+                { a: "Tony Allen", t: "Ariya", c: "Percussion", s: "percussion-forward timbre, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Tony+Allen+Ariya" },
+                { a: "Fela Kuti", t: "Gentleman", c: "Percussion", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Fela+Kuti+Gentleman" },
+                { a: "Orchestre Poly-Rythmo", t: "Pardon", c: "Percussion", s: "pulse/ostinato drive, percussion-forward timbre", u: "https://www.youtube.com/results?search_query=Orchestre+Poly-Rythmo+Pardon" },
+                { a: "Susumu Hirasawa", t: "Aria", c: "Percussion", s: "oddity/unstable texture, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Susumu+Hirasawa+Aria" },
+                { a: "Muslimgauze", t: "Azad (Excerpt)", c: "Percussion", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Muslimgauze+Azad+Excerpt" },
+                { a: "Dâm-Funk", t: "Mirrors", c: "Boogie", s: "pulse/ostinato drive, bassline-centric", u: "https://www.youtube.com/results?search_query=D%C3%A2m-Funk+Mirrors" },
+                { a: "Lewis Taylor", t: "Lucky", c: "Boogie", s: "pulse/ostinato drive, voice as primary material", u: "https://www.youtube.com/results?search_query=Lewis+Taylor+Lucky" },
+                { a: "Saâda Bonaire", t: "You Could Be More As You Are", c: "Boogie", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Sa%C3%A2da+Bonaire+You+Could+Be+More+As+You+Are" },
+                { a: "Sandra", t: "(I’ll Never Be) Maria Magdalena (Dub/12” vibe)", c: "Boogie", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Sandra+Maria+Magdalena+Dub+12" },
+                { a: "Change", t: "The Glow of Love", c: "Boogie", s: "pulse/ostinato drive, string/sweet chord sheen", u: "https://www.youtube.com/results?search_query=Change+The+Glow+of+Love" },
+                { a: "Mtume", t: "Juicy Fruit", c: "Boogie", s: "sharp transients/percussive hits, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Mtume+Juicy+Fruit" },
+                { a: "The System", t: "You Are in My System", c: "Boogie", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=The+System+You+Are+in+My+System" },
+                { a: "Kashif", t: "I Just Gotta Have You", c: "Boogie", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Kashif+I+Just+Gotta+Have+You" },
+                { a: "Aurra", t: "Are You Single?", c: "Boogie", s: "pulse/ostinato drive, voice as primary material", u: "https://www.youtube.com/results?search_query=Aurra+Are+You+Single%3F" },
+                { a: "Fatback Band", t: "Yum Yum (Gimme Some)", c: "Boogie", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Fatback+Band+Yum+Yum+Gimme+Some" },
+                { a: "Tom Browne", t: "Funkin’ for Jamaica", c: "Boogie", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Tom+Browne+Funkin%E2%80%99+for+Jamaica" },
+                { a: "Roy Ayers", t: "Running Away", c: "Boogie", s: "pulse/ostinato drive, bassline-centric", u: "https://www.youtube.com/results?search_query=Roy+Ayers+Running+Away" },
+                { a: "Oneohtrix Point Never", t: "Zones Without People", c: "Leftfield", s: "drone/longform sustain, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Oneohtrix+Point+Never+Zones+Without+People" },
+                { a: "Tim Hecker", t: "Chimeras", c: "Leftfield", s: "drone/longform sustain, tape saturation/looped texture", u: "https://www.youtube.com/results?search_query=Tim+Hecker+Chimeras" },
+                { a: "Pan Sonic", t: "Murto", c: "Leftfield", s: "sharp transients/percussive hits, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Pan+Sonic+Murto" },
+                { a: "Vladislav Delay", t: "Raaja", c: "Leftfield", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Vladislav+Delay+Raaja" },
+                { a: "GAS", t: "Pop 4", c: "Leftfield", s: "pulse/ostinato drive, drone/longform sustain", u: "https://www.youtube.com/results?search_query=GAS+Pop+4" },
+                { a: "Fennesz", t: "Rivers of Sand", c: "Leftfield", s: "tape saturation/looped texture, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Fennesz+Rivers+of+Sand" },
+                { a: "Jan Jelinek", t: "Tendency (Loop Studies vibe)", c: "Leftfield", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Jan+Jelinek+Tendency+Loop+Studies" },
+                { a: "Shackleton", t: "Blood on My Hands (Excerpt)", c: "Leftfield", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Shackleton+Blood+on+My+Hands+Excerpt" },
+                { a: "Actress", t: "Hubble", c: "Leftfield", s: "pulse/ostinato drive, room tone/spatial ambience", u: "https://www.youtube.com/results?search_query=Actress+Hubble" },
+                { a: "Floating Points", t: "Falaise", c: "Leftfield", s: "pulse/ostinato drive, sharp transients/percussive hits", u: "https://www.youtube.com/results?search_query=Floating+Points+Falaise" },
+                { a: "Visible Cloaks", t: "Screen (Abridged)", c: "Leftfield", s: "room tone/spatial ambience, pulse/ostinato drive", u: "https://www.youtube.com/results?search_query=Visible+Cloaks+Screen+Abridged" },
+                { a: "Lucrecia Dalt", t: "Edges", c: "Leftfield", s: "room tone/spatial ambience, voice as primary material", u: "https://www.youtube.com/results?search_query=Lucrecia+Dalt+Edges" }
+            ];
+
+            // Local state variables
+            let Q = [...A], idx = -1, played = 0, cat = 'all', auto = true, shuf = false, loop = false, P = null;
+
+            if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+                const tag = document.createElement('script');
+                tag.src = "https://www.youtube.com/iframe_api";
+                document.head.appendChild(tag);
+            }
+
+            // This function needs to be global so YT API can call it
+            window.onYouTubeIframeAPIReady = function() { }
+
+            function vid(u) {
+                const m = u.match(/(?:v=|\/shorts\/|youtu\.be\/)([^&?\/]+)/);
+                return m ? m[1] : null;
+            }
+
+            function getSearchQuery(u) {
+                try {
+                    // Handle search_query param if it exists
+                    if (u.includes('search_query=')) {
+                        const url = new URL(u);
+                        return url.searchParams.get('search_query');
+                    }
+                    return null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function load(i) {
+                if (i < 0 || i >= Q.length) return;
+                const x = Q[i];
+                
+                // 1. Try to get direct video ID
+                const id = vid(x.u);
+                
+                // 2. If no ID, try to get search query
+                const query = !id ? getSearchQuery(x.u) : null;
+                
+                // 3. Fallback: Create query from metadata if all else fails
+                const finalQuery = id ? null : (query || `${x.a} ${x.t}`);
+
+                // DESTROY AND REBUILD
+                // We must destroy the player to switch between 'search' mode and 'video' mode reliably,
+                // or to update the search query.
+                if (P) {
+                    P.destroy(); 
+                    P = null;
+                }
+                
+                // Re-create the placeholder DIV because destroy() removes the iframe but doesn't restore the div
+                const wrap = document.querySelector('.video-wrap');
+                wrap.innerHTML = '<div id="player"></div>';
+
+                const playerConfig = {
+                    height: '100%',
+                    width: '100%',
+                    playerVars: {
+                        autoplay: 1,
+                        controls: 1,
+                        modestbranding: 1,
+                        rel: 0,
+                        playsinline: 1,
+                        fs: 0
+                    },
+                    events: {
+                        'onStateChange': onEnd
+                    }
+                };
+
+                if (id) {
+                    playerConfig.videoId = id;
+                } else {
+                    // Use the Search Embed feature
+                    playerConfig.playerVars.listType = 'search';
+                    playerConfig.playerVars.list = finalQuery;
+                }
+
+                P = new YT.Player('player', playerConfig);
+
+                idx = i;
+                document.getElementById('np-artist').textContent = x.a;
+                document.getElementById('np-track').textContent = x.t;
+                document.getElementById('np-cat').textContent = x.c;
+                document.getElementById('np-year').textContent = x.y || '';
+                document.getElementById('np-sonic').textContent = x.s;
+                document.getElementById('s-idx').textContent = i + 1;
+                render();
+            }
+
+            function onEnd(e) {
+                if (e.data === 0) {
+                    played++;
+                    document.getElementById('s-played').textContent = played;
+                    if (loop) { 
+                        // For search playlists, seeking to 0 might not work as expected, 
+                        // but usually it restarts the current video in the playlist
+                        // However, auto-advance is safer for "crate digging"
+                        if (P && typeof P.seekTo === 'function') {
+                            P.seekTo(0); 
+                            P.playVideo();
+                        }
+                    }
+                    else if (auto) next();
+                }
+            }
+
+            function next() { idx = shuf ? Math.floor(Math.random() * Q.length) : (idx + 1) % Q.length; load(idx); }
+            function prev() { idx = idx <= 0 ? Q.length - 1 : idx - 1; load(idx); }
+            function rand() { idx = Math.floor(Math.random() * Q.length); load(idx); }
+
+            function filter(c) {
+                cat = c;
+                Q = c === 'all' ? [...A] : A.filter(x => x.c === c);
+                idx = -1;
+                document.querySelectorAll('.cat-chip').forEach(e => e.classList.toggle('active', e.dataset.c === c));
+                stats(); render();
+            }
+
+            function render() {
+                document.getElementById('list').innerHTML = Q.map((x, i) => `
+            <div class="track ${i === idx ? 'playing' : ''}" onclick="load(${i})">
+                <div class="t-num">${i + 1}</div>
+                <div class="t-info"><div class="t-artist">${x.a}</div><div class="t-title">${x.t}</div></div>
+                <div class="t-meta"><span class="t-cat">${x.c}</span>${x.y || ''}</div>
+            </div>
+        `).join('');
+            }
+
+            function cats() {
+                const c = {}; A.forEach(x => c[x.c] = (c[x.c] || 0) + 1);
+                document.getElementById('cats').innerHTML = `<div class="cat-chip active" data-c="all" onclick="filter('all')">ALL<span>${A.length}</span></div>` +
+                    Object.keys(c).map(k => `<div class="cat-chip" data-c="${k}" onclick="filter('${k}')">${k.toUpperCase()}<span>${c[k]}</span></div>`).join('');
+            }
+
+            function stats() {
+                document.getElementById('s-total').textContent = A.length;
+                document.getElementById('s-show').textContent = Q.length;
+            }
+
+            // Expose necessary functions to window for HTML event handlers
+            window.load = load;
+            window.filter = filter;
+
+            // Bind Event Listeners
+            document.getElementById('btn-next').onclick = next;
+            document.getElementById('btn-prev').onclick = prev;
+            document.getElementById('btn-rand').onclick = rand;
+            document.getElementById('p-auto').onclick = function () { auto = !auto; this.classList.toggle('on', auto); };
+            document.getElementById('p-shuf').onclick = function () { shuf = !shuf; this.classList.toggle('on', shuf); };
+            document.getElementById('p-loop').onclick = function () { loop = !loop; this.classList.toggle('on', loop); };
+
+            // Initialize
+            cats(); render(); stats();
+        })();
+    </script>
+</body>
+
+</html>
