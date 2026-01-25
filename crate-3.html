@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>SAMPLE CRATE 120: THE DEEP DIG</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel: #111;
+            --border: #222;
+            --accent: #ff6b35;
+            --accent2: #00ff88;
+            --text: #e8e8e8;
+            --dim: #666;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'SF Mono', 'Monaco', monospace;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .app {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            background: #080808;
+        }
+
+        .brand {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        .mode-pills {
+            display: flex;
+            gap: 4px;
+        }
+
+        .pill {
+            padding: 4px 8px;
+            font-size: 8px;
+            border-radius: 10px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            cursor: pointer;
+        }
+
+        .pill.on {
+            background: var(--accent2);
+            color: #000;
+            border-color: var(--accent2);
+        }
+
+        .video-section {
+            flex-shrink: 0;
+            background: #000;
+        }
+
+        .video-wrap {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            background: #000;
+            overflow: hidden;
+        }
+
+        .video-wrap iframe,
+        #player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .now-playing {
+            padding: 10px 12px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .np-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .np-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .np-artist {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-track {
+            font-size: 10px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .np-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+
+        .tag.cat {
+            background: rgba(255, 107, 53, 0.2);
+            color: var(--accent);
+        }
+
+        .tag.sonic {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent2);
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tag.year {
+            color: var(--dim);
+            border: 1px solid var(--border);
+        }
+
+        .controls {
+            display: flex;
+            gap: 6px;
+            padding: 10px 12px;
+            background: #080808;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ctrl {
+            flex: 1;
+            padding: 12px 8px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .ctrl:active {
+            transform: scale(0.95);
+        }
+
+        .ctrl.primary {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .ctrl.on {
+            background: var(--accent2);
+            color: #000;
+            border-color: var(--accent2);
+        }
+
+        .cat-bar {
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+            overflow-x: auto;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .cat-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-chip {
+            flex-shrink: 0;
+            padding: 5px 10px;
+            font-size: 9px;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--dim);
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+
+        .cat-chip.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .cat-chip span {
+            opacity: 0.6;
+            margin-left: 2px;
+        }
+
+        .track-list {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .track {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .track:active {
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .track.playing {
+            background: rgba(0, 255, 136, 0.08);
+            border-left: 2px solid var(--accent2);
+        }
+
+        .t-num {
+            width: 20px;
+            font-size: 9px;
+            color: var(--dim);
+            text-align: center;
+        }
+
+        .t-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .t-artist {
+            font-size: 10px;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-title {
+            font-size: 9px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .t-meta {
+            font-size: 8px;
+            color: var(--dim);
+            text-align: right;
+            min-width: 50px;
+        }
+
+        .t-cat {
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 12px;
+            background: #080808;
+            border-top: 1px solid var(--border);
+            font-size: 9px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-val {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .stat-lbl {
+            color: var(--dim);
+            font-size: 7px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="header">
+            <span class="brand">CRATE 120: DEEP DIG</span>
+            <div class="mode-pills">
+                <div class="pill on" id="p-auto">AUTO</div>
+                <div class="pill" id="p-shuf">SHUF</div>
+                <div class="pill" id="p-loop">LOOP</div>
+            </div>
+        </div>
+        <div class="video-section">
+            <div class="video-wrap">
+                <div id="player"></div>
+            </div>
+        </div>
+        <div class="now-playing">
+            <div class="np-row">
+                <div class="np-main">
+                    <div class="np-artist" id="np-artist">Select a track</div>
+                    <div class="np-track" id="np-track">--</div>
+                </div>
+            </div>
+            <div class="np-tags">
+                <span class="tag cat" id="np-cat">--</span>
+                <span class="tag year" id="np-year">--</span>
+                <span class="tag sonic" id="np-sonic">--</span>
+            </div>
+        </div>
+        <div class="controls">
+            <button class="ctrl" id="btn-prev">PREV</button>
+            <button class="ctrl primary" id="btn-next">NEXT</button>
+            <button class="ctrl" id="btn-rand">RND</button>
+        </div>
+        <div class="cat-bar" id="cats"></div>
+        <div class="track-list" id="list"></div>
+        <div class="footer">
+            <div class="stat"><span class="stat-val" id="s-total">0</span><br><span class="stat-lbl">TOTAL</span></div>
+            <div class="stat"><span class="stat-val" id="s-show">0</span><br><span class="stat-lbl">SHOWING</span></div>
+            <div class="stat"><span class="stat-val" id="s-played">0</span><br><span class="stat-lbl">PLAYED</span>
+            </div>
+            <div class="stat"><span class="stat-val" id="s-idx">0</span><br><span class="stat-lbl">INDEX</span></div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            // Mapped Data from CRATE 120
+            const A = [
+                { a: "The Ventures", t: "The 2000 Pound Bee", c: "Library", y: 1962, s: "Fuzz guitar pioneer.", u: "https://www.youtube.com/results?search_query=The+Ventures+The+2000+Pound+Bee+1962" },
+                { a: "Alan Hawkshaw", t: "The Awakening", c: "Library", y: 1970, s: "UK library funk monster.", u: "https://www.youtube.com/results?search_query=Alan+Hawkshaw+The+Awakening+1970" },
+                { a: "Alan Parker / John Cameron", t: "Grasshopper", c: "Library", y: 1974, s: "Bouncy wah-wah.", u: "https://www.youtube.com/results?search_query=Alan+Parker+%2F+John+Cameron+Grasshopper+1974" },
+                { a: "Keith Mansfield", t: "Funky Fanfare", c: "Library", y: 1970, s: "The ultimate interstitial sting.", u: "https://www.youtube.com/results?search_query=Keith+Mansfield+Funky+Fanfare+1970" },
+                { a: "Brian Bennett", t: "Solitude", c: "Library", y: 1978, s: "Synth-driven library disco.", u: "https://www.youtube.com/results?search_query=Brian+Bennett+Solitude+1978" },
+                { a: "Pierre-Alain Dahan / Claude Engel", t: "Vivre Pour Vivre", c: "Library", y: 1975, s: "French psych-funk.", u: "https://www.youtube.com/results?search_query=Pierre-Alain+Dahan+%2F+Claude+Engel+Vivre+Pour+Vivre+1975" },
+                { a: "Alessandro Alessandroni", t: "Faster", c: "Library", y: 1975, s: "Whistling & fuzz from Italy.", u: "https://www.youtube.com/results?search_query=Alessandro+Alessandroni+Faster+1975" },
+                { a: "Sven Libaek", t: "Inner Space", c: "Library", y: 1973, s: "Australian aquatic jazz-funk.", u: "https://www.youtube.com/results?search_query=Sven+Libaek+Inner+Space+1973" },
+                { a: "Neil Richardson", t: "Hawaiian Breeze", c: "Library", y: 1973, s: "Exotica lounge vibe.", u: "https://www.youtube.com/results?search_query=Neil+Richardson+Hawaiian+Breeze+1973" },
+                { a: "Ennio Morricone", t: "Deep Down", c: "Library", y: 1971, s: "Rare, funky library cut.", u: "https://www.youtube.com/results?search_query=Ennio+Morricone+Deep+Down+1971" },
+                { a: "The Pharaohs", t: "Freedom Road", c: "Rare Groove", y: 1971, s: "Chicago Afro-funk epic.", u: "https://www.youtube.com/results?search_query=The+Pharaohs+Freedom+Road+1971" },
+                { a: "Cymande", t: "Bra", c: "Rare Groove", y: 1972, s: "British funk with Nyabinghi rhythms.", u: "https://www.youtube.com/results?search_query=Cymande+Bra+1972" },
+                { a: "The New Birth", t: "Got To Get A Knutt", c: "Rare Groove", y: 1973, s: "Ridiculous funk jam.", u: "https://www.youtube.com/results?search_query=The+New+Birth+Got+To+Get+A+Knutt+1973" },
+                { a: "Vicky & The Vampires", t: "Fever", c: "Rare Groove", y: 1971, s: "Serbian prog-funk oddity.", u: "https://www.youtube.com/results?search_query=Vicky+%26+The+Vampires+Fever+1971" },
+                { a: "Curtis Mayfield", t: "(Don't Worry) If There's a Hell Below", c: "Rare Groove", y: 1970, s: "Deep cut intro.", u: "https://www.youtube.com/results?search_query=Curtis+Mayfield+%28Don%27t+Worry%29+If+There%27s+a+Hell+Below%2C+We%27re+All+Going+to+Go+1970" },
+                { a: "The Nite-Liters", t: "K-Jee", c: "Rare Groove", y: 1971, s: "Instrumental Hustle sample source.", u: "https://www.youtube.com/results?search_query=The+Nite-Liters+K-Jee+1971" },
+                { a: "The Pazant Brothers & The Beaufort Express", t: "Skunk Juice", c: "Rare Groove", y: 1975, s: "Funky big band.", u: "https://www.youtube.com/results?search_query=The+Pazant+Brothers+%26+The+Beaufort+Express+Skunk+Juice+1975" },
+                { a: "Black Heat", t: "Zimba Ku", c: "Rare Groove", y: 1972, s: "Raw, percussive funk.", u: "https://www.youtube.com/results?search_query=Black+Heat+Zimba+Ku+1972" },
+                { a: "Darondo", t: "Didn't I", c: "Rare Groove", y: 1973, s: "Gritty Bay Area soul.", u: "https://www.youtube.com/results?search_query=Darondo+Didn%27t+I+1973" },
+                { a: "Witch", t: "Chifundo", c: "Rare Groove", y: 1974, s: "Zamrock fuzz guitar & soul.", u: "https://www.youtube.com/results?search_query=Witch+Chifundo+1974" },
+                { a: "CAN", t: "Vitamin C", c: "Prog", y: 1972, s: "Motorik beat & iconic groove.", u: "https://www.youtube.com/results?search_query=CAN+Vitamin+C+1972" },
+                { a: "Gentle Giant", t: "Proclamation", c: "Prog", y: 1974, s: "Vocal layering, complex rhythms.", u: "https://www.youtube.com/results?search_query=Gentle+Giant+Proclamation+1974" },
+                { a: "Van der Graaf Generator", t: "Killer", c: "Prog", y: 1970, s: "Sax-driven Gothic intensity.", u: "https://www.youtube.com/results?search_query=Van+der+Graaf+Generator+Killer+1970" },
+                { a: "Frank Zappa", t: "The Gumbo Variations", c: "Prog", y: 1969, s: "Saxophone & organ freakout.", u: "https://www.youtube.com/results?search_query=Frank+Zappa+The+Gumbo+Variations+1969" },
+                { a: "King Crimson", t: "21st Century Schizoid Man", c: "Prog", y: 1969, s: "Distorted sax, heavy riff.", u: "https://www.youtube.com/results?search_query=King+Crimson+21st+Century+Schizoid+Man+1969" },
+                { a: "Steve Hillage", t: "It's All Too Much", c: "Prog", y: 1976, s: "Glissando guitar ambient.", u: "https://www.youtube.com/results?search_query=Steve+Hillage+It%27s+All+Too+Much+1976" },
+                { a: "Magma", t: "Mëkanïk Dëstruktïẁ Kömmandöh", c: "Prog", y: 1973, s: "Zeuhl, operatic, alien jazz.", u: "https://www.youtube.com/results?search_query=Magma+M%C3%ABkan%C3%AFk+D%C3%ABstrukt%C3%AF%E1%BA%81+K%C3%B6mmand%C3%B6h+1973" },
+                { a: "Kraftwerk", t: "Ananas Symphonie", c: "Prog", y: 1973, s: "Early, acoustic(!) Kraftwerk weirdness.", u: "https://www.youtube.com/results?search_query=Kraftwerk+Ananas+Symphonie+1973" },
+                { a: "Rush", t: "YYZ", c: "Prog", y: 1981, s: "Instrumental prog with synth break.", u: "https://www.youtube.com/results?search_query=Rush+YYZ+1981" },
+                { a: "Mike Oldfield", t: "Tubular Bells (Part One)", c: "Prog", y: 1973, s: "Progressive minimalism.", u: "https://www.youtube.com/results?search_query=Mike+Oldfield+Tubular+Bells+%28Part+One%29+1973" },
+                { a: "Gary Numan", t: "M.E.", c: "Synth", y: 1979, s: "Dark synthpop, sampled by Basement Jaxx.", u: "https://www.youtube.com/results?search_query=Gary+Numan+M.E.+1979" },
+                { a: "Kano", t: "I'm Ready", c: "Synth", y: 1980, s: "Italo disco bassline.", u: "https://www.youtube.com/results?search_query=Kano+I%27m+Ready+1980" },
+                { a: "Tangerine Dream", t: "Love on a Real Train", c: "Synth", y: 1984, s: "Risky Business ambient.", u: "https://www.youtube.com/results?search_query=Tangerine+Dream+Love+on+a+Real+Train+1984" },
+                { a: "John Carpenter", t: "The End", c: "Synth", y: 1978, s: "Minimal synth dread.", u: "https://www.youtube.com/results?search_query=John+Carpenter+The+End+1978" },
+                { a: "Goblin", t: "Suspiria", c: "Synth", y: 1977, s: "Prog-horror theme.", u: "https://www.youtube.com/results?search_query=Goblin+Suspiria+1977" },
+                { a: "Yellow Magic Orchestra", t: "Firecracker", c: "Synth", y: 1978, s: "Electronic exotica.", u: "https://www.youtube.com/results?search_query=Yellow+Magic+Orchestra+Firecracker+1978" },
+                { a: "Vangelis", t: "Dervish D", c: "Synth", y: 1977, s: "Hammered dulcimer & synth.", u: "https://www.youtube.com/results?search_query=Vangelis+Dervish+D+1977" },
+                { a: "Anne Clark", t: "Our Darkness", c: "Synth", y: 1984, s: "Spoken word & minimal synth.", u: "https://www.youtube.com/results?search_query=Anne+Clark+Our+Darkness+1984" },
+                { a: "Fad Gadget", t: "Ricky's Hand", c: "Synth", y: 1980, s: "Eccentric industrial synthpop.", u: "https://www.youtube.com/results?search_query=Fad+Gadget+Ricky%27s+Hand+1980" },
+                { a: "Suicide", t: "Ghost Rider", c: "Synth", y: 1977, s: "Proto-punk electronic drone.", u: "https://www.youtube.com/results?search_query=Suicide+Ghost+Rider+1977" },
+                { a: "Astrud Gilberto", t: "Berimbau", c: "Brazil", y: 1965, s: "Not just 'The Girl from Ipanema'.", u: "https://www.youtube.com/results?search_query=Astrud+Gilberto+Berimbau+1965" },
+                { a: "Gal Costa", t: "Tuareg", c: "Brazil", y: 1973, s: "Psychedelic Brazilian rock.", u: "https://www.youtube.com/results?search_query=Gal+Costa+Tuareg+1973" },
+                { a: "Jorge Ben Jor", t: "Taj Mahal", c: "Brazil", y: 1972, s: "Funky samba, sampled by Rodigan.", u: "https://www.youtube.com/results?search_query=Jorge+Ben+Jor+Taj+Mahal+1972" },
+                { a: "Tom Zé", t: "Jimmy, Renda-se", c: "Brazil", y: 1975, s: "Avant-garde Tropicália.", u: "https://www.youtube.com/results?search_query=Tom+Z%C3%A9+Jimmy%2C+Renda-se+1975" },
+                { a: "Arthur Verocai", t: "Caboclo", c: "Brazil", y: 1972, s: "Luscious orchestral arrangements.", u: "https://www.youtube.com/results?search_query=Arthur+Verocai+Caboclo+1972" },
+                { a: "Milton Nascimento & Lô Borges", t: "Tudo Que Você Podia Ser", c: "Brazil", y: 1972, s: "Clube da Esquina masterpiece.", u: "https://www.youtube.com/results?search_query=Milton+Nascimento+%26+L%C3%B4+Borges+Tudo+Que+Voc%C3%AA+Podia+Ser+1972" },
+                { a: "Sérgio Mendes & Brasil '66", t: "Mas Que Nada", c: "Brazil", y: 1966, s: "Bossa nova classic.", u: "https://www.youtube.com/results?search_query=S%C3%A9rgio+Mendes+%26+Brasil+%2766+Mas+Que+Nada+1966" },
+                { a: "Elis Regina & Antônio Carlos Jobim", t: "Águas de Março", c: "Brazil", y: 1974, s: "Vocal perfection.", u: "https://www.youtube.com/results?search_query=Elis+Regina+%26+Ant%C3%B4nio+Carlos+Jobim+%C3%81guas+de+Mar%C3%A7o+1974" },
+                { a: "Banda Black Rio", t: "Maria Fumaça", c: "Brazil", y: 1977, s: "Brazilian funk fusion.", u: "https://www.youtube.com/results?search_query=Banda+Black+Rio+Maria+Fuma%C3%A7a+1977" },
+                { a: "Marcos Valle", t: "Estrelar", c: "Brazil", y: 1983, s: "Boogie/AOR masterpiece.", u: "https://www.youtube.com/results?search_query=Marcos+Valle+Estrelar+1983" },
+                { a: "William Onyeabor", t: "Fantastic Man", c: "Afro", y: 1983, s: "Nigerian synth-funk mystery.", u: "https://www.youtube.com/results?search_query=William+Onyeabor+Fantastic+Man+1983" },
+                { a: "Francis Bebey", t: "The Coffee Cola Song", c: "Afro", y: 1975, s: "Psychedelic African folk.", u: "https://www.youtube.com/results?search_query=Francis+Bebey+The+Coffee+Cola+Song+1975" },
+                { a: "Tabu Ley Rochereau", t: "Hafi Deo", c: "Afro", y: 1975, s: "Soukous guitar brilliance.", u: "https://www.youtube.com/results?search_query=Tabu+Ley+Rochereau+Hafi+Deo+1975" },
+                { a: "Ami Koita", t: "Djougouya", c: "Afro", y: 1985, s: "Mande music diva.", u: "https://www.youtube.com/results?search_query=Ami+Koita+Djougouya+1985" },
+                { a: "Bembeya Jazz National", t: "Armée Guinéenne", c: "Afro", y: 1969, s: "Guinean big band.", u: "https://www.youtube.com/results?search_query=Bembeya+Jazz+National+Arm%C3%A9e+Guin%C3%A9enne+1969" },
+                { a: "Mulatu Astatke", t: "Yègellé Tezeta", c: "Afro", y: 1974, s: "Ethiopian jazz, Éthio-jazz.", u: "https://www.youtube.com/results?search_query=Mulatu+Astatke+Y%C3%A8gell%C3%A9+Tezeta+1974" },
+                { a: "Manu Dibango", t: "Big Blow", c: "Afro", y: 1976, s: "Sax-driven Afro-disco.", u: "https://www.youtube.com/results?search_query=Manu+Dibango+Big+Blow+1976" },
+                { a: "Orchestre Poly-Rythmo de Cotonou", t: "Minsato Le, Mi Dayihome", c: "Afro", y: 1973, s: "Voodoo funk.", u: "https://www.youtube.com/results?search_query=Orchestre+Poly-Rythmo+de+Cotonou+Minsato+Le%2C+Mi+Dayihome+1973" },
+                { a: "Osibisa", t: "Music for Gong Gong", c: "Afro", y: 1973, s: "Ghanaian/U.K. Afro-rock.", u: "https://www.youtube.com/results?search_query=Osibisa+Music+for+Gong+Gong+1973" },
+                { a: "Rikki Ililonga & Musi-O-Tunya", t: "Dark Sunrise", c: "Afro", y: 1976, s: "Zambian rock protest.", u: "https://www.youtube.com/results?search_query=Rikki+Ililonga+%26+Musi-O-Tunya+Dark+Sunrise+1976" },
+                { a: "Public Image Ltd", t: "Public Image", c: "Post-Punk", y: 1978, s: "Jah Wobble's iconic bass.", u: "https://www.youtube.com/results?search_query=Public+Image+Ltd+Public+Image+1978" },
+                { a: "Liquid Liquid", t: "Cavern", c: "Post-Punk", y: 1983, s: "Percussive minimalist funk.", u: "https://www.youtube.com/results?search_query=Liquid+Liquid+Cavern+1983" },
+                { a: "The Pop Group", t: "She Is Beyond Good and Evil", c: "Post-Punk", y: 1979, s: "Funk-punk chaos.", u: "https://www.youtube.com/results?search_query=The+Pop+Group+She+Is+Beyond+Good+and+Evil+1979" },
+                { a: "A Certain Ratio", t: "Shack Up", c: "Post-Punk", y: 1980, s: "Manchester funk-punk.", u: "https://www.youtube.com/results?search_query=A+Certain+Ratio+Shack+Up+1980" },
+                { a: "ESG", t: "Moody", c: "Post-Punk", y: 1983, s: "Minimalist 'punk-funk' trio.", u: "https://www.youtube.com/results?search_query=ESG+Moody+1983" },
+                { a: "Delta 5", t: "Mind Your Own Business", c: "Post-Punk", y: 1979, s: "Dual basslines, feminist anthem.", u: "https://www.youtube.com/results?search_query=Delta+5+Mind+Your+Own+Business+1979" },
+                { a: "The Slits", t: "Typical Girls", c: "Post-Punk", y: 1979, s: "Reggae-inflected post-punk.", u: "https://www.youtube.com/results?search_query=The+Slits+Typical+Girls+1979" },
+                { a: "The B-52's", t: "Planet Claire", c: "Post-Punk", y: 1979, s: "Surf-rock from space.", u: "https://www.youtube.com/results?search_query=The+B-52%27s+Planet+Claire+1979" },
+                { a: "XTC", t: "Making Plans for Nigel", c: "Post-Punk", y: 1979, s: "Angular new wave.", u: "https://www.youtube.com/results?search_query=XTC+Making+Plans+for+Nigel+1979" },
+                { a: "Talking Heads", t: "Born Under Punches", c: "Post-Punk", y: 1980, s: "Poly-rhythmic masterpiece.", u: "https://www.youtube.com/results?search_query=Talking+Heads+Born+Under+Punches+%28The+Heat+Goes+On%29+1980" },
+                { a: "The Jimmy Castor Bunch", t: "It's Just Begun", c: "Samples", y: 1972, s: "Breakbeat staple.", u: "https://www.youtube.com/results?search_query=The+Jimmy+Castor+Bunch+It%27s+Just+Begun+1972" },
+                { a: "Incredible Bongo Band", t: "Apache", c: "Samples", y: 1973, s: "Perhaps the second most sampled break.", u: "https://www.youtube.com/results?search_query=Incredible+Bongo+Band+Apache+1973" },
+                { a: "Melvin Bliss", t: "Synthetic Substitution", c: "Samples", y: 1973, s: "Drum break gold.", u: "https://www.youtube.com/results?search_query=Melvin+Bliss+Synthetic+Substitution+1973" },
+                { a: "Skull Snaps", t: "It's a New Day", c: "Samples", y: 1973, s: "Funky drum break.", u: "https://www.youtube.com/results?search_query=Skull+Snaps+It%27s+a+New+Day+1973" },
+                { a: "Dennis Coffey", t: "Scorpio", c: "Samples", y: 1971, s: "Fuzz guitar breakbeat.", u: "https://www.youtube.com/results?search_query=Dennis+Coffey+Scorpio+1971" },
+                { a: "The Honey Drippers", t: "Impeach the President", c: "Samples", y: 1973, s: "Classic break.", u: "https://www.youtube.com/results?search_query=The+Honey+Drippers+Impeach+the+President+1973" },
+                { a: "Bob James", t: "Take Me to the Mardi Gras", c: "Samples", y: 1975, s: "Cowbell & clavinet.", u: "https://www.youtube.com/results?search_query=Bob+James+Take+Me+to+the+Mardi+Gras+1975" },
+                { a: "David Axelrod", t: "The Edge", c: "Samples", y: 1968, s: "Cinematic, dark jazz.", u: "https://www.youtube.com/results?search_query=David+Axelrod+The+Edge+1968" },
+                { a: "Galt MacDermot", t: "Space", c: "Samples", y: 1969, s: "Hair composer's funky oddity.", u: "https://www.youtube.com/results?search_query=Galt+MacDermot+Space+1969" },
+                { a: "Prince", t: "17 Days (B-side)", c: "Samples", y: 1984, s: "Piano riff sampled for 'Kiss'.", u: "https://www.youtube.com/results?search_query=Prince+17+Days+%28B-side%29+1984" },
+                { a: "Brian Eno", t: "An Ending (Ascent)", c: "Ambient", y: 1983, s: "Ambient space.", u: "https://www.youtube.com/results?search_query=Brian+Eno+An+Ending+%28Ascent%29+1983" },
+                { a: "Laurie Anderson", t: "O Superman", c: "Ambient", y: 1981, s: "Avant-garde pop.", u: "https://www.youtube.com/results?search_query=Laurie+Anderson+O+Superman+1981" },
+                { a: "Jon Hassell", t: "Caracas Night September 11, 1975", c: "Ambient", y: 1977, s: "'Fourth World' music.", u: "https://www.youtube.com/results?search_query=Jon+Hassell+Caracas+Night+September+11%2C+1975+1977" },
+                { a: "Popol Vuh", t: "Aguirre I (L'Acrime Di Rei)", c: "Ambient", y: 1975, s: "Herzog film ambience.", u: "https://www.youtube.com/results?search_query=Popol+Vuh+Aguirre+I+%28L%27Acrime+Di+Rei%29+1975" },
+                { a: "Cluster & Eno", t: "Ho Renomo", c: "Ambient", y: 1977, s: "Warm electronic pulses.", u: "https://www.youtube.com/results?search_query=Cluster+%26+Eno+Ho+Renomo+1977" },
+                { a: "Hiroshi Yoshimura", t: "Green", c: "Ambient", y: 1986, s: "Japanese environmental music.", u: "https://www.youtube.com/results?search_query=Hiroshi+Yoshimura+Green+1986" },
+                { a: "Suzanne Ciani", t: "The Eighth Wave", c: "Ambient", y: 1982, s: "Buchla synth pioneer.", u: "https://www.youtube.com/results?search_query=Suzanne+Ciani+The+Eighth+Wave+1982" },
+                { a: "Aphex Twin", t: "Rhubarb", c: "Ambient", y: 1994, s: "Ambient melancholy.", u: "https://www.youtube.com/results?search_query=Aphex+Twin+Rhubarb+1994" },
+                { a: "Harold Budd", t: "The Plateaux of Mirror", c: "Ambient", y: 1980, s: "Piano ambience.", u: "https://www.youtube.com/results?search_query=Harold+Budd+The+Plateaux+of+Mirror+1980" },
+                { a: "Stars of the Lid", t: "Requiem for Dying Mothers, Part 2", c: "Ambient", y: 2001, s: "Drone modern classical.", u: "https://www.youtube.com/results?search_query=Stars+of+the+Lid+Requiem+for+Dying+Mothers%2C+Part+2+2001" },
+                { a: "Steve Reich", t: "Music for 18 Musicians", c: "Avant-Garde", y: 1978, s: "Phase patterns.", u: "https://www.youtube.com/results?search_query=Steve+Reich+Music+for+18+Musicians+1978" },
+                { a: "Philip Glass", t: "Koyaanisqatsi", c: "Avant-Garde", y: 1982, s: "Minimalist prophecy.", u: "https://www.youtube.com/results?search_query=Philip+Glass+Koyaanisqatsi+1982" },
+                { a: "György Ligeti", t: "Atmosphères", c: "Avant-Garde", y: 1961, s: "Used in 2001: A Space Odyssey.", u: "https://www.youtube.com/results?search_query=Gy%C3%B6rgy+Ligeti+Atmosph%C3%A8res+1961" },
+                { a: "John Cage", t: "4'33\"", c: "Avant-Garde", y: 1952, s: "The silent sample.", u: "https://www.youtube.com/results?search_query=John+Cage+4%2733%22+1952" },
+                { a: "Krzysztof Penderecki", t: "Threnody for the Victims of Hiroshima", c: "Avant-Garde", y: 1960, s: "Dissonant strings.", u: "https://www.youtube.com/results?search_query=Krzysztof+Penderecki+Threnody+for+the+Victims+of+Hiroshima+1960" },
+                { a: "Arvo Pärt", t: "Spiegel im Spiegel", c: "Avant-Garde", y: 1978, s: "Tintinnabuli, stark beauty.", u: "https://www.youtube.com/results?search_query=Arvo+P%C3%A4rt+Spiegel+im+Spiegel+1978" },
+                { a: "Terry Riley", t: "A Rainbow in Curved Air", c: "Avant-Garde", y: 1969, s: "Keyboard loops.", u: "https://www.youtube.com/results?search_query=Terry+Riley+A+Rainbow+in+Curved+Air+1969" },
+                { a: "Moondog", t: "Bird's Lament", c: "Avant-Garde", y: 1969, s: "Street composer's jazz.", u: "https://www.youtube.com/results?search_query=Moondog+Bird%27s+Lament+1969" },
+                { a: "Mica Levi", t: "Love", c: "Avant-Garde", y: 2013, s: "Under the Skin score, unsettling.", u: "https://www.youtube.com/results?search_query=Mica+Levi+Love+2013" },
+                { a: "Colin Stetson", t: "The Righteous Wrath of an Honorable Man", c: "Avant-Garde", y: 2013, s: "Circular breathing sax epic.", u: "https://www.youtube.com/results?search_query=Colin+Stetson+The+Righteous+Wrath+of+an+Honorable+Man+2013" },
+                { a: "Ken Nordine", t: "My Baby", c: "Spoken", y: 1967, s: "'Word jazz' weirdness.", u: "https://www.youtube.com/results?search_query=Ken+Nordine+My+Baby+1967" },
+                { a: "The Last Poets", t: "When The Revolution Comes", c: "Spoken", y: 1970, s: "Proto-rap.", u: "https://www.youtube.com/results?search_query=The+Last+Poets+When+The+Revolution+Comes+1970" },
+                { a: "Spalding Gray", t: "Swimming to Cambodia", c: "Spoken", y: 1985, s: "Monologue sample.", u: "https://www.youtube.com/results?search_query=Spalding+Gray+Swimming+to+Cambodia+1985" },
+                { a: "Bill Hicks", t: "It's Just a Ride", c: "Spoken", y: 1993, s: "Philosophical comedy.", u: "https://www.youtube.com/results?search_query=Bill+Hicks+It%27s+Just+a+Ride+1993" },
+                { a: "Henry Rollins", t: "Liar", c: "Spoken", y: 1994, s: "Spoken word intensity.", u: "https://www.youtube.com/results?search_query=Henry+Rollins+Liar+1994" },
+                { a: "Anaïs Nin", t: "Reading from Delta of Venus", c: "Spoken", y: 1975, s: "Erotic literature.", u: "https://www.youtube.com/results?search_query=Ana%C3%AFs+Nin+Reading+from+Delta+of+Venus+1975" },
+                { a: "Jiddu Krishnamurti", t: "On Freedom", c: "Spoken", y: 1968, s: "Philosophical talk.", u: "https://www.youtube.com/results?search_query=Jiddu+Krishnamurti+On+Freedom+1968" },
+                { a: "Maya Angelou", t: "On the Pulse of Morning", c: "Spoken", y: 1993, s: "Inaugural poem.", u: "https://www.youtube.com/results?search_query=Maya+Angelou+On+the+Pulse+of+Morning+1993" },
+                { a: "George Carlin", t: "The Planet is Fine", c: "Spoken", y: 1992, s: "Environmental rant.", u: "https://www.youtube.com/results?search_query=George+Carlin+The+Planet+is+Fine+1992" },
+                { a: "Hal Blaine & The Wrecking Crew", t: "Drum Conversation", c: "Spoken", y: 1967, s: "Isolated drum breaks & chat.", u: "https://www.youtube.com/results?search_query=Hal+Blaine+%26+The+Wrecking+Crew+Drum+Conversation+1967" },
+                { a: "Koji Kondo", t: "Dire, Dire Docks", c: "OST", y: 1996, s: "Super Mario 64 ambient.", u: "https://www.youtube.com/results?search_query=Koji+Kondo+Dire%2C+Dire+Docks+1996" },
+                { a: "Nobuo Uematsu", t: "Aerith's Theme", c: "OST", y: 1997, s: "Final Fantasy VII emotion.", u: "https://www.youtube.com/results?search_query=Nobuo+Uematsu+Aerith%27s+Theme+1997" },
+                { a: "David Wise", t: "Stickerbush Symphony", c: "OST", y: 1994, s: "Donkey Kong Country 2 ambient.", u: "https://www.youtube.com/results?search_query=David+Wise+Stickerbush+Symphony+1994" },
+                { a: "Yoko Kanno", t: "Tank!", c: "OST", y: 1998, s: "Cowboy Bebop big band.", u: "https://www.youtube.com/results?search_query=Yoko+Kanno+Tank%21+1998" },
+                { a: "Disasterpeace", t: "Title (FEZ)", c: "OST", y: 2010, s: "Fez chiptune ambience.", u: "https://www.youtube.com/results?search_query=Disasterpeace+Title+%28FEZ%29+2010" },
+                { a: "John Barry", t: "The Persuaders! (Theme)", c: "OST", y: 1971, s: "Funky TV theme.", u: "https://www.youtube.com/results?search_query=John+Barry+The+Persuaders%21+%28Theme%29+1971" },
+                { a: "Riz Ortolani", t: "Oh My Love", c: "OST", y: 1968, s: "Haunting Western theme.", u: "https://www.youtube.com/results?search_query=Riz+Ortolani+Oh+My+Love+%28The+Great+Silence%29+1968" },
+                { a: "Roy Budd", t: "The Getaway", c: "OST", y: 1972, s: "Piano-led crime funk.", u: "https://www.youtube.com/results?search_query=Roy+Budd+The+Getaway+1972" },
+                { a: "Bernard Fèvre", t: "Suspense", c: "OST", y: 1977, s: "French library/horror synth.", u: "https://www.youtube.com/results?search_query=Bernard+F%C3%A8vre+Suspense+1977" },
+                { a: "Wendy Carlos", t: "Title Music A Clockwork Orange", c: "OST", y: 1971, s: "Moog'd Beethoven.", u: "https://www.youtube.com/results?search_query=Wendy+Carlos+Title+Music+from+A+Clockwork+Orange+1971" }
+            ];
+
+            // Local state variables
+            let Q = [...A], idx = -1, played = 0, cat = 'all', auto = true, shuf = false, loop = false, P = null;
+
+            if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+                const tag = document.createElement('script');
+                tag.src = "https://www.youtube.com/iframe_api";
+                document.head.appendChild(tag);
+            }
+
+            // This function needs to be global so YT API can call it
+            window.onYouTubeIframeAPIReady = function() { }
+
+            function vid(u) {
+                const m = u.match(/(?:v=|\/shorts\/|youtu\.be\/)([^&?\/]+)/);
+                return m ? m[1] : null;
+            }
+
+            function getSearchQuery(u) {
+                try {
+                    // Handle search_query param if it exists
+                    if (u.includes('search_query=')) {
+                        const url = new URL(u);
+                        return url.searchParams.get('search_query');
+                    }
+                    return null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function load(i) {
+                if (i < 0 || i >= Q.length) return;
+                const x = Q[i];
+                
+                // 1. Try to get direct video ID
+                const id = vid(x.u);
+                
+                // 2. If no ID, try to get search query
+                const query = !id ? getSearchQuery(x.u) : null;
+                
+                // 3. Fallback: Create query from metadata if all else fails
+                const finalQuery = id ? null : (query || `${x.a} ${x.t}`);
+
+                // DESTROY AND REBUILD
+                // We must destroy the player to switch between 'search' mode and 'video' mode reliably,
+                // or to update the search query.
+                if (P) {
+                    P.destroy(); 
+                    P = null;
+                }
+                
+                // Re-create the placeholder DIV because destroy() removes the iframe but doesn't restore the div
+                const wrap = document.querySelector('.video-wrap');
+                wrap.innerHTML = '<div id="player"></div>';
+
+                const playerConfig = {
+                    height: '100%',
+                    width: '100%',
+                    playerVars: {
+                        autoplay: 1,
+                        controls: 1,
+                        modestbranding: 1,
+                        rel: 0,
+                        playsinline: 1,
+                        fs: 0
+                    },
+                    events: {
+                        'onStateChange': onEnd
+                    }
+                };
+
+                if (id) {
+                    playerConfig.videoId = id;
+                } else {
+                    // Use the Search Embed feature
+                    playerConfig.playerVars.listType = 'search';
+                    playerConfig.playerVars.list = finalQuery;
+                }
+
+                P = new YT.Player('player', playerConfig);
+
+                idx = i;
+                document.getElementById('np-artist').textContent = x.a;
+                document.getElementById('np-track').textContent = x.t;
+                document.getElementById('np-cat').textContent = x.c;
+                document.getElementById('np-year').textContent = x.y;
+                document.getElementById('np-sonic').textContent = x.s;
+                document.getElementById('s-idx').textContent = i + 1;
+                render();
+            }
+
+            function onEnd(e) {
+                if (e.data === 0) {
+                    played++;
+                    document.getElementById('s-played').textContent = played;
+                    if (loop) { 
+                        // For search playlists, seeking to 0 might not work as expected, 
+                        // but usually it restarts the current video in the playlist
+                        // However, auto-advance is safer for "crate digging"
+                        if (P && typeof P.seekTo === 'function') {
+                            P.seekTo(0); 
+                            P.playVideo();
+                        }
+                    }
+                    else if (auto) next();
+                }
+            }
+
+            function next() { idx = shuf ? Math.floor(Math.random() * Q.length) : (idx + 1) % Q.length; load(idx); }
+            function prev() { idx = idx <= 0 ? Q.length - 1 : idx - 1; load(idx); }
+            function rand() { idx = Math.floor(Math.random() * Q.length); load(idx); }
+
+            function filter(c) {
+                cat = c;
+                Q = c === 'all' ? [...A] : A.filter(x => x.c === c);
+                idx = -1;
+                document.querySelectorAll('.cat-chip').forEach(e => e.classList.toggle('active', e.dataset.c === c));
+                stats(); render();
+            }
+
+            function render() {
+                document.getElementById('list').innerHTML = Q.map((x, i) => `
+            <div class="track ${i === idx ? 'playing' : ''}" onclick="load(${i})">
+                <div class="t-num">${i + 1}</div>
+                <div class="t-info"><div class="t-artist">${x.a}</div><div class="t-title">${x.t}</div></div>
+                <div class="t-meta"><span class="t-cat">${x.c}</span>${x.y}</div>
+            </div>
+        `).join('');
+            }
+
+            function cats() {
+                const c = {}; A.forEach(x => c[x.c] = (c[x.c] || 0) + 1);
+                document.getElementById('cats').innerHTML = `<div class="cat-chip active" data-c="all" onclick="filter('all')">ALL<span>${A.length}</span></div>` +
+                    Object.keys(c).map(k => `<div class="cat-chip" data-c="${k}" onclick="filter('${k}')">${k.toUpperCase()}<span>${c[k]}</span></div>`).join('');
+            }
+
+            function stats() {
+                document.getElementById('s-total').textContent = A.length;
+                document.getElementById('s-show').textContent = Q.length;
+            }
+
+            // Expose necessary functions to window for HTML event handlers
+            window.load = load;
+            window.filter = filter;
+
+            // Bind Event Listeners
+            document.getElementById('btn-next').onclick = next;
+            document.getElementById('btn-prev').onclick = prev;
+            document.getElementById('btn-rand').onclick = rand;
+            document.getElementById('p-auto').onclick = function () { auto = !auto; this.classList.toggle('on', auto); };
+            document.getElementById('p-shuf').onclick = function () { shuf = !shuf; this.classList.toggle('on', shuf); };
+            document.getElementById('p-loop').onclick = function () { loop = !loop; this.classList.toggle('on', loop); };
+
+            // Initialize
+            cats(); render(); stats();
+        })();
+    </script>
+</body>
+
+</html>
