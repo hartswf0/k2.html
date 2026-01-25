@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#121212">
+    <title>SAMPLE CRATE 120</title>
+    <style>
+        :root {
+            --bg: #050505;
+            --panel: #111;
+            --border: #222;
+            --accent: #ff5500; /* Cratedigger Orange */
+            --accent-dim: rgba(255, 85, 0, 0.15);
+            --secondary: #00ccff; /* Blue for contrast */
+            --text: #e0e0e0;
+            --text-dim: #777;
+            --font-mono: 'SF Mono', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-mono); }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+
+        /* HEADER */
+        .header {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: #080808;
+            border-bottom: 1px solid var(--border);
+        }
+        .brand {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+        .brand span { color: var(--accent); }
+
+        .modes { display: flex; gap: 6px; }
+        .mode-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 9px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-family: inherit;
+        }
+        .mode-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* VIDEO AREA */
+        .viewport {
+            flex-shrink: 0;
+            width: 100%;
+            background: #000;
+            position: relative;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 */
+            overflow: hidden;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border: none;
+        }
+        /* Missing URL State */
+        .missing-state {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            color: var(--text-dim);
+            z-index: 10;
+        }
+        .missing-icon { font-size: 24px; margin-bottom: 10px; opacity: 0.5; }
+        .search-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: var(--text);
+            color: #000;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .search-btn:hover { background: var(--accent); }
+
+        /* NOW PLAYING */
+        .info-panel {
+            flex-shrink: 0;
+            padding: 12px 16px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+        .info-main { margin-bottom: 8px; }
+        .info-artist { font-size: 13px; color: var(--accent); font-weight: bold; margin-bottom: 2px; }
+        .info-track { font-size: 12px; color: #fff; line-height: 1.4; }
+        
+        .sonic-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .s-tag {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            background: #222;
+            color: #aaa;
+            border: 1px solid #333;
+        }
+        .s-tag.type { background: var(--accent-dim); color: var(--accent); border-color: transparent; }
+        .s-tag.desc { background: rgba(0, 204, 255, 0.1); color: var(--secondary); border-color: transparent; }
+
+        /* CONTROLS */
+        .controls {
+            flex-shrink: 0;
+            display: flex;
+            gap: 1px;
+            background: var(--border);
+            padding: 1px 0;
+        }
+        .ctrl-btn {
+            flex: 1;
+            background: var(--panel);
+            border: none;
+            color: var(--text);
+            padding: 12px 0;
+            font-family: inherit;
+            font-size: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .ctrl-btn:active { background: #222; }
+        .ctrl-btn.main { color: var(--accent); }
+
+        /* CATEGORY SCROLLER */
+        .cat-scroll {
+            flex-shrink: 0;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 10px 16px;
+            background: #080808;
+            border-bottom: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
+        }
+        .cat-scroll::-webkit-scrollbar { display: none; }
+        .cat-chip {
+            display: inline-block;
+            font-size: 10px;
+            padding: 4px 10px;
+            margin-right: 6px;
+            border-radius: 12px;
+            background: #1a1a1a;
+            color: #666;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .cat-chip.active {
+            background: var(--text);
+            color: #000;
+            font-weight: bold;
+        }
+        .cat-chip:hover:not(.active) { border-color: #444; }
+
+        /* TRACK LIST */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg);
+            -webkit-overflow-scrolling: touch;
+        }
+        .track-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            border-bottom: 1px solid #111;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .track-row:active { background: #111; }
+        .track-row.playing { 
+            background: var(--accent-dim); 
+            border-left: 3px solid var(--accent);
+            padding-left: 13px;
+        }
+        
+        .row-idx { font-size: 9px; color: #444; width: 24px; text-align: center; font-variant-numeric: tabular-nums; }
+        .row-data { flex: 1; min-width: 0; }
+        .row-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+        .row-artist { font-size: 11px; font-weight: bold; color: #bbb; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .row-cat { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+        .row-title { font-size: 11px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .track-row.playing .row-title { color: #fff; }
+        .track-row.playing .row-artist { color: var(--accent); }
+
+        /* STATUS BAR */
+        .footer {
+            flex-shrink: 0;
+            padding: 4px 8px;
+            background: #000;
+            border-top: 1px solid var(--border);
+            font-size: 8px;
+            color: #444;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <!-- Header -->
+    <div class="header">
+        <div class="brand">CRATE <span>120</span></div>
+        <div class="modes">
+            <button class="mode-btn active" id="btn-auto">Auto</button>
+            <button class="mode-btn" id="btn-shuf">Shuf</button>
+        </div>
+    </div>
+
+    <!-- Video Player -->
+    <div class="viewport">
+        <div class="video-container" id="video-container">
+            <div id="player"></div>
+            <div id="missing-overlay" class="missing-state" style="display: none;">
+                <div class="missing-icon">⚠️</div>
+                <div>DIGITAL CRATE</div>
+                <div style="font-size: 10px; margin-top:4px; opacity:0.7;">No Direct Stream Available</div>
+                <a id="search-link" href="#" target="_blank" class="search-btn">
+                    <span>SEARCH YOUTUBE</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="info-panel">
+        <div class="info-main">
+            <div class="info-artist" id="np-artist">Select a track</div>
+            <div class="info-track" id="np-track">to begin digging</div>
+        </div>
+        <div class="sonic-tags" id="np-tags"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="ctrl-btn" id="btn-prev">Prev</button>
+        <button class="ctrl-btn main" id="btn-play">Play / Pause</button>
+        <button class="ctrl-btn" id="btn-next">Next</button>
+        <button class="ctrl-btn" id="btn-rand">Random</button>
+    </div>
+
+    <!-- Categories -->
+    <div class="cat-scroll" id="cat-scroll">
+        <!-- Injected via JS -->
+    </div>
+
+    <!-- List -->
+    <div class="list-container" id="track-list">
+        <!-- Injected via JS -->
+    </div>
+
+    <div class="footer">
+        <span id="stat-count">0 ITEMS</span>
+        <span>SAMPLE CRATE 120 // v2.0</span>
+    </div>
+</div>
+
+<script>
+// --- DATASET ---
+const CRATE = [
+  {"a":"Alan Hawkshaw","t":"The Champ","c":"library","y":null,"u":"https://www.youtube.com/watch?v=Ck__WD3YzPA","s":"[BRK][STAB] — fat drums + brass hits","q":"https://www.youtube.com/results?search_query=Alan+Hawkshaw+The+Champ"},
+  {"a":"Keith Mansfield","t":"Boogaloo a Go-Go","c":"library","y":null,"u":"https://www.youtube.com/watch?v=0mpgkJjGs74","s":"[BRK][STAB] — bouncy breaks, easy loops","q":"https://www.youtube.com/results?search_query=Keith+Mansfield+Boogaloo+a+Go-Go"},
+  {"a":"Brian Bennett","t":"Solstice","c":"library","y":null,"u":"https://www.youtube.com/watch?v=vtj419ogV2k","s":"[BRK][ODD] — floaty synth + drum pocket","q":"https://www.youtube.com/results?search_query=Brian+Bennett+Solstice"},
+  {"a":"Janko Nilovic","t":"Drug Song","c":"library","y":null,"u":"https://www.youtube.com/watch?v=Swg5KWANsDk","s":"[ODD][BRK] — eerie psych-funk cues","q":"https://www.youtube.com/results?search_query=Janko+Nilovic+Drug+Song"},
+  {"a":"Bernard Purdie","t":"Cool Down","c":"library","y":null,"u":"https://www.youtube.com/watch?v=wEQH1y1aU60","s":"[BRK][BASS] — pure pocket, minimal clutter","q":"https://www.youtube.com/results?search_query=Bernard+Purdie+Cool+Down"},
+  {"a":"Jack Trombey","t":"Mo’ Zunguzungu","c":"library","y":null,"u":"","s":"[BRK][STAB] — dusty funk bed, big accents","q":"https://www.youtube.com/results?search_query=Jack+Trombey+Mo%E2%80%99+Zunguzungu"},
+  {"a":"The Mohawks","t":"The Champ","c":"library","y":null,"u":"https://www.youtube.com/watch?v=alYqbyhflMY","s":"[BRK][STAB] — the other “Champ” (dig both)","q":"https://www.youtube.com/results?search_query=The+Mohawks+The+Champ"},
+  {"a":"John Cameron","t":"Half Forgotten Daydreams","c":"library","y":null,"u":"https://www.youtube.com/watch?v=rNxaBEv6M1w","s":"[STR][ODD] — wistful strings, film haze","q":"https://www.youtube.com/results?search_query=John+Cameron+Half+Forgotten+Daydreams"},
+  {"a":"Armando Trovajoli","t":"Sessomatto","c":"library","y":null,"u":"https://www.youtube.com/watch?v=jsmr70YWAnU","s":"[ODD][BRK] — Italian groove weirdness","q":"https://www.youtube.com/results?search_query=Armando+Trovajoli+Sessomatto"},
+  {"a":"Piero Umiliani","t":"Gassman Blues","c":"library","y":null,"u":"https://www.youtube.com/watch?v=A7y4hH7jRk4","s":"[ODD][BASS] — lounge noir, crisp bass","q":"https://www.youtube.com/results?search_query=Piero+Umiliani+Gassman+Blues"},
+  {"a":"Alessandro Alessandroni","t":"Canto Apache","c":"library","y":null,"u":"","s":"[ODD][STAB] — whistles + spooky hits","q":"https://www.youtube.com/results?search_query=Alessandro+Alessandroni+Canto+Apache"},
+  {"a":"Stelvio Cipriani","t":"Mary’s Theme","c":"library","y":null,"u":"https://www.youtube.com/watch?v=OGQR3Chf9hE","s":"[STR] — slow string lift, clean chop","q":"https://www.youtube.com/results?search_query=Stelvio+Cipriani+Mary%E2%80%99s+Theme"},
+  {"a":"Bruno Nicolai","t":"100.000 Dollari per Ringo","c":"library","y":null,"u":"https://www.youtube.com/watch?v=cmJv-Wlkmw4","s":"[ODD][STR] — tension strings + space","q":"https://www.youtube.com/results?search_query=Bruno+Nicolai+100.000+Dollari+per+Ringo"},
+  {"a":"Nora Orlandi","t":"Dies Irae Psichedelico","c":"library","y":null,"u":"https://www.youtube.com/watch?v=U47JJGRHEqU","s":"[ODD] — choral oddity, horror texture","q":"https://www.youtube.com/results?search_query=Nora+Orlandi+Dies+Irae+Psichedelico"},
+  {"a":"Francesco De Masi","t":"Il Padrino","c":"library","y":null,"u":"","s":"[STR][ODD] — dark motifs, suspense glue","q":"https://www.youtube.com/results?search_query=Francesco+De+Masi+Il+Padrino"},
+  {"a":"Lafayette Afro-Rock Band","t":"Darkest Light","c":"private_funk","y":null,"u":"","s":"[STAB][BRK] — horn stab heaven","q":"https://www.youtube.com/results?search_query=Lafayette+Afro-Rock+Band+Darkest+Light"},
+  {"a":"The Pazant Brothers","t":"Chick a Boom","c":"private_funk","y":null,"u":"","s":"[BRK][STAB] — clean drums + bright hits","q":"https://www.youtube.com/results?search_query=The+Pazant+Brothers+Chick+a+Boom"},
+  {"a":"The Soul Surfers","t":"Soul Power ’74","c":"private_funk","y":null,"u":"","s":"[BRK][BASS] — crunchy live kit","q":"https://www.youtube.com/results?search_query=The+Soul+Surfers+Soul+Power+%E2%80%9974"},
+  {"a":"The Barons","t":"Making It Better","c":"private_funk","y":null,"u":"","s":"[BRK][STAB] — tight vamp, quick edits","q":"https://www.youtube.com/results?search_query=The+Barons+Making+It+Better"},
+  {"a":"The Ambassadors","t":"Ain’t Got the Love of One Girl","c":"private_funk","y":null,"u":"","s":"[VOX][BRK] — plaintive phrases","q":"https://www.youtube.com/results?search_query=The+Ambassadors+Ain%E2%80%99t+Got+the+Love+of+One+Girl"},
+  {"a":"The Topics","t":"Giving Up","c":"private_funk","y":null,"u":"","s":"[VOX][BRK] — raw 45 energy","q":"https://www.youtube.com/results?search_query=The+Topics+Giving+Up"},
+  {"a":"The Voids","t":"I Wanna Be Your Man","c":"private_funk","y":null,"u":"","s":"[BRK][BASS] — simple pocket, hard swing","q":"https://www.youtube.com/results?search_query=The+Voids+I+Wanna+Be+Your+Man"},
+  {"a":"The Eternals","t":"Rockin’ My Baby Back and Forth","c":"private_funk","y":null,"u":"","s":"[BRK][STAB] — guitar chops, breaks","q":"https://www.youtube.com/results?search_query=The+Eternals+Rockin%E2%80%99+My+Baby+Back+and+Forth"},
+  {"a":"Natural Four","t":"Can This Be Real","c":"private_funk","y":null,"u":"","s":"[STR][VOX] — sweet harmony stems","q":"https://www.youtube.com/results?search_query=Natural+Four+Can+This+Be+Real"},
+  {"a":"The Sylvers","t":"Stay Away From Me","c":"private_funk","y":null,"u":"","s":"[BRK][BASS] — youthful groove, loopable","q":"https://www.youtube.com/results?search_query=The+Sylvers+Stay+Away+From+Me"},
+  {"a":"Joe Simon","t":"Drowning in the Sea of Love","c":"private_funk","y":null,"u":"","s":"[VOX][BRK] — strong hook phrases","q":"https://www.youtube.com/results?search_query=Joe+Simon+Drowning+in+the+Sea+of+Love"},
+  {"a":"The Independents","t":"Leaving Me","c":"private_funk","y":null,"u":"","s":"[STR][VOX] — clean chorus lifts","q":"https://www.youtube.com/results?search_query=The+Independents+Leaving+Me"},
+  {"a":"The Realistics","t":"The Thing We Did Last Summer","c":"private_funk","y":null,"u":"","s":"[STR][VOX] — melancholy, cinematic","q":"https://www.youtube.com/results?search_query=The+Realistics+The+Thing+We+Did+Last+Summer"},
+  {"a":"The Emotions","t":"Show Me How","c":"private_funk","y":null,"u":"","s":"[BRK][VOX] — tight drums, call/response","q":"https://www.youtube.com/results?search_query=The+Emotions+Show+Me+How"},
+  {"a":"Black Heat","t":"Zimba Ku","c":"private_funk","y":null,"u":"","s":"[BRK][ODD] — aggressive band energy","q":"https://www.youtube.com/results?search_query=Black+Heat+Zimba+Ku"},
+  {"a":"The Awakening","t":"Mode D.D.","c":"deep_jazz","y":null,"u":"","s":"[ODD][BRK] — hypnotic groove cycle","q":"https://www.youtube.com/results?search_query=The+Awakening+Mode+D.D."},
+  {"a":"Doug Carn","t":"Power and the Glory","c":"deep_jazz","y":null,"u":"","s":"[STR][VOX] — choir + Rhodes tension","q":"https://www.youtube.com/results?search_query=Doug+Carn+Power+and+the+Glory"},
+  {"a":"Pharoah Sanders","t":"You’ve Got to Have Freedom","c":"deep_jazz","y":null,"u":"","s":"[ODD][VOX] — chant energy, big arcs","q":"https://www.youtube.com/results?search_query=Pharoah+Sanders+You%E2%80%99ve+Got+to+Have+Freedom"},
+  {"a":"Alice Coltrane","t":"Journey in Satchidananda","c":"deep_jazz","y":null,"u":"","s":"[ODD] — harp/tanpura trance bed","q":"https://www.youtube.com/results?search_query=Alice+Coltrane+Journey+in+Satchidananda"},
+  {"a":"Lonnie Liston Smith","t":"Expansions","c":"deep_jazz","y":null,"u":"","s":"[BASS][ODD] — cosmic groove, vocal bits","q":"https://www.youtube.com/results?search_query=Lonnie+Liston+Smith+Expansions"},
+  {"a":"Bob James","t":"Westchester Lady","c":"deep_jazz","y":null,"u":"","s":"[STR][ODD] — CTI gloss, clean phrases","q":"https://www.youtube.com/results?search_query=Bob+James+Westchester+Lady"},
+  {"a":"Roy Brooks","t":"The Free Slave","c":"deep_jazz","y":null,"u":"","s":"[ODD][BRK] — dramatic changes, drum pockets","q":"https://www.youtube.com/results?search_query=Roy+Brooks+The+Free+Slave"},
+  {"a":"Idris Muhammad","t":"Could Heaven Ever Be Like This","c":"deep_jazz","y":null,"u":"","s":"[BRK][STR] — warm lift, great chorus","q":"https://www.youtube.com/results?search_query=Idris+Muhammad+Could+Heaven+Ever+Be+Like+This"},
+  {"a":"Gene Russell","t":"Get Down","c":"deep_jazz","y":null,"u":"","s":"[BRK][BASS] — basement pocket, minimal melody","q":"https://www.youtube.com/results?search_query=Gene+Russell+Get+Down"},
+  {"a":"Weldon Irvine","t":"I Love You","c":"deep_jazz","y":null,"u":"","s":"[STR][VOX] — tender chords, flip-ready","q":"https://www.youtube.com/results?search_query=Weldon+Irvine+I+Love+You"},
+  {"a":"Dorothy Ashby","t":"Come Live With Me","c":"deep_jazz","y":null,"u":"","s":"[ODD][STR] — harp + lounge drums","q":"https://www.youtube.com/results?search_query=Dorothy+Ashby+Come+Live+With+Me"},
+  {"a":"Charles Earland","t":"Lowdown","c":"deep_jazz","y":null,"u":"","s":"[BRK][BASS] — organ funk, easy loop","q":"https://www.youtube.com/results?search_query=Charles+Earland+Lowdown"},
+  {"a":"Grant Green","t":"The Final Comedown","c":"deep_jazz","y":null,"u":"","s":"[BRK][ODD] — cinematic guitar lines","q":"https://www.youtube.com/results?search_query=Grant+Green+The+Final+Comedown"},
+  {"a":"Cal Tjader","t":"Soul Sauce","c":"deep_jazz","y":null,"u":"","s":"[BRK][STAB] — crisp percussion hits","q":"https://www.youtube.com/results?search_query=Cal+Tjader+Soul+Sauce"},
+  {"a":"Ahmad Jamal","t":"I Love Music","c":"deep_jazz","y":null,"u":"","s":"[ODD][BRK] — live dynamics, break moments","q":"https://www.youtube.com/results?search_query=Ahmad+Jamal+I+Love+Music"},
+  {"a":"Willie Colón","t":"La Murga","c":"latin","y":null,"u":"","s":"[STAB][BRK] — brass riffs, drum fills","q":"https://www.youtube.com/results?search_query=Willie+Col%C3%B3n+La+Murga"},
+  {"a":"Héctor Lavoe","t":"Mi Gente","c":"latin","y":null,"u":"","s":"[VOX][BRK] — crowd energy, chant loops","q":"https://www.youtube.com/results?search_query=H%C3%A9ctor+Lavoe+Mi+Gente"},
+  {"a":"Eddie Palmieri","t":"Muneca","c":"latin","y":null,"u":"","s":"[BRK][STAB] — piano montunos, breaks","q":"https://www.youtube.com/results?search_query=Eddie+Palmieri+Muneca"},
+  {"a":"Ray Barretto","t":"Acid","c":"latin","y":null,"u":"","s":"[BRK][BASS] — long groove, conga science","q":"https://www.youtube.com/results?search_query=Ray+Barretto+Acid"},
+  {"a":"Mongo Santamaría","t":"Cloud Nine","c":"latin","y":null,"u":"","s":"[BRK][STAB] — punchy band hits","q":"https://www.youtube.com/results?search_query=Mongo+Santamar%C3%ADa+Cloud+Nine"},
+  {"a":"Irakere","t":"Bacalao Con Pan","c":"latin","y":null,"u":"","s":"[ODD][BRK] — wild changes, drum pockets","q":"https://www.youtube.com/results?search_query=Irakere+Bacalao+Con+Pan"},
+  {"a":"Caldera","t":"Ancient Source","c":"latin","y":null,"u":"","s":"[BRK][ODD] — synthy percussion groove","q":"https://www.youtube.com/results?search_query=Caldera+Ancient+Source"},
+  {"a":"Grupo Fantasma","t":"El Dos","c":"latin","y":null,"u":"","s":"[BRK][STAB] — tight modern breaks","q":"https://www.youtube.com/results?search_query=Grupo+Fantasma+El+Dos"},
+  {"a":"Los Mirlos","t":"La Danza de Los Mirlos","c":"latin","y":null,"u":"","s":"[BASS][ODD] — hypnotic guitar line","q":"https://www.youtube.com/results?search_query=Los+Mirlos+La+Danza+de+Los+Mirlos"},
+  {"a":"Celia Cruz","t":"Cucala","c":"latin","y":null,"u":"","s":"[VOX][BRK] — call/response phrases","q":"https://www.youtube.com/results?search_query=Celia+Cruz+Cucala"},
+  {"a":"Joe Bataan","t":"Rap-O Clap-O","c":"latin","y":null,"u":"","s":"[BRK][VOX] — chants + drums","q":"https://www.youtube.com/results?search_query=Joe+Bataan+Rap-O+Clap-O"},
+  {"a":"Ricardo Ray","t":"Jala Jala y Boogaloo","c":"latin","y":null,"u":"","s":"[BRK][STAB] — horns + breaks","q":"https://www.youtube.com/results?search_query=Ricardo+Ray+Jala+Jala+y+Boogaloo"},
+  {"a":"Tito Puente","t":"Oye Como Va","c":"latin","y":null,"u":"","s":"[BRK][STAB] — percussion + organ riffs","q":"https://www.youtube.com/results?search_query=Tito+Puente+Oye+Como+Va"},
+  {"a":"Orchestra Harlow","t":"La Cartera","c":"latin","y":null,"u":"","s":"[BRK][VOX] — story vocals, groove","q":"https://www.youtube.com/results?search_query=Orchestra+Harlow+La+Cartera"},
+  {"a":"Fania All-Stars","t":"Descarga Fania","c":"latin","y":null,"u":"","s":"[BRK][STAB] — jam sections for edits","q":"https://www.youtube.com/results?search_query=Fania+All-Stars+Descarga+Fania"},
+  {"a":"Orchestre Poly-Rythmo","t":"Pardon","c":"africa_caribbean","y":null,"u":"","s":"[BRK][BASS] — deep pocket, endless vamp","q":"https://www.youtube.com/results?search_query=Orchestre+Poly-Rythmo+Pardon"},
+  {"a":"Ebo Taylor","t":"Love and Death","c":"africa_caribbean","y":null,"u":"","s":"[BRK][STAB] — guitars + horn hits","q":"https://www.youtube.com/results?search_query=Ebo+Taylor+Love+and+Death"},
+  {"a":"Pat Thomas","t":"Odo Bra","c":"africa_caribbean","y":null,"u":"","s":"[BRK][VOX] — warm groove, vocal phrases","q":"https://www.youtube.com/results?search_query=Pat+Thomas+Odo+Bra"},
+  {"a":"Ibibio Sound Machine","t":"Give Me a Reason","c":"africa_caribbean","y":null,"u":"","s":"[BRK][ODD] — kinetic percussion","q":"https://www.youtube.com/results?search_query=Ibibio+Sound+Machine+Give+Me+a+Reason"},
+  {"a":"Ata Kak","t":"Obaa Sima","c":"africa_caribbean","y":null,"u":"","s":"[ODD][BRK] — lo-fi synth highlife bounce","q":"https://www.youtube.com/results?search_query=Ata+Kak+Obaa+Sima"},
+  {"a":"William Onyeabor","t":"Fantastic Man","c":"africa_caribbean","y":null,"u":"","s":"[BASS][ODD] — synth funk for days","q":"https://www.youtube.com/results?search_query=William+Onyeabor+Fantastic+Man"},
+  {"a":"Manu Dibango","t":"Ceddo","c":"africa_caribbean","y":null,"u":"","s":"[ODD][STAB] — cinematic afro-jazz cues","q":"https://www.youtube.com/results?search_query=Manu+Dibango+Ceddo"},
+  {"a":"Mulatu Astatke","t":"Yègellé Tezeta","c":"africa_caribbean","y":null,"u":"","s":"[ODD][BRK] — minor-key mood loops","q":"https://www.youtube.com/results?search_query=Mulatu+Astatke+Y%C3%A8gell%C3%A9+Tezeta"},
+  {"a":"Hailu Mergia","t":"Wede Harer Guzo","c":"africa_caribbean","y":null,"u":"","s":"[ODD][BASS] — organ lines, clean groove","q":"https://www.youtube.com/results?search_query=Hailu+Mergia+Wede+Harer+Guzo"},
+  {"a":"The Skatalites","t":"Phoenix City","c":"africa_caribbean","y":null,"u":"","s":"[BRK][STAB] — bright horns, fast chops","q":"https://www.youtube.com/results?search_query=The+Skatalites+Phoenix+City"},
+  {"a":"Prince Buster","t":"Ghost Dance","c":"africa_caribbean","y":null,"u":"","s":"[BRK][ODD] — spooky groove, sparse","q":"https://www.youtube.com/results?search_query=Prince+Buster+Ghost+Dance"},
+  {"a":"Jackie Mittoo","t":"Drum Song","c":"africa_caribbean","y":null,"u":"","s":"[BRK][BASS] — organ + drums, loop heaven","q":"https://www.youtube.com/results?search_query=Jackie+Mittoo+Drum+Song"},
+  {"a":"The Ethiopians","t":"Train to Skaville","c":"africa_caribbean","y":null,"u":"","s":"[VOX][BRK] — vocal bits, upbeat pocket","q":"https://www.youtube.com/results?search_query=The+Ethiopians+Train+to+Skaville"},
+  {"a":"Mighty Sparrow","t":"Sa Sa Ya","c":"africa_caribbean","y":null,"u":"","s":"[ODD][BRK] — playful rhythms, odd hooks","q":"https://www.youtube.com/results?search_query=Mighty+Sparrow+Sa+Sa+Ya"},
+  {"a":"Kassav’","t":"Zouk-la Sé Sèl Médikaman Nou Ni","c":"africa_caribbean","y":null,"u":"","s":"[BASS][BRK] — modern island bounce","q":"https://www.youtube.com/results?search_query=Kassav%E2%80%99+Zouk-la+S%C3%A9+S%C3%A8l+M%C3%A9dikaman+Nou+Ni"},
+  {"a":"Barış Manço","t":"Dağlar Dağlar","c":"eastern_psych","y":null,"u":"","s":"[ODD][VOX] — dramatic vocals, heavy drums","q":"https://www.youtube.com/results?search_query=Bar%C4%B1%C5%9F+Man%C3%A7o+Da%C4%9Flar+Da%C4%9Flar"},
+  {"a":"Erkin Koray","t":"Şaşkın","c":"eastern_psych","y":null,"u":"","s":"[BRK][ODD] — fuzz + swing","q":"https://www.youtube.com/results?search_query=Erkin+Koray+%C5%9Ea%C5%9Fk%C4%B1n"},
+  {"a":"Selda Bağcan","t":"İnce İnce Bir Kar Yağar","c":"eastern_psych","y":null,"u":"","s":"[ODD][VOX] — haunting folk phrases","q":"https://www.youtube.com/results?search_query=Selda+Ba%C4%9Fcan+%C4%B0nce+%C4%B0nce+Bir+Kar+Ya%C4%9Far"},
+  {"a":"Mogollar","t":"Haliç’te Güneş","c":"eastern_psych","y":null,"u":"","s":"[ODD] — psych instrumental beds","q":"https://www.youtube.com/results?search_query=Mogollar+Hali%C3%A7%E2%80%99te+G%C3%BCne%C5%9F"},
+  {"a":"Mustafa Özkent","t":"Uzelli Psychedelic Anadolu","c":"eastern_psych","y":null,"u":"","s":"[ODD][BRK] — guitar psych loops","q":"https://www.youtube.com/results?search_query=Mustafa+%C3%96zkent+Uzelli+Psychedelic+Anadolu"},
+  {"a":"Kourosh Yaghmaei","t":"Gole Yakh","c":"eastern_psych","y":null,"u":"","s":"[ODD][BRK] — airy psych-pop groove","q":"https://www.youtube.com/results?search_query=Kourosh+Yaghmaei+Gole+Yakh"},
+  {"a":"Googoosh","t":"Talagh","c":"eastern_psych","y":null,"u":"","s":"[VOX][ODD] — dramatic hook phrases","q":"https://www.youtube.com/results?search_query=Googoosh+Talagh"},
+  {"a":"Fairuz","t":"Al Bosta","c":"eastern_psych","y":null,"u":"","s":"[ODD][VOX] — melodic lines for flips","q":"https://www.youtube.com/results?search_query=Fairuz+Al+Bosta"},
+  {"a":"Omar Khorshid","t":"Rakset El Fadaa","c":"eastern_psych","y":null,"u":"","s":"[ODD][BRK] — spacey surf-oud funk","q":"https://www.youtube.com/results?search_query=Omar+Khorshid+Rakset+El+Fadaa"},
+  {"a":"Ahmed Malek","t":"Autopsie d’un Complot","c":"eastern_psych","y":null,"u":"","s":"[ODD][BRK] — synth thriller cues","q":"https://www.youtube.com/results?search_query=Ahmed+Malek+Autopsie+d%E2%80%99un+Complot"},
+  {"a":"Mustafa Kandıralı","t":"Oyun Havası","c":"eastern_psych","y":null,"u":"","s":"[BRK][ODD] — zurna/percussion energy","q":"https://www.youtube.com/results?search_query=Mustafa+Kand%C4%B1ral%C4%B1+Oyun+Havas%C4%B1"},
+  {"a":"Anouar Brahem","t":"Astrakan Café","c":"eastern_psych","y":null,"u":"","s":"[ODD] — oud + minimal space","q":"https://www.youtube.com/results?search_query=Anouar+Brahem+Astrakan+Caf%C3%A9"},
+  {"a":"Dabrye","t":"Game Over","c":"eastern_psych","y":null,"u":"","s":"[BRK][ODD] — glitchy drum science","q":"https://www.youtube.com/results?search_query=Dabrye+Game+Over"},
+  {"a":"Dengue Fever","t":"Tiger Phone Card","c":"eastern_psych","y":null,"u":"","s":"[ODD][BRK] — fuzz + strange melodies","q":"https://www.youtube.com/results?search_query=Dengue+Fever+Tiger+Phone+Card"},
+  {"a":"Hedi Jouini","t":"Nhebnek Ya Oumri","c":"eastern_psych","y":null,"u":"","s":"[VOX][ODD] — vintage vocal texture","q":"https://www.youtube.com/results?search_query=Hedi+Jouini+Nhebnek+Ya+Oumri"},
+  {"a":"King Tubby","t":"Dub from the Roots","c":"dub","y":null,"u":"","s":"[DUB][BASS] — space + sub drops","q":"https://www.youtube.com/results?search_query=King+Tubby+Dub+from+the+Roots"},
+  {"a":"Scientist","t":"Dance of the Vampires","c":"dub","y":null,"u":"","s":"[DUB][ODD] — wild FX, great transitions","q":"https://www.youtube.com/results?search_query=Scientist+Dance+of+the+Vampires"},
+  {"a":"Prince Jammy","t":"Jammy’s a Shine","c":"dub","y":null,"u":"","s":"[DUB][BRK] — sharp snares, clean edits","q":"https://www.youtube.com/results?search_query=Prince+Jammy+Jammy%E2%80%99s+a+Shine"},
+  {"a":"The Revolutionaries","t":"Kunta Kinte Dub","c":"dub","y":null,"u":"","s":"[DUB][BRK] — militant groove, minimal","q":"https://www.youtube.com/results?search_query=The+Revolutionaries+Kunta+Kinte+Dub"},
+  {"a":"Roots Radics","t":"Dubbing at King Tubby’s","c":"dub","y":null,"u":"","s":"[DUB][BASS] — tough bass bed","q":"https://www.youtube.com/results?search_query=Roots+Radics+Dubbing+at+King+Tubby%E2%80%99s"},
+  {"a":"Sly & Robbie","t":"Unmetered Taxi","c":"dub","y":null,"u":"","s":"[BASS][DUB] — modern low-end blueprint","q":"https://www.youtube.com/results?search_query=Sly+%26+Robbie+Unmetered+Taxi"},
+  {"a":"Linval Thompson","t":"I Love Marijuana","c":"dub","y":null,"u":"","s":"[VOX][BRK] — chant hook phrases","q":"https://www.youtube.com/results?search_query=Linval+Thompson+I+Love+Marijuana"},
+  {"a":"Yabby You","t":"Conquering Lion","c":"dub","y":null,"u":"","s":"[VOX][DUB] — spiritual grit, big atmos","q":"https://www.youtube.com/results?search_query=Yabby+You+Conquering+Lion"},
+  {"a":"Big Youth","t":"S-90 Skank","c":"dub","y":null,"u":"","s":"[VOX][BRK] — talky lines, skank loops","q":"https://www.youtube.com/results?search_query=Big+Youth+S-90+Skank"},
+  {"a":"Prince Far I","t":"Heavy Manners","c":"dub","y":null,"u":"","s":"[VOX][ODD] — thunder-voice phrases","q":"https://www.youtube.com/results?search_query=Prince+Far+I+Heavy+Manners"},
+  {"a":"The Abyssinians","t":"Satta Massagana","c":"dub","y":null,"u":"","s":"[VOX][BRK] — chorus stems, timeless","q":"https://www.youtube.com/results?search_query=The+Abyssinians+Satta+Massagana"},
+  {"a":"Johnny Clarke","t":"Enter His Gates","c":"dub","y":null,"u":"","s":"[VOX][BRK] — uplifting vocal loops","q":"https://www.youtube.com/results?search_query=Johnny+Clarke+Enter+His+Gates"},
+  {"a":"Max Romeo","t":"War Ina Babylon","c":"dub","y":null,"u":"","s":"[VOX][BRK] — militant mood, easy chops","q":"https://www.youtube.com/results?search_query=Max+Romeo+War+Ina+Babylon"},
+  {"a":"Cornell Campbell","t":"Boxing","c":"dub","y":null,"u":"","s":"[VOX][BRK] — hooky lines, spare groove","q":"https://www.youtube.com/results?search_query=Cornell+Campbell+Boxing"},
+  {"a":"Augustus Pablo","t":"Rockers Dub","c":"dub","y":null,"u":"","s":"[DUB][BRK] — clean dub architecture","q":"https://www.youtube.com/results?search_query=Augustus+Pablo+Rockers+Dub"},
+  {"a":"Delia Derbyshire","t":"Pot Au Feu","c":"texture","y":null,"u":"","s":"[ODD] — Radiophonic weirdness bed","q":"https://www.youtube.com/results?search_query=Delia+Derbyshire+Pot+Au+Feu"},
+  {"a":"BBC Radiophonic Workshop","t":"The Delian Mode","c":"texture","y":null,"u":"","s":"[ODD] — pure tone + space","q":"https://www.youtube.com/results?search_query=BBC+Radiophonic+Workshop+The+Delian+Mode"},
+  {"a":"Raymond Scott","t":"Portofino","c":"texture","y":null,"u":"","s":"[ODD] — proto-synth motifs","q":"https://www.youtube.com/results?search_query=Raymond+Scott+Portofino"},
+  {"a":"Wendy Carlos","t":"Timesteps","c":"texture","y":null,"u":"","s":"[ODD][STR] — tense synth orchestration","q":"https://www.youtube.com/results?search_query=Wendy+Carlos+Timesteps"},
+  {"a":"Cluster","t":"Für die Katz","c":"texture","y":null,"u":"","s":"[ODD] — minimal pulse + haze","q":"https://www.youtube.com/results?search_query=Cluster+F%C3%BCr+die+Katz"},
+  {"a":"Harmonia","t":"Watussi","c":"texture","y":null,"u":"","s":"[ODD][BRK] — motorik loop energy","q":"https://www.youtube.com/results?search_query=Harmonia+Watussi"},
+  {"a":"Can","t":"Future Days","c":"texture","y":null,"u":"","s":"[ODD][BRK] — watery groove textures","q":"https://www.youtube.com/results?search_query=Can+Future+Days"},
+  {"a":"Faust","t":"It’s a Rainy Day, Sunshine Girl","c":"texture","y":null,"u":"","s":"[ODD] — chanty odd loop","q":"https://www.youtube.com/results?search_query=Faust+It%E2%80%99s+a+Rainy+Day%2C+Sunshine+Girl"},
+  {"a":"Silver Apples","t":"Oscillations","c":"texture","y":null,"u":"","s":"[ODD][BRK] — primitive synth + drums","q":"https://www.youtube.com/results?search_query=Silver+Apples+Oscillations"},
+  {"a":"Suicide","t":"Cheree","c":"texture","y":null,"u":"","s":"[ODD][VOX] — stark vocal + pulse","q":"https://www.youtube.com/results?search_query=Suicide+Cheree"},
+  {"a":"This Heat","t":"Horizontal Hold","c":"texture","y":null,"u":"","s":"[ODD][BRK] — broken-rhythm sampling heaven","q":"https://www.youtube.com/results?search_query=This+Heat+Horizontal+Hold"},
+  {"a":"Moondog","t":"Bird’s Lament","c":"texture","y":null,"u":"","s":"[STAB][BRK] — melodic motif, marchy swing","q":"https://www.youtube.com/results?search_query=Moondog+Bird%E2%80%99s+Lament"},
+  {"a":"Sun Ra","t":"Door of the Cosmos","c":"texture","y":null,"u":"","s":"[ODD] — outer-space textures","q":"https://www.youtube.com/results?search_query=Sun+Ra+Door+of+the+Cosmos"},
+  {"a":"Les Baxter","t":"Ritual of the Savage","c":"texture","y":null,"u":"","s":"[ODD][BRK] — tribal percussion + drama","q":"https://www.youtube.com/results?search_query=Les+Baxter+Ritual+of+the+Savage"},
+  {"a":"Joe Meek","t":"I Hear a New World","c":"texture","y":null,"u":"","s":"[ODD] — alien tape experiments","q":"https://www.youtube.com/results?search_query=Joe+Meek+I+Hear+a+New+World"}
+];
+
+// --- APP STATE ---
+let filtered = [...CRATE];
+let currentIdx = -1;
+let player = null;
+let settings = { auto: true, shuf: false };
+let categories = ['all', ...new Set(CRATE.map(x => x.c))];
+
+// --- SETUP YOUTUBE ---
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tag);
+
+function onYouTubeIframeAPIReady() {
+    // Player ready, will init when user clicks if needed, 
+    // but the load function creates the player instance if it doesn't exist
+}
+
+// --- CORE FUNCTIONS ---
+
+function extractVideoId(url) {
+    if (!url) return null;
+    const m = url.match(/(?:v=|\/shorts\/|youtu\.be\/)([^&?\/]+)/);
+    return m ? m[1] : null;
+}
+
+function loadTrack(idx) {
+    if (idx < 0 || idx >= filtered.length) return;
+    
+    // Update State
+    currentIdx = idx;
+    const track = filtered[idx];
+    
+    // Update UI
+    document.getElementById('np-artist').textContent = track.a;
+    document.getElementById('np-track').textContent = track.t;
+    
+    // Render Sonic Tags
+    const tagsContainer = document.getElementById('np-tags');
+    tagsContainer.innerHTML = '';
+    
+    // Parse tags like [BRK][STAB]
+    const tagMatch = track.s.match(/\[(.*?)\]/g);
+    const description = track.s.replace(/\[(.*?)\]/g, '').replace(/^ — /, '').trim();
+    
+    if (tagMatch) {
+        tagMatch.forEach(t => {
+            const span = document.createElement('span');
+            span.className = 's-tag type';
+            span.textContent = t.replace(/[\[\]]/g, '');
+            tagsContainer.appendChild(span);
+        });
+    }
+    
+    if (description) {
+        const descSpan = document.createElement('span');
+        descSpan.className = 's-tag desc';
+        descSpan.textContent = description;
+        tagsContainer.appendChild(descSpan);
+    }
+
+    // Video Handling
+    const vidId = extractVideoId(track.u);
+    const overlay = document.getElementById('missing-overlay');
+    const searchLink = document.getElementById('search-link');
+
+    if (vidId) {
+        overlay.style.display = 'none';
+        if (player) {
+            player.loadVideoById(vidId);
+        } else {
+            player = new YT.Player('player', {
+                videoId: vidId,
+                playerVars: { 
+                    'autoplay': 1, 
+                    'controls': 1, 
+                    'rel': 0, 
+                    'modestbranding': 1,
+                    'playsinline': 1 
+                },
+                events: { 'onStateChange': onPlayerStateChange }
+            });
+        }
+    } else {
+        // Handle Missing URL
+        if (player) player.stopVideo();
+        overlay.style.display = 'flex';
+        searchLink.href = track.q || `https://www.youtube.com/results?search_query=${encodeURIComponent(track.a + ' ' + track.t)}`;
+        
+        // Auto-skip logic if auto is on? 
+        // No, let's pause on missing tracks so user can decide to search or skip.
+    }
+
+    renderList(); // Update playing highlight
+}
+
+function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+        if (settings.auto) nextTrack();
+    }
+}
+
+function nextTrack() {
+    if (filtered.length === 0) return;
+    let nextI;
+    if (settings.shuf) {
+        nextI = Math.floor(Math.random() * filtered.length);
+    } else {
+        nextI = (currentIdx + 1) % filtered.length;
+    }
+    loadTrack(nextI);
+}
+
+function prevTrack() {
+    if (filtered.length === 0) return;
+    let prevI = currentIdx - 1;
+    if (prevI < 0) prevI = filtered.length - 1;
+    loadTrack(prevI);
+}
+
+function filterCategory(cat) {
+    filtered = cat === 'all' ? [...CRATE] : CRATE.filter(t => t.c === cat);
+    currentIdx = -1; // Reset index on filter change
+    
+    // Update Chips UI
+    document.querySelectorAll('.cat-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.cat === cat);
+    });
+    
+    // Update Stats
+    document.getElementById('stat-count').textContent = `${filtered.length} ITEMS`;
+    
+    renderList();
+}
+
+function renderList() {
+    const list = document.getElementById('track-list');
+    list.innerHTML = filtered.map((t, i) => {
+        const isPlaying = i === currentIdx;
+        // Check if playable
+        const isPlayable = !!t.u;
+        const opacity = isPlayable ? '1' : '0.5';
+        
+        return `
+        <div class="track-row ${isPlaying ? 'playing' : ''}" onclick="loadTrack(${i})">
+            <div class="row-idx">${isPlaying ? '▶' : (i+1)}</div>
+            <div class="row-data" style="opacity: ${opacity}">
+                <div class="row-top">
+                    <span class="row-artist">${t.a}</span>
+                    <span class="row-cat">${t.c}</span>
+                </div>
+                <div class="row-title">${t.t}</div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function renderCategories() {
+    const scroll = document.getElementById('cat-scroll');
+    scroll.innerHTML = categories.map(c => `
+        <div class="cat-chip ${c === 'all' ? 'active' : ''}" 
+             data-cat="${c}" 
+             onclick="filterCategory('${c}')">
+             ${c.toUpperCase().replace('_', ' ')}
+        </div>
+    `).join('');
+}
+
+// --- INIT LISTENERS ---
+document.getElementById('btn-next').onclick = nextTrack;
+document.getElementById('btn-prev').onclick = prevTrack;
+document.getElementById('btn-rand').onclick = () => loadTrack(Math.floor(Math.random() * filtered.length));
+
+document.getElementById('btn-play').onclick = () => {
+    if (player && player.getPlayerState() === 1) player.pauseVideo();
+    else if (player) player.playVideo();
+    else if (currentIdx === -1 && filtered.length > 0) loadTrack(0);
+};
+
+document.getElementById('btn-auto').onclick = (e) => {
+    settings.auto = !settings.auto;
+    e.target.classList.toggle('active');
+};
+
+document.getElementById('btn-shuf').onclick = (e) => {
+    settings.shuf = !settings.shuf;
+    e.target.classList.toggle('active');
+};
+
+// --- START ---
+renderCategories();
+filterCategory('all');
+</script>
+</body>
+</html>
