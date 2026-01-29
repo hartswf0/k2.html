@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TX-105 // RESONANT FABRIC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;800&display=swap');
+        
+        :root {
+            --bg: #030305;
+            --accent: #00f2ff;
+            --warn: #ff4d00;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #canvas-container {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1;
+        }
+
+        .hud {
+            position: fixed; z-index: 10;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        .hud-top-left { top: 30px; left: 30px; }
+        .hud-top-right { top: 30px; right: 30px; text-align: right; }
+        .hud-bottom-right { bottom: 30px; right: 30px; pointer-events: auto; }
+
+        .label { font-size: 8px; font-weight: 800; color: #444; letter-spacing: 4px; }
+        .value { font-size: 14px; font-weight: 300; color: var(--accent); }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            font-size: 9px;
+            color: #666;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            transition: all 0.3s;
+            letter-spacing: 2px;
+        }
+        .btn-ghost:hover { background: rgba(0, 242, 255, 0.1); color: #fff; border-color: var(--accent); }
+
+        /* Noise floor animation */
+        @keyframes grain {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -5%); }
+            30% { transform: translate(5%, 5%); }
+            50% { transform: translate(-5%, 5%); }
+            70% { transform: translate(5%, -5%); }
+        }
+
+        #noise-layer {
+            position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+            background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 5;
+            animation: grain 1s steps(10) infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="noise-layer"></div>
+
+    <div class="hud hud-top-left">
+        <div class="label">Harmonic Fabric v1.05</div>
+        <div class="value tracking-widest text-white">RESONANT // TX-105</div>
+        <div id="status-line" class="text-[9px] mt-2 opacity-30">GRANULAR_STABLE // NOISE_FLOOR_-48dB</div>
+    </div>
+
+    <div class="hud hud-top-right">
+        <div class="label">Silk Displacement</div>
+        <div id="disp-val" class="value text-[#00f2ff]">0.00μm</div>
+        <div class="label mt-4">Surface Grit</div>
+        <div class="value" style="color: #ff4d00;">ACTIVE_GRAIN</div>
+    </div>
+
+    <div class="hud hud-bottom-right flex gap-3">
+        <button id="btn-recenter" class="btn-ghost">STABILIZE</button>
+        <button id="btn-entropy" class="btn-ghost">ENTROPY_DRIVE</button>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="surface-canvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('surface-canvas');
+        const ctx = canvas.getContext('2d');
+        const dispValDisp = document.getElementById('disp-val');
+        const statusLine = document.getElementById('status-line');
+
+        let width, height;
+        let nodes = [];
+        let springs = [];
+        let particles = [];
+        let mouse = { x: 0, y: 0, down: false, target: null };
+        let offset = { x: 0, y: 0 };
+        let entropyMode = false;
+        let time = 0;
+
+        // --- AUDIO ENGINE: HIGH-TEXTURE FABRIC ---
+        
+        const limiter = new Tone.Limiter(-1).toDestination();
+        const mainGain = new Tone.Gain(0.4).connect(limiter);
+        
+        // Grainy Reverb
+        const verb = new Tone.Reverb({ decay: 10, wet: 0.6 }).connect(mainGain);
+        const feedbackDelay = new Tone.FeedbackDelay("8n", 0.35).connect(verb);
+        const bitcrush = new Tone.BitCrusher(6).connect(feedbackDelay); // Add grit
+        
+        // Noise Floor (The "Unthinkable" Texture)
+        const latticeNoise = new Tone.Noise("pink").connect(new Tone.Filter(200, "lowpass")).start();
+        const noiseGain = new Tone.Gain(0.02).connect(mainGain);
+        latticeNoise.connect(noiseGain);
+
+        // Main Pad Synth
+        const padSynth = new Tone.PolySynth(Tone.Synth).connect(feedbackDelay);
+        padSynth.set({
+            oscillator: { type: "fattriangle", count: 4, spread: 30 },
+            envelope: { attack: 0.8, decay: 1, sustain: 0.5, release: 3 }
+        });
+
+        // Impact / Pluck (Tactile weight)
+        const impactSynth = new Tone.MembraneSynth({
+            pitchDecay: 0.008,
+            octaves: 2,
+            envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 0.4 }
+        }).connect(new Tone.Gain(0.15).connect(verb));
+
+        // --- PHYSICS CORE ---
+
+        class Node {
+            constructor(midi, x, y) {
+                this.midi = midi;
+                this.baseX = x; this.baseY = y;
+                this.x = x; this.y = y;
+                this.vx = 0; this.vy = 0;
+                this.excitement = 0;
+                this.mass = 1.0;
+                this.name = Tone.Frequency(midi, "midi").toNote().replace(/\d/,'');
+            }
+
+            update() {
+                if (this === mouse.target) return;
+                
+                const k = entropyMode ? 0.004 : 0.018;
+                const dx = this.baseX - this.x;
+                const dy = this.baseY - this.y;
+                this.vx += dx * k;
+                this.vy += dy * k;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= 0.94;
+                this.vy *= 0.94;
+                this.excitement *= 0.94;
+            }
+        }
+
+        class Spring {
+            constructor(a, b, length, type) {
+                this.a = a; this.b = b;
+                this.length = length;
+                this.type = type;
+                this.tension = 0;
+                this.pulses = []; // Physical waves traveling the line
+            }
+
+            update() {
+                const dx = this.b.x - this.a.x;
+                const dy = this.b.y - this.a.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist === 0) return;
+                
+                const force = (dist - this.length) * 0.04;
+                this.tension = Math.abs(force);
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+
+                if (this.a !== mouse.target) { this.a.vx += fx; this.a.vy += fy; }
+                if (this.b !== mouse.target) { this.b.vx -= fx; this.b.vy -= fy; }
+
+                // Move pulses
+                for(let i = this.pulses.length - 1; i >= 0; i--) {
+                    this.pulses[i].pos += 0.05;
+                    if(this.pulses[i].pos > 1) this.pulses.splice(i, 1);
+                }
+            }
+
+            addPulse(power) {
+                this.pulses.push({ pos: 0, power: power });
+            }
+        }
+
+        function initLattice() {
+            nodes = []; springs = [];
+            const spacing = Math.max(width, height) / 14;
+            const cols = Math.ceil(width / spacing) + 2;
+            const rows = Math.ceil(height / spacing) + 2;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const midi = 36 + (r * 4) + (c * 7);
+                    const x = (c - cols/2) * spacing + (r % 2 === 0 ? 0 : spacing/2);
+                    const y = (r - rows/2) * spacing * 0.866;
+                    nodes.push(new Node(midi, x, y));
+                }
+            }
+
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const diff = Math.abs(nodes[i].midi - nodes[j].midi) % 12;
+                    const dist = Math.sqrt((nodes[i].x - nodes[j].x)**2 + (nodes[i].y - nodes[j].y)**2);
+                    if (dist < spacing * 1.6) {
+                        let type = (diff === 7 || diff === 5) ? '5th' : (diff === 4 || diff === 8 ? 'M3' : (diff === 3 || diff === 9 ? 'm3' : null));
+                        if (type) springs.push(new Spring(nodes[i], nodes[j], dist, type));
+                    }
+                }
+            }
+        }
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initLattice();
+        }
+
+        function draw() {
+            time += 0.02;
+            ctx.fillStyle = "#030305";
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.save();
+            ctx.translate(width/2 + offset.x, height/2 + offset.y);
+
+            let maxDisp = 0;
+
+            // Render Springs (Fabric Silk)
+            springs.forEach(s => {
+                s.update();
+                const energy = (s.a.excitement + s.b.excitement) * 0.5;
+                maxDisp += s.tension;
+
+                const segments = 15;
+                const angle = Math.atan2(s.b.y - s.a.y, s.b.x - s.a.x);
+                const normal = angle + Math.PI/2;
+
+                ctx.beginPath();
+                ctx.moveTo(s.a.x, s.a.y);
+
+                for (let i = 1; i <= segments; i++) {
+                    const t = i / segments;
+                    let lx = s.a.x + (s.b.x - s.a.x) * t;
+                    let ly = s.a.y + (s.b.y - s.a.y) * t;
+
+                    // Physical Displacement Waves
+                    s.pulses.forEach(p => {
+                        const d = Math.abs(t - p.pos);
+                        if (d < 0.2) {
+                            const bump = Math.sin((d/0.2) * Math.PI) * p.power * 10;
+                            lx += Math.cos(normal) * bump;
+                            ly += Math.sin(normal) * bump;
+                        }
+                    });
+
+                    // Micro-vibration (Grit)
+                    const jitter = (Math.random() - 0.5) * (s.tension * 0.5);
+                    ctx.lineTo(lx + jitter, ly + jitter);
+                }
+
+                // Shading for Silk
+                let color = s.type === '5th' ? [0, 242, 255] : (s.type === 'M3' ? [255, 77, 0] : [255, 255, 255]);
+                const alpha = Math.min(0.7, 0.05 + s.tension * 0.15 + energy * 0.5);
+                
+                // Multi-pass draw for Bloom
+                ctx.strokeStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha * 0.3})`;
+                ctx.lineWidth = 3 + s.tension;
+                ctx.stroke();
+
+                ctx.strokeStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`;
+                ctx.lineWidth = 0.5 + energy * 2;
+                ctx.stroke();
+            });
+
+            // Render Nodes
+            nodes.forEach(n => {
+                n.update();
+                const isActive = n === mouse.target;
+                
+                ctx.shadowBlur = isActive ? 20 : 0;
+                ctx.shadowColor = "white";
+                
+                ctx.fillStyle = isActive ? "#fff" : `rgba(255,255,255,${0.1 + n.excitement})`;
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, isActive ? 4 : 1.5, 0, Math.PI*2);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            });
+
+            ctx.restore();
+
+            // Update HUD
+            dispValDisp.innerText = (maxDisp / springs.length * 10).toFixed(2) + "μm";
+            noiseGain.gain.value = 0.02 + (maxDisp / springs.length) * 0.05;
+
+            requestAnimationFrame(draw);
+        }
+
+        // --- INTERACTION ---
+
+        const handleStart = (e) => {
+            if (Tone.context.state !== 'running') Tone.start();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const mx = clientX - width/2 - offset.x;
+            const my = clientY - height/2 - offset.y;
+
+            let closest = null; let minDist = 50;
+            nodes.forEach(n => {
+                const d = Math.sqrt((n.x-mx)**2 + (n.y-my)**2);
+                if (d < minDist) { minDist = d; closest = n; }
+            });
+
+            if (closest) {
+                mouse.target = closest;
+                const freq = Tone.Frequency(closest.midi, "midi").toNote();
+                
+                // Impact Sound
+                impactSynth.triggerAttackRelease("C1", "16n");
+                padSynth.triggerAttack(freq);
+                
+                statusLine.innerText = `PHASE_ENGAGED: ${freq} // IMPULSE_GENERATED`;
+                if (navigator.vibrate) navigator.vibrate(10);
+            } else {
+                mouse.startX = clientX; mouse.startY = clientY; mouse.down = true;
+            }
+        };
+
+        const handleMove = (e) => {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            if (mouse.target) {
+                mouse.target.x = clientX - width/2 - offset.x;
+                mouse.target.y = clientY - height/2 - offset.y;
+                mouse.target.excitement = 1.0;
+            } else if (mouse.down) {
+                offset.x += clientX - mouse.startX;
+                offset.y += clientY - mouse.startY;
+                mouse.startX = clientX; mouse.startY = clientY;
+            }
+        };
+
+        const handleEnd = () => {
+            if (mouse.target) {
+                const midi = mouse.target.midi;
+                padSynth.triggerRelease(Tone.Frequency(midi, "midi").toNote());
+                
+                // Trigger wave pulses in connected springs
+                springs.forEach(s => {
+                    if (s.a === mouse.target || s.b === mouse.target) {
+                        s.addPulse(mouse.target.vx + mouse.target.vy + 1);
+                    }
+                });
+                
+                impactSynth.triggerAttackRelease("G2", "16n", undefined, 0.1);
+                statusLine.innerText = "IMPULSE_DIFFUSING... // NOISE_FLOOR_STABLE";
+            }
+            mouse.target = null; mouse.down = false;
+        };
+
+        canvas.addEventListener('mousedown', handleStart);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, { passive: false });
+        window.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, { passive: false });
+        window.addEventListener('touchend', handleEnd);
+
+        document.getElementById('btn-recenter').onclick = () => {
+            offset = { x: 0, y: 0 }; entropyMode = false;
+            initLattice();
+        };
+
+        document.getElementById('btn-entropy').onclick = () => {
+            entropyMode = !entropyMode;
+            document.getElementById('btn-entropy').style.color = entropyMode ? "var(--warn)" : "#666";
+        };
+
+        window.addEventListener('resize', resize);
+        resize(); draw();
+    </script>
+</body>
+</html>
+
