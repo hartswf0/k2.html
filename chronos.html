@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TX-160 // RESONANT CHRONOS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;800&display=swap');
+        :root {
+            --bg: #020204;
+            --silk: #f5f5f0;
+            --active: #00f2ff;
+            --ghost: #ff0055;
+            --panel: rgba(10, 10, 15, 0.95);
+        }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: var(--bg); color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden; touch-action: none; user-select: none;
+        }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        .hud { position: fixed; z-index: 10; pointer-events: none; text-transform: uppercase; }
+        .hud-top { top: 30px; left: 30px; width: calc(100% - 60px); display: flex; justify-content: space-between; }
+        .hud-bottom { bottom: 30px; left: 30px; right: 30px; display: flex; flex-direction: column; gap: 15px; pointer-events: auto; }
+        .label { font-size: 8px; font-weight: 800; color: #555; letter-spacing: 3px; }
+        .val { font-size: 14px; font-weight: 300; color: var(--silk); }
+        
+        .btn-te {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 18px; font-size: 9px; color: #888;
+            cursor: pointer; backdrop-filter: blur(10px); transition: 0.2s;
+            border-bottom: 3px solid #000;
+        }
+        .btn-te:hover { color: #fff; border-color: var(--silk); }
+        .btn-te:active { transform: translateY(2px); border-bottom-width: 1px; }
+        .btn-te.active { color: var(--ghost); border-color: var(--ghost); background: rgba(255, 0, 85, 0.1); }
+
+        input[type=range] { -webkit-appearance: none; background: transparent; width: 100px; }
+        input[type=range]::-webkit-slider-runnable-track { height: 2px; background: #333; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 6px; background: var(--active); cursor: pointer; margin-top: -5px; }
+
+        #tutorial-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; backdrop-filter: blur(15px);
+        }
+        .tut-card { background: var(--panel); border: 1px solid #222; padding: 40px; max-width: 360px; border-radius: 2px; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        
+        #crt {
+            position: fixed; inset: 0; pointer-events: none; z-index: 5;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <div id="crt"></div>
+
+    <div id="tutorial-overlay">
+        <div class="tut-card">
+            <div class="label mb-2" id="tut-step">INITIALIZING</div>
+            <div id="tut-text" class="text-sm font-light leading-relaxed mb-8">
+                The TX-160 is a tactile harmonic surface. Drag nodes to synthesize. Use the MOOD packs to transform the lattice's physics and soul.
+            </div>
+            <button id="tut-next" class="btn-te w-full">ENGAGE_LATTICE</button>
+        </div>
+    </div>
+
+    <div class="hud hud-top">
+        <div>
+            <div class="label">Harmonic Master</div>
+            <div class="val tracking-widest text-white">TX-160 // CHRONOS</div>
+        </div>
+        <div class="text-right">
+            <div class="label">System Load</div>
+            <div id="load-val" class="val text-[#00f2ff]">OPTIMAL</div>
+        </div>
+    </div>
+
+    <div class="hud hud-bottom">
+        <div class="flex gap-4 items-center bg-[rgba(0,0,0,0.6)] p-4 border border-[#222] rounded-sm">
+            <div class="flex flex-col">
+                <div class="label">Loop_Rev</div>
+                <input type="range" id="pacing-slider" min="1000" max="10000" value="4000">
+            </div>
+            <div class="flex flex-col">
+                <div class="label">Fade_Bias</div>
+                <input type="range" id="decay-slider" min="0.0" max="0.5" step="0.01" value="0.05">
+            </div>
+            <div class="flex flex-col">
+                <div class="label">Gain_Out</div>
+                <input type="range" id="gain-slider" min="-30" max="0" value="-6">
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button id="btn-mood" class="btn-te" style="color:var(--active); border-color:var(--active); min-width: 140px;">MOOD: ANCIENT</button>
+            <button id="btn-record" class="btn-te">SAMPLING_OFF</button>
+            <button id="btn-clear" class="btn-te">WIPE_SPECTRE</button>
+            <button id="btn-help" class="btn-te">?</button>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const moodBtn = document.getElementById('btn-mood');
+        const loadVal = document.getElementById('load-val');
+        
+        let width, height, nodes = [], springs = [], touches = new Map();
+        let isSampling = false, STEPS = 128, sequence = new Array(STEPS).fill(null).map(() => []);
+        let loopStartTime = Date.now(), loopDuration = 4000, decayRate = 0.05, lastStep = -1;
+
+        // --- OPTIMIZED AUDIO ENGINE ---
+        
+        // 1. MASTER CHAIN: One path for all audio prevents cracking
+        const limiter = new Tone.Limiter(-0.5).toDestination();
+        const masterCompressor = new Tone.Compressor(-20, 4).connect(limiter);
+        const mainGain = new Tone.Gain(-6, "db").connect(masterCompressor);
+        const globalReverb = new Tone.Reverb({ decay: 6, wet: 0.4 }).connect(mainGain);
+        const globalDelay = new Tone.FeedbackDelay("8n", 0.3).connect(globalReverb);
+
+        // 2. SHARED FILTER BUS (Prevents CPU Overload)
+        const filterA = new Tone.Filter(400, "bandpass", -24).connect(globalDelay);
+        const filterB = new Tone.Filter(800, "bandpass", -24).connect(globalDelay);
+
+        // 3. SYNTH POOLS
+        const ghostSynth = new Tone.PolySynth(Tone.Synth).connect(filterA).connect(filterB);
+        const liveSynth = new Tone.PolySynth(Tone.Synth).connect(filterA).connect(filterB);
+
+        // MOOD PACKS
+        const MOODS = [
+            { name: "ANCIENT", osc: "sawtooth", color: "#f5f5f0", filterQ: 15, wet: 0.3, bit: 0 },
+            { name: "VOID", osc: "square", color: "#ff4d00", filterQ: 4, wet: 0.8, bit: 8 },
+            { name: "SPIRIT", osc: "sine", color: "#00f2ff", filterQ: 25, wet: 0.1, bit: 0 },
+            { name: "TECHNO", osc: "triangle", color: "#00ff66", filterQ: 8, wet: 0.4, bit: 4 },
+            { name: "ROYAL", osc: "fatsawtooth", color: "#ffd700", filterQ: 12, wet: 0.5, bit: 0 }
+        ];
+        let currentMoodIdx = 0;
+
+        function updateMood() {
+            const mood = MOODS[currentMoodIdx];
+            moodBtn.innerText = `MOOD: ${mood.name}`;
+            moodBtn.style.color = mood.color;
+            moodBtn.style.borderColor = mood.color;
+            
+            const synthSettings = {
+                oscillator: { type: mood.osc },
+                envelope: { attack: 0.15, decay: 0.2, sustain: 0.8, release: 2 }
+            };
+            ghostSynth.set(synthSettings);
+            liveSynth.set(synthSettings);
+            
+            filterA.Q.setTargetAtTime(mood.filterQ, Tone.now(), 0.1);
+            filterB.Q.setTargetAtTime(mood.filterQ, Tone.now(), 0.1);
+            
+            statusLine(`LOAD_PACK: ${mood.name}`);
+        }
+
+        const FORMANT_MAP = { U: [350, 600], O: [400, 800], A: [700, 1200], E: [450, 1800], I: [300, 2300] };
+
+        function updateFormants(x) {
+            const xPct = x / window.innerWidth;
+            const keys = Object.keys(FORMANT_MAP);
+            const key = keys[Math.floor(xPct * keys.length)] || 'A';
+            const [f1, f2] = FORMANT_MAP[key];
+            filterA.frequency.setTargetAtTime(f1, Tone.now(), 0.05);
+            filterB.frequency.setTargetAtTime(f2, Tone.now(), 0.05);
+        }
+
+        // --- PHYSICS ---
+        class Node {
+            constructor(midi, x, y) {
+                this.midi = midi; this.x = this.baseX = x; this.y = this.baseY = y;
+                this.vx = 0; this.vy = 0; this.energy = 0; this.pulse = 0;
+            }
+            update(isGrabbed) {
+                if (!isGrabbed) {
+                    const k = 0.015;
+                    this.vx += (this.baseX - this.x) * k;
+                    this.vy += (this.baseY - this.y) * k;
+                    this.x += this.vx; this.y += this.vy;
+                    this.vx *= 0.92; this.vy *= 0.92;
+                }
+                this.energy *= 0.92; this.pulse *= 0.85;
+            }
+        }
+
+        class Spring {
+            constructor(a, b, len) { this.a = a; this.b = b; this.len = len; this.tension = 0; }
+            update() {
+                const dx = this.b.x - this.a.x, dy = this.b.y - this.a.y, d = Math.sqrt(dx*dx + dy*dy);
+                if (d === 0) return;
+                const f = (d - this.len) * 0.04;
+                this.tension = Math.abs(f);
+                this.a.vx += (dx/d)*f; this.a.vy += (dy/d)*f;
+                this.b.vx -= (dx/d)*f; this.b.vy -= (dy/d)*f;
+            }
+        }
+
+        function initLattice() {
+            nodes = []; springs = [];
+            const spacing = Math.max(width, height) / 14;
+            const SCALE = [0, 2, 3, 5, 7, 8, 10]; // Minor
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    const midi = SCALE[(c + r) % SCALE.length] + (3 + Math.floor(r/3)) * 12;
+                    const x = (c - 5) * spacing + (r%2 ? spacing/2 : 0);
+                    const y = (r - 5) * spacing * 0.866;
+                    nodes.push(new Node(midi, x, y));
+                }
+            }
+            nodes.forEach((n, i) => {
+                nodes.forEach((m, j) => {
+                    if (i < j) {
+                        const d = Math.sqrt((n.x-m.x)**2 + (n.y-m.y)**2);
+                        if (d < spacing * 1.5) springs.push(new Spring(n, m, d));
+                    }
+                });
+            });
+        }
+
+        function draw() {
+            const now = Date.now(), elapsed = (now - loopStartTime) % loopDuration, progress = elapsed / loopDuration;
+            const currentStep = Math.floor(progress * STEPS);
+
+            if (currentStep !== lastStep) {
+                if (currentStep < lastStep) {
+                    for(let s=0; s<STEPS; s++) {
+                        sequence[s] = sequence[s].filter(note => {
+                            note.life -= decayRate;
+                            return note.life > 0.05;
+                        });
+                    }
+                }
+                sequence[currentStep].forEach(n => {
+                    updateFormants(n.x + width/2);
+                    ghostSynth.triggerAttackRelease(Tone.Frequency(n.midi, "midi").toNote(), "16n", undefined, n.life);
+                    const node = nodes.find(node => node.midi === n.midi);
+                    if (node) { node.energy = n.life; node.pulse = n.life; node.vx += (Math.random()-0.5)*10*n.life; }
+                });
+                lastStep = currentStep;
+            }
+
+            if (isSampling && touches.size > 0) {
+                touches.forEach(t => {
+                    if (!sequence[currentStep].some(n => n.midi === t.targetNode.midi)) {
+                        sequence[currentStep].push({ midi: t.targetNode.midi, x: t.targetNode.x, y: t.targetNode.y, life: 1.0 });
+                        t.targetNode.pulse = 0.5;
+                    }
+                });
+            }
+
+            ctx.fillStyle = "#020204"; ctx.fillRect(0, 0, width, height);
+            ctx.save(); ctx.translate(width/2, height/2);
+
+            const currentMood = MOODS[currentMoodIdx];
+
+            // Radial Guidelines
+            for(let s = 0; s < STEPS; s++) {
+                if (s % 4 !== 0 && sequence[s].length === 0) continue;
+                const ang = (s / STEPS) * Math.PI * 2 - Math.PI/2;
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(ang) * width, Math.sin(ang) * width);
+                ctx.strokeStyle = s === currentStep ? currentMood.color + "44" : "rgba(255,255,255,0.02)";
+                ctx.stroke();
+
+                sequence[s].forEach(note => {
+                    const d = Math.sqrt(note.x**2 + note.y**2);
+                    ctx.fillStyle = s === currentStep ? "#fff" : currentMood.color + Math.floor(note.life * 255).toString(16).padStart(2, '0');
+                    ctx.beginPath(); ctx.arc(Math.cos(ang)*d, Math.sin(ang)*d, 2 * note.life, 0, Math.PI*2); ctx.fill();
+                });
+            }
+
+            // Springs & Nodes
+            springs.forEach(s => { 
+                s.update(); ctx.beginPath(); ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y);
+                ctx.strokeStyle = currentMood.color + Math.floor((0.05 + s.tension) * 255).toString(16).padStart(2, '0');
+                ctx.stroke(); 
+            });
+            nodes.forEach(n => {
+                const isGrabbed = Array.from(touches.values()).some(t => t.targetNode === n);
+                n.update(isGrabbed);
+                ctx.fillStyle = isGrabbed ? "#fff" : (n.pulse > 0.1 ? "#fff" : currentMood.color + "22");
+                ctx.beginPath(); ctx.arc(n.x, n.y, (isGrabbed ? 4 : 1.5) + n.pulse*4, 0, Math.PI*2); ctx.fill();
+            });
+
+            // Playhead
+            const pAng = progress * Math.PI * 2 - Math.PI/2;
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(pAng)*width, Math.sin(pAng)*width);
+            ctx.strokeStyle = currentMood.color; ctx.lineWidth = 1.5; ctx.stroke();
+
+            ctx.restore();
+            requestAnimationFrame(draw);
+        }
+
+        function statusLine(msg) { loadVal.innerText = msg; }
+
+        // INTERACTION
+        function handlePointerDown(e) {
+            if (Tone.context.state !== 'running') Tone.start();
+            const rect = canvas.getBoundingClientRect(), mx = e.clientX - rect.left - width/2, my = e.clientY - rect.top - height/2;
+            let closest = null, minDist = 80;
+            nodes.forEach(n => { const d = Math.sqrt((n.x-mx)**2 + (n.y-my)**2); if (d < minDist) { minDist = d; closest = n; } });
+            if (closest) {
+                touches.set(e.pointerId, { targetNode: closest });
+                liveSynth.triggerAttack(Tone.Frequency(closest.midi, "midi").toNote());
+                updateFormants(e.clientX);
+            }
+        }
+        function handlePointerMove(e) {
+            if (touches.has(e.pointerId)) {
+                const t = touches.get(e.pointerId);
+                t.targetNode.x = e.clientX - width/2; t.targetNode.y = e.clientY - height/2; t.targetNode.energy = 1.0;
+                updateFormants(e.clientX);
+            }
+        }
+        function handlePointerUp(e) {
+            if (touches.has(e.pointerId)) {
+                const t = touches.get(e.pointerId);
+                liveSynth.triggerRelease(Tone.Frequency(t.targetNode.midi, "midi").toNote());
+                touches.delete(e.pointerId);
+            }
+        }
+
+        moodBtn.onclick = () => { currentMoodIdx = (currentMoodIdx + 1) % MOODS.length; updateMood(); };
+        document.getElementById('btn-record').onclick = function() { isSampling = !isSampling; this.classList.toggle('active'); this.innerText = isSampling ? "SAMPLING_ON" : "SAMPLE_OFF"; };
+        document.getElementById('btn-clear').onclick = () => { sequence = new Array(STEPS).fill(null).map(() => []); ghostSynth.releaseAll(); nodes.forEach(n => n.pulse = 0.5); };
+        document.getElementById('pacing-slider').oninput = function() { loopDuration = parseInt(this.value); };
+        document.getElementById('decay-slider').oninput = function() { decayRate = parseFloat(this.value); };
+        document.getElementById('gain-slider').oninput = function() { mainGain.gain.setTargetAtTime(Tone.dbToGain(parseFloat(this.value)), Tone.now(), 0.1); };
+        document.getElementById('tut-next').onclick = () => { document.getElementById('tutorial-overlay').style.display = 'none'; if (Tone.context.state !== 'running') Tone.start(); };
+        document.getElementById('btn-help').onclick = () => { document.getElementById('tutorial-overlay').style.display = 'flex'; };
+
+        window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; initLattice(); });
+        canvas.addEventListener('pointerdown', handlePointerDown);
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
+        window.addEventListener('pointercancel', handlePointerUp);
+
+        width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight;
+        initLattice(); updateMood(); draw();
+    </script>
+</body>
+</html>
+
