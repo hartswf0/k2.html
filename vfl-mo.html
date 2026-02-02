@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shield of Achilles: Orbital Interface</title>
+    <meta name="theme-color" content="#000000">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            overscroll-behavior: none;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #e0e0e0;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* LAYERS */
+        #webgl-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        #ui-canvas-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: auto; /* UI handles touch */
+        }
+
+        /* OVERLAYS */
+        .scanline {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s;
+        }
+
+        /* BUTTONS */
+        .btn-init {
+            padding: 20px 40px;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.05);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 16px;
+            letter-spacing: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+        .btn-init:active {
+            background: #00ffff;
+            color: #000;
+        }
+
+        /* HUD ELEMENTS */
+        .hud-text {
+            position: absolute;
+            font-size: 10px;
+            color: #00ffff;
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 15;
+            text-shadow: 0 0 5px rgba(0,255,255,0.5);
+        }
+
+        #camera-switch {
+            position: fixed;
+            bottom: 20px; right: 20px;
+            z-index: 30;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            color: #888;
+            padding: 10px;
+            font-size: 10px;
+            display: none;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="webgl-layer"></canvas>
+    <canvas id="ui-canvas-layer"></canvas>
+    <div class="scanline"></div>
+
+    <div id="overlay">
+        <div class="text-xs tracking-[0.5em] mb-4 text-cyan-500">ORBITAL INTERFACE</div>
+        <button id="init-btn" class="btn-init">INITIALIZE SYSTEM</button>
+    </div>
+
+    <button id="camera-switch">SWITCH CAM</button>
+
+    <!-- HUD LABELS (Positioned via JS) -->
+    <div id="hud-core" class="hud-text">CORE</div>
+    <div id="hud-outer" class="hud-text">MYTHOS</div>
+    <div id="hud-edge" class="hud-text">ETHER</div>
+
+<script>
+/**
+ * SHIELD OF ACHILLES: ORBITAL ENGINE
+ * Merges the Feedback Loop visual logic with the Orbital Loom UI interaction model.
+ */
+
+// --- SHADER SOURCES ---
+
+// Vertex Shader (Common)
+const VERTEX_SHADER = `
+    attribute vec2 position;
+    varying vec2 vUv;
+    void main() {
+        vec2 uv = position * 0.5 + 0.5;
+        vUv = vec2(uv.x, 1.0 - uv.y); // Flip Y for WebGL convention
+        gl_Position = vec4(position, 0.0, 1.0);
+    }
+`;
+
+// Feedback Fragment Shader (The Forge)
+// Uses light accumulation logic to reduce "doubling" artifacts
+const FEEDBACK_SHADER = `
+    precision mediump float;
+    uniform sampler2D uFrame;
+    uniform sampler2D uFeedback;
+    uniform float uTime;
+    uniform vec2 uResolution;
+    
+    // Orbital Controls
+    uniform float uCoreVal;   // Ring 1 Drag
+    uniform float uInnerVal;  // Ring 1 Rotation
+    uniform float uOuterVal;  // Ring 2 Rotation
+    uniform float uEdgeVal;   // Ring 3 Rotation
+
+    varying vec2 vUv;
+
+    void main() {
+        vec2 center = vec2(0.5);
+        vec2 p = vUv - center;
+        float aspect = uResolution.x / uResolution.y;
+        p.x *= aspect; 
+        float dist = length(p);
+
+        // Zone Radii
+        float rCore = 0.20;
+        float rOuter = 0.45;
+        
+        vec2 feedbackUv = vUv;
+        float feedbackAmt = 0.0;
+        vec3 zoneTint = vec3(1.0);
+        
+        // --- ZONE LOGIC ---
+        
+        // ZONE 1: CORE & INNER (The Narrative)
+        if (dist < rCore) {
+            // Slight zoom out based on uCoreVal
+            float zoom = 0.99 - (uCoreVal * 0.02);
+            // Rotation based on uInnerVal
+            float angle = (uInnerVal - 0.5) * 0.1;
+            float s = sin(angle); float c = cos(angle);
+            vec2 rotated = vec2(
+                (vUv.x - 0.5) * c - (vUv.y - 0.5) * s + 0.5,
+                (vUv.x - 0.5) * s + (vUv.y - 0.5) * c + 0.5
+            );
+            feedbackUv = center + (rotated - center) * zoom;
+            
+            // High feedback to prevent doubling, creating a smear
+            feedbackAmt = 0.92 + (uCoreVal * 0.06); 
+            zoneTint = vec3(1.0, 0.95, 0.9); // Gold/Warm
+        } 
+        // ZONE 2: OUTER (The Mythos)
+        else if (dist < rOuter) {
+             // Static but deep
+             feedbackUv = center + (vUv - center) * 0.998;
+             feedbackAmt = 0.95 + (uOuterVal * 0.04); 
+             zoneTint = vec3(0.9, 1.0, 1.1); // Cyan/Cold
+        }
+        // ZONE 3: EDGE (The Ether)
+        else {
+             // Warping based on uEdgeVal
+             float warp = sin(dist * 20.0 - uTime) * (uEdgeVal * 0.01);
+             feedbackUv = center + (vUv - center) * (1.01 + warp); 
+             feedbackAmt = 0.90;
+             zoneTint = vec3(0.8, 0.8, 0.9); 
+        }
+
+        vec4 newFrame = texture2D(uFrame, vUv);
+        vec4 oldFrame = texture2D(uFeedback, feedbackUv);
+        
+        // VELVET BLEND LOGIC (Fixing Doubling)
+        // Instead of standard mix, we weigh the old frame heavily but darken it slightly
+        // This creates trails rather than double exposures
+        vec3 blended = mix(newFrame.rgb, oldFrame.rgb, feedbackAmt);
+        
+        // Soft Light accumulation
+        // blended += newFrame.rgb * 0.05; 
+
+        // Apply Tints
+        blended *= zoneTint;
+
+        // Etching Lines (Orbital Dividers)
+        float w = 0.003;
+        float border = smoothstep(w, 0.0, abs(dist - rCore)) + smoothstep(w, 0.0, abs(dist - rOuter));
+        blended = mix(blended, vec3(0.0, 1.0, 1.0), border * 0.3);
+
+        // Mask Edges
+        if (dist > 0.55) blended *= 0.0;
+
+        gl_FragColor = vec4(blended, 1.0);
+    }
+`;
+
+// Datamosh Shader (Screen Output)
+const MOSH_SHADER = `
+    precision mediump float;
+    uniform sampler2D uCurrent;   
+    uniform sampler2D uPrevious;  
+    uniform float uFlowIntensity; // Linked to Inner
+    uniform vec2 uResolution;
+    varying vec2 vUv;
+
+    float luma(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+
+    void main() {
+        vec2 pixel = 1.0 / uResolution;
+        vec4 current = texture2D(uCurrent, vUv);
+        vec4 prev = texture2D(uPrevious, vUv);
+        
+        // Calculate optical flow based brightness diff
+        float diff = luma(current.rgb) - luma(prev.rgb);
+        
+        // Thresholding to prevent micro-jitter
+        float motion = smoothstep(0.05, 0.2, abs(diff));
+        
+        float dx = luma(texture2D(uCurrent, vUv + vec2(pixel.x, 0.0)).rgb) - luma(texture2D(uCurrent, vUv - vec2(pixel.x, 0.0)).rgb);
+        float dy = luma(texture2D(uCurrent, vUv + vec2(0.0, pixel.y)).rgb) - luma(texture2D(uCurrent, vUv - vec2(0.0, pixel.y)).rgb);
+        
+        // Displacement
+        vec2 flow = vec2(dx, dy) * uFlowIntensity * 50.0 * motion;
+        vec2 lookup = vUv - flow;
+        
+        gl_FragColor = texture2D(uCurrent, lookup);
+    }
+`;
+
+// --- SONIFICATION ENGINE ---
+const Sound = {
+    ctx: null,
+    master: null,
+    voices: {},
+    isInit: false,
+
+    init() {
+        if (this.isInit) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.4;
+        this.master.connect(this.ctx.destination);
+
+        // Create Voices
+        this.voices.core = this.createDrone(110, 'sine'); // Deep bass
+        this.voices.outer = this.createDrone(220, 'triangle'); // Mid texture
+        this.voices.edge = this.createNoise(); // High texture
+
+        this.isInit = true;
+    },
+
+    createDrone(freq, type) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+        
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.value = 0;
+        filter.type = 'lowpass';
+        filter.frequency.value = 500;
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.master);
+        osc.start();
+
+        return { osc, gain, filter };
+    },
+
+    createNoise() {
+        const size = this.ctx.sampleRate * 2;
+        const buffer = this.ctx.createBuffer(1, size, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+
+        const src = this.ctx.createBufferSource();
+        src.buffer = buffer;
+        src.loop = true;
+        
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        
+        const gain = this.ctx.createGain();
+        gain.gain.value = 0;
+
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.master);
+        src.start();
+
+        return { src, filter, gain };
+    },
+
+    update(state) {
+        if (!this.isInit) return;
+        const now = this.ctx.currentTime;
+
+        // Map visual state to audio
+        
+        // Core: Pitch & Volume
+        this.voices.core.osc.frequency.setTargetAtTime(60 + (state.core * 60), now, 0.1);
+        this.voices.core.gain.gain.setTargetAtTime(0.5 + (state.core * 0.2), now, 0.1);
+
+        // Outer: Filter Cutoff (Mythos)
+        this.voices.outer.filter.frequency.setTargetAtTime(200 + (state.outer * 1000), now, 0.1);
+        this.voices.outer.gain.gain.setTargetAtTime(state.outer * 0.3, now, 0.1);
+
+        // Edge: Noise filter & Volume (Ether)
+        this.voices.edge.filter.frequency.setTargetAtTime(500 + (state.edge * 2000), now, 0.1);
+        this.voices.edge.gain.gain.setTargetAtTime(state.edge * 0.15, now, 0.1);
+    },
+
+    triggerHaptic() {
+        if (navigator.vibrate) navigator.vibrate(5);
+    }
+};
+
+// --- ORBITAL UI ENGINE ---
+const UI = {
+    canvas: null,
+    ctx: null,
+    w: 0, h: 0,
+    cx: 0, cy: 0,
+    
+    // State of the rings
+    rings: [
+        { r: 0, targetR: 0, angle: 0, label: 'CORE', val: 0.5, color: '#ffff00' }, // Inner
+        { r: 0, targetR: 0, angle: 0, label: 'OUTER', val: 0.2, color: '#00ffff' }, // Mid
+        { r: 0, targetR: 0, angle: 0, label: 'EDGE', val: 0.6, color: '#ff00ff' }  // Outer
+    ],
+    
+    drag: null, // { idx: 0-2, type: 'rotate'|'slide', ... }
+
+    init() {
+        this.canvas = document.getElementById('ui-canvas-layer');
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.bindEvents();
+    },
+
+    resize() {
+        this.w = window.innerWidth;
+        this.h = window.innerHeight;
+        this.canvas.width = this.w;
+        this.canvas.height = this.h;
+        this.cx = this.w / 2;
+        this.cy = this.h / 2;
+        
+        // Calculate Ring Radii based on screen size
+        const minDim = Math.min(this.w, this.h);
+        this.rings[0].targetR = minDim * 0.20; // Core
+        this.rings[1].targetR = minDim * 0.32; // Outer
+        this.rings[2].targetR = minDim * 0.44; // Edge
+        
+        // Initial animation pop
+        this.rings.forEach(r => r.r = 0);
+    },
+
+    update() {
+        // Animate radius opening
+        this.rings.forEach(r => {
+            r.r += (r.targetR - r.r) * 0.1;
+        });
+    },
+
+    draw() {
+        this.ctx.clearRect(0, 0, this.w, this.h);
+        this.ctx.translate(this.cx, this.cy);
+
+        this.rings.forEach((r, i) => {
+            if (r.r < 5) return;
+
+            // Draw Ring
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, r.r, 0, Math.PI * 2);
+            this.ctx.lineWidth = 1.5;
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            this.ctx.stroke();
+
+            // Active Arc based on value (Slider visualization)
+            this.ctx.beginPath();
+            const startAng = -Math.PI / 2;
+            const endAng = startAng + (r.val * Math.PI * 2);
+            this.ctx.arc(0, 0, r.r, startAng, endAng);
+            this.ctx.lineWidth = 3;
+            this.ctx.strokeStyle = r.color;
+            this.ctx.globalAlpha = 0.6;
+            this.ctx.stroke();
+            this.ctx.globalAlpha = 1.0;
+
+            // Handle (The "Slider" knob on the rim)
+            const hx = Math.cos(endAng) * r.r;
+            const hy = Math.sin(endAng) * r.r;
+            
+            // Draw Handle Shape
+            this.ctx.fillStyle = '#fff';
+            this.ctx.shadowColor = r.color;
+            this.ctx.shadowBlur = 10;
+            
+            this.ctx.beginPath();
+            if (i === 0) { // Diamond
+                this.ctx.moveTo(hx, hy - 6);
+                this.ctx.lineTo(hx + 6, hy);
+                this.ctx.lineTo(hx, hy + 6);
+                this.ctx.lineTo(hx - 6, hy);
+            } else if (i === 1) { // Square
+                this.ctx.rect(hx - 5, hy - 5, 10, 10);
+            } else { // Circle
+                this.ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+            }
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+
+            // HUD Lines to Labels
+            /* We draw faint lines connecting ring to label text positions 
+               to enforce the "Orbital Loom" schematic look
+            */
+        });
+
+        this.ctx.translate(-this.cx, -this.cy);
+    },
+
+    bindEvents() {
+        const getTouchPos = (e) => {
+            const t = e.touches ? e.touches[0] : e;
+            return { x: t.clientX - this.cx, y: t.clientY - this.cy };
+        };
+
+        const handleStart = (x, y) => {
+            const dist = Math.sqrt(x*x + y*y);
+            // Check rings (outer to inner)
+            for (let i = 2; i >= 0; i--) {
+                const r = this.rings[i];
+                if (Math.abs(dist - r.r) < 30) { // Hit tolerance
+                    this.drag = { idx: i, startAng: Math.atan2(y, x), startVal: r.val };
+                    Sound.triggerHaptic();
+                    return;
+                }
+            }
+        };
+
+        const handleMove = (x, y) => {
+            if (!this.drag) return;
+            const r = this.rings[this.drag.idx];
+            const ang = Math.atan2(y, x);
+            
+            // Calculate delta angle to update value
+            // We map 0 to 2PI range to 0.0 to 1.0 value
+            // Ideally we track relative movement to avoid jumps, 
+            // but for a "rim slider" absolute angle is intuitive.
+            
+            // Normalize angle -PI..PI to 0..1 (starting at -PI/2 or top)
+            let normAng = ang + Math.PI / 2;
+            if (normAng < 0) normAng += Math.PI * 2;
+            
+            r.val = normAng / (Math.PI * 2);
+            
+            // Pass to Audio & Visuals
+            updateSystemState();
+        };
+
+        const handleEnd = () => {
+            this.drag = null;
+        };
+
+        this.canvas.addEventListener('mousedown', e => handleStart(e.clientX - this.cx, e.clientY - this.cy));
+        window.addEventListener('mousemove', e => handleMove(e.clientX - this.cx, e.clientY - this.cy));
+        window.addEventListener('mouseup', handleEnd);
+
+        this.canvas.addEventListener('touchstart', e => { 
+            e.preventDefault(); 
+            const p = getTouchPos(e); 
+            handleStart(p.x, p.y); 
+        }, {passive: false});
+        
+        window.addEventListener('touchmove', e => { 
+            const p = getTouchPos(e); 
+            handleMove(p.x, p.y); 
+        }, {passive: false});
+        
+        window.addEventListener('touchend', handleEnd);
+    }
+};
+
+// --- WEBGL ENGINE ---
+const GL = {
+    c: null, gl: null,
+    prog: null, moshProg: null,
+    tex: [], fbo: [],
+    texMosh: null, fboMosh: null,
+    video: null,
+    buf: null,
+    
+    // Config
+    width: 0, height: 0,
+    currIdx: 0,
+
+    init() {
+        this.c = document.getElementById('webgl-layer');
+        this.gl = this.c.getContext('webgl', { alpha: false, preserveDrawingBuffer: false });
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        // Create Shaders
+        this.prog = this.createProgram(VERTEX_SHADER, FEEDBACK_SHADER);
+        this.moshProg = this.createProgram(VERTEX_SHADER, MOSH_SHADER);
+
+        // Buffers
+        this.buf = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buf);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), this.gl.STATIC_DRAW);
+
+        // Textures
+        // 0 and 1 are ping-pong for feedback
+        for(let i=0; i<3; i++) { 
+            this.tex[i] = this.createTexture();
+            this.fbo[i] = this.createFBO(this.tex[i]);
+        }
+        
+        // Mosh history texture
+        this.texMosh = this.createTexture();
+        this.fboMosh = this.createFBO(this.texMosh);
+    },
+
+    resize() {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.c.width = this.width;
+        this.c.height = this.height;
+        if(this.gl) this.gl.viewport(0, 0, this.width, this.height);
+        // Re-init textures on resize to match pixel ratio? 
+        // For simple feedback, scaling texture is safer to avoid clear
+        if(this.tex.length > 0) {
+            this.tex.forEach(t => {
+                this.gl.bindTexture(this.gl.TEXTURE_2D, t);
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.width, this.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+            });
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.texMosh);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.width, this.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        }
+    },
+
+    createProgram(vs, fs) {
+        const p = this.gl.createProgram();
+        const add = (src, type) => {
+            const s = this.gl.createShader(type);
+            this.gl.shaderSource(s, src);
+            this.gl.compileShader(s);
+            if(!this.gl.getShaderParameter(s, this.gl.COMPILE_STATUS)) console.error(this.gl.getShaderInfoLog(s));
+            this.gl.attachShader(p, s);
+        };
+        add(vs, this.gl.VERTEX_SHADER);
+        add(fs, this.gl.FRAGMENT_SHADER);
+        this.gl.linkProgram(p);
+        return p;
+    },
+
+    createTexture() {
+        const t = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, t);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.width, this.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        return t;
+    },
+
+    createFBO(tex) {
+        const f = this.gl.createFramebuffer();
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, f);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, tex, 0);
+        return f;
+    },
+
+    render(time, state) {
+        if(!this.video || this.video.readyState < 2) return;
+
+        // 1. Draw Video to Temp Texture (to ensure resizing)
+        // We use tex[2] as temp input
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex[2]);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.video);
+
+        // 2. Feedback Pass
+        // Write to: fbo[1 - curr]
+        // Read from: tex[curr]
+        const writeIdx = 1 - this.currIdx;
+        const readIdx = this.currIdx;
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.fbo[writeIdx]);
+        this.gl.useProgram(this.prog);
+        
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buf);
+        this.gl.enableVertexAttribArray(0);
+        this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.activeTexture(this.gl.TEXTURE0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex[2]); // Video
+        this.gl.uniform1i(this.gl.getUniformLocation(this.prog, 'uFrame'), 0);
+
+        this.gl.activeTexture(this.gl.TEXTURE1);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex[readIdx]); // Feedback
+        this.gl.uniform1i(this.gl.getUniformLocation(this.prog, 'uFeedback'), 1);
+
+        this.gl.uniform1f(this.gl.getUniformLocation(this.prog, 'uTime'), time);
+        this.gl.uniform2f(this.gl.getUniformLocation(this.prog, 'uResolution'), this.width, this.height);
+        
+        // Pass UI State
+        this.gl.uniform1f(this.gl.getUniformLocation(this.prog, 'uCoreVal'), state.core);
+        this.gl.uniform1f(this.gl.getUniformLocation(this.prog, 'uInnerVal'), state.inner);
+        this.gl.uniform1f(this.gl.getUniformLocation(this.prog, 'uOuterVal'), state.outer);
+        this.gl.uniform1f(this.gl.getUniformLocation(this.prog, 'uEdgeVal'), state.edge);
+
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+
+        // 3. Datamosh / Screen Output
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        this.gl.useProgram(this.moshProg);
+
+        this.gl.activeTexture(this.gl.TEXTURE0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.tex[writeIdx]); // The frame we just made
+        this.gl.uniform1i(this.gl.getUniformLocation(this.moshProg, 'uCurrent'), 0);
+
+        this.gl.activeTexture(this.gl.TEXTURE1);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texMosh); // Previous frame on screen
+        this.gl.uniform1i(this.gl.getUniformLocation(this.moshProg, 'uPrevious'), 1);
+
+        this.gl.uniform1f(this.gl.getUniformLocation(this.moshProg, 'uFlowIntensity'), state.inner);
+        this.gl.uniform2f(this.gl.getUniformLocation(this.moshProg, 'uResolution'), this.width, this.height);
+
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+
+        // 4. Save Screen for Next Mosh
+        // Copy Screen (Backbuffer) to texMosh
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texMosh);
+        this.gl.copyTexImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 0, 0, this.width, this.height, 0);
+
+        // Swap ping-pong
+        this.currIdx = 1 - this.currIdx;
+    }
+};
+
+// --- MAIN LOOP & STATE ---
+const State = {
+    core: 0.5,
+    inner: 0.5,
+    outer: 0.2,
+    edge: 0.6,
+    time: 0
+};
+
+function updateSystemState() {
+    // Sync UI Rings to Abstract State
+    State.core = UI.rings[0].val;
+    State.inner = UI.rings[0].val; // Shared ring for simplicity? Or separate rotation vs extent? 
+    // Let's use Rotation for Inner, Radius for Core? 
+    // UI logic mapped 1:1 for now:
+    State.core = UI.rings[0].val;
+    State.inner = UI.rings[0].val; // For now linked
+    State.outer = UI.rings[1].val;
+    State.edge = UI.rings[2].val;
+
+    Sound.update(State);
+}
+
+async function init() {
+    const btn = document.getElementById('init-btn');
+    const overlay = document.getElementById('overlay');
+    
+    // Init Audio context on click
+    Sound.init();
+    
+    // Init Video
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: {ideal: 1280}, height: {ideal: 720} },
+            audio: false
+        });
+        GL.video = document.createElement('video');
+        GL.video.srcObject = stream;
+        GL.video.autoplay = true;
+        GL.video.muted = true;
+        GL.video.playsInline = true;
+        await GL.video.play();
+        
+        // Cam Switcher
+        navigator.mediaDevices.enumerateDevices().then(devs => {
+            if(devs.filter(d=>d.kind==='videoinput').length > 1) {
+                document.getElementById('camera-switch').style.display = 'block';
+            }
+        });
+
+    } catch(e) {
+        alert('Camera Error: ' + e.message);
+        return;
+    }
+
+    // Init Engine
+    UI.init();
+    GL.init();
+
+    // Start Loop
+    const loop = () => {
+        State.time += 0.01;
+        UI.update();
+        UI.draw();
+        GL.render(State.time, State);
+        requestAnimationFrame(loop);
+    };
+    loop();
+
+    // Fade UI
+    overlay.style.opacity = 0;
+    setTimeout(() => overlay.style.display = 'none', 500);
+}
+
+document.getElementById('init-btn').addEventListener('click', init);
+
+document.getElementById('camera-switch').addEventListener('click', async () => {
+    // Simple reload for camera toggle on mobile as stream swapping is complex
+    // Or implement track stop/start
+    // For this demo, let's just alert standard procedure
+    location.reload(); 
+});
+
+</script>
+</body>
+</html>
