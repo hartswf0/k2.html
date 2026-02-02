@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shield of Achilles: Orbital Interface</title>
+    <meta name="theme-color" content="#020202">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            overscroll-behavior: none;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: #020202;
+            color: #e0e0e0;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- UI OVERLAYS --- */
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 90;
+        }
+
+        /* --- CONTROLS --- */
+        .controls-container {
+            position: absolute;
+            bottom: max(70px, env(safe-area-inset-bottom) + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            width: 95%;
+            max-width: 600px;
+            pointer-events: none; /* Let clicks pass through gaps */
+        }
+
+        .control-panel {
+            pointer-events: auto;
+            background: rgba(5, 5, 5, 0.85);
+            border: 1px solid #333;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            flex: 1 1 80px;
+            min-width: 70px;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        .control-panel:hover, .control-panel.active {
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+        }
+
+        /* CUSTOM SLIDERS */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 2px;
+            background: #333;
+            outline: none;
+            margin: 12px 0;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #00ffff;
+            cursor: pointer;
+            transform: rotate(45deg);
+            box-shadow: 0 0 5px #00ffff;
+            transition: transform 0.1s;
+        }
+
+        input[type=range]:active::-webkit-slider-thumb {
+            transform: rotate(45deg) scale(1.2);
+            background: #fff;
+        }
+
+        /* BUTTONS */
+        .btn-ctrl {
+            border: 1px solid #333;
+            color: #888;
+            font-size: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: rgba(0,0,0,0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .btn-ctrl:hover, .btn-ctrl.active {
+            border-color: #00ffff;
+            color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+
+        .label-sm {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #333;
+            border-radius: 50%;
+            transition: all 0.1s;
+        }
+        .status-dot.active {
+            background: #00ffff;
+            box-shadow: 0 0 8px #00ffff;
+        }
+
+        /* TOP STRIP */
+        #top-strip {
+            position: absolute;
+            top: max(0px, env(safe-area-inset-top));
+            left: 0;
+            right: 0;
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            background: rgba(5, 5, 5, 0.9);
+            border-bottom: 1px solid #333;
+            height: 50px;
+            padding: 0 10px;
+            justify-content: space-between;
+        }
+
+        /* BOTTOM NAV */
+        #bottom-bar {
+            position: absolute;
+            bottom: max(10px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            display: flex;
+            width: 95%;
+            max-width: 600px;
+            gap: 8px;
+        }
+
+        /* Overlay for permissions */
+        #permission-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-init {
+            padding: 15px 40px;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.05);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+        .btn-init:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.4);
+        }
+
+        #camera-switch {
+            display: none; /* Toggled via JS */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanline"></div>
+
+    <div id="canvas-container">
+        <canvas id="display"></canvas>
+    </div>
+
+    <!-- TOP CONTROL STRIP -->
+    <div id="top-strip">
+        <div class="flex items-center gap-4">
+            <div id="status-dot" class="status-dot"></div>
+            <div class="text-[#00ffff] text-xs tracking-widest font-bold">ACHILLES_ENGINE</div>
+        </div>
+        
+        <div class="flex items-center border-l border-[#333] pl-2 h-full">
+            <button id="mode-shield" class="h-full px-3 text-[9px] font-bold text-[#00ffff] bg-[#00ffff]/10 hover:bg-[#00ffff]/20 transition-colors">SHIELD</button>
+            <button id="mode-forge" class="h-full px-3 text-[9px] font-bold text-gray-500 hover:text-white transition-colors border-l border-[#333]">FORGE</button>
+            <button id="mode-ether" class="h-full px-3 text-[9px] font-bold text-gray-500 hover:text-white transition-colors border-l border-[#333]">ETHER</button>
+        </div>
+
+        <div class="flex items-center gap-2 border-l border-[#333] pl-4 h-full">
+            <span class="text-[9px] text-gray-500 tracking-wider">SPEED</span>
+            <input type="range" id="speed-slider" min="0" max="2.0" step="0.1" value="1.0" style="width: 60px;">
+        </div>
+    </div>
+
+    <!-- PARAMETER SLIDERS (The "Orbital Loom" Control Surfaces) -->
+    <div class="controls-container">
+        <div class="control-panel">
+            <span class="label-sm">CORE</span>
+            <input type="range" id="param-core" min="0" max="1" step="0.01" value="0.85">
+            <span class="text-[9px] text-white font-mono" id="val-core">0.85</span>
+        </div>
+        <div class="control-panel">
+            <span class="label-sm">INNER</span>
+            <input type="range" id="param-inner" min="0" max="1" step="0.01" value="0.50">
+            <span class="text-[9px] text-white font-mono" id="val-inner">0.50</span>
+        </div>
+        <div class="control-panel">
+            <span class="label-sm">OUTER</span>
+            <input type="range" id="param-outer" min="0" max="1" step="0.01" value="0.20">
+            <span class="text-[9px] text-white font-mono" id="val-outer">0.20</span>
+        </div>
+        <div class="control-panel">
+            <span class="label-sm">EDGE</span>
+            <input type="range" id="param-edge" min="0" max="1" step="0.01" value="0.60">
+            <span class="text-[9px] text-white font-mono" id="val-edge">0.60</span>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div id="bottom-bar">
+        <button id="pause-btn" class="btn-ctrl flex-1 border-r border-[#333]">PAUSE</button>
+        <button id="reset-btn" class="btn-ctrl flex-1 border-r border-[#333]">RESET</button>
+        <button id="camera-switch" class="btn-ctrl flex-1 text-[#00ffff] border-[#00ffff]">FLIP CAM</button>
+    </div>
+
+    <!-- PERMISSION OVERLAY -->
+    <div id="permission-overlay">
+        <div class="mb-8 text-center opacity-75">
+            <div class="text-[10px] tracking-[0.5em] mb-2 text-[#00ffff]">SYSTEM READY</div>
+            <div class="w-24 h-[1px] bg-white mx-auto"></div>
+        </div>
+        <button id="start-btn" class="btn-init">INITIALIZE</button>
+        <div id="error-msg" class="mt-4 text-red-500 text-xs font-mono hidden"></div>
+    </div>
+
+<script>
+// --- SHADER SOURCES ---
+
+const VERTEX_SHADER = `
+    attribute vec2 position;
+    varying vec2 vUv;
+    void main() {
+        vec2 uv = position * 0.5 + 0.5;
+        vUv = vec2(uv.x, 1.0 - uv.y);
+        gl_Position = vec4(position, 0.0, 1.0);
+    }
+`;
+
+const FRAGMENT_SHADER = `
+    precision mediump float;
+    uniform sampler2D uFrame;
+    uniform sampler2D uFeedback;
+    uniform float uTime;
+    uniform vec2 uResolution;
+    
+    // Controlled by Sliders
+    uniform float uParamCore;   
+    uniform float uParamInner;  
+    uniform float uParamOuter;  
+    uniform float uParamEdge;   
+    
+    // Mode Toggles (0 or 1)
+    uniform float uModeForge; // High Contrast
+    uniform float uModeEther; // Soft/Cloudy
+
+    varying vec2 vUv;
+
+    void main() {
+        vec2 center = vec2(0.5);
+        vec2 p = vUv - center;
+        float aspect = uResolution.x / uResolution.y;
+        p.x *= aspect; 
+        float dist = length(p);
+
+        float rCore = 0.18;
+        float rInner = 0.35;
+        float rOuter = 0.50;
+        
+        vec2 feedbackUv = vUv;
+        float feedbackAmt = 0.0;
+        vec3 zoneTint = vec3(1.0);
+        
+        // --- ZONE LOGIC ---
+        if (dist < rCore) {
+            // Core: Controlled by uParamCore
+            feedbackUv = center + (vUv - center) * (0.98 + (uParamCore * 0.03)); 
+            feedbackAmt = 0.8 + (uParamCore * 0.15); 
+            zoneTint = vec3(1.05, 1.0, 0.9);
+        } 
+        else if (dist < rInner) {
+            // Inner: Narrative / Rotation
+            float angle = (0.01 + uParamInner * 0.05) * sin(uTime * 0.5);
+            float s = sin(angle);
+            float c = cos(angle);
+            vec2 rotated = vec2(
+                (vUv.x - 0.5) * c - (vUv.y - 0.5) * s + 0.5,
+                (vUv.x - 0.5) * s + (vUv.y - 0.5) * c + 0.5
+            );
+            feedbackUv = center + (rotated - center) * 0.995;
+            feedbackAmt = 0.85 + (uParamInner * 0.14);
+            zoneTint = vec3(0.9, 0.95, 1.05); 
+        }
+        else if (dist < rOuter) {
+             // Outer: Mythos / Deep History
+             feedbackUv = center + (vUv - center) * 0.999;
+             feedbackAmt = 0.9 + (uParamOuter * 0.09); // High feedback capability
+             zoneTint = vec3(1.0 + uParamOuter*0.2, 0.9, 0.8);
+        }
+        else {
+             // Edge: Ether / Displacement
+             feedbackUv = center + (vUv - center) * (1.0 - (uParamEdge * 0.02)); 
+             feedbackAmt = 0.9;
+             zoneTint = vec3(0.8, 0.9, 1.0 + uParamEdge * 0.5);
+        }
+
+        vec4 newFrame = texture2D(uFrame, vUv);
+        vec4 oldFrame = texture2D(uFeedback, feedbackUv);
+        vec3 color = mix(newFrame.rgb, oldFrame.rgb, feedbackAmt);
+        color *= zoneTint;
+
+        // --- VISUAL MODES ---
+        if (uModeForge > 0.5) {
+            // High contrast, metallic
+            color = (color - 0.5) * 1.4 + 0.5;
+            color = vec3(dot(color, vec3(0.333))) * vec3(1.0, 0.8, 0.6); // Sepia/Gold
+        } 
+        else if (uModeEther > 0.5) {
+            // Soft, dreamy, inverted
+            color = (color - 0.5) * 0.9 + 0.5;
+            color = 1.0 - color; // Invert
+        }
+
+        // --- ETCHING LINES ---
+        float w = 0.002;
+        float border = 0.0;
+        border += smoothstep(w, 0.0, abs(dist - rCore));
+        border += smoothstep(w, 0.0, abs(dist - rInner));
+        border += smoothstep(w, 0.0, abs(dist - rOuter));
+        
+        vec3 gold = vec3(1.0, 0.8, 0.4);
+        color = mix(color, gold, border * 0.6); 
+
+        // Mask
+        if (dist > 0.55) {
+            color *= 0.0; 
+        }
+
+        gl_FragColor = vec4(color, 1.0);
+    }
+`;
+
+const DATAMOSH_SHADER = `
+    precision mediump float;
+    uniform sampler2D uCurrent;   
+    uniform sampler2D uPrevious;  
+    uniform float uMoshIntensity; // Linked to Inner
+    uniform float uDisplacement;  // Linked to Edge
+    uniform vec2 uResolution;
+    varying vec2 vUv;
+
+    float luma(vec3 color) { return dot(color, vec3(0.299, 0.587, 0.114)); }
+
+    void main() {
+        vec2 pixel = 1.0 / uResolution;
+        vec4 current = texture2D(uCurrent, vUv);
+        vec4 prev = texture2D(uPrevious, vUv);
+        
+        float diff = luma(current.rgb) - luma(prev.rgb);
+        float motion = smoothstep(0.02, 0.2, abs(diff));
+        
+        float dx = luma(texture2D(uCurrent, vUv + vec2(pixel.x, 0.0)).rgb) - luma(texture2D(uCurrent, vUv - vec2(pixel.x, 0.0)).rgb);
+        float dy = luma(texture2D(uCurrent, vUv + vec2(0.0, pixel.y)).rgb) - luma(texture2D(uCurrent, vUv - vec2(0.0, pixel.y)).rgb);
+        
+        vec2 flow = vec2(dx, dy) * uDisplacement * 100.0 * motion * uMoshIntensity;
+        vec2 lookup = vUv - flow;
+        
+        gl_FragColor = texture2D(uCurrent, lookup);
+    }
+`;
+
+// --- SYSTEM STATE ---
+const STATE = {
+    core: 0.85,
+    inner: 0.50,
+    outer: 0.20,
+    edge: 0.60,
+    speed: 1.0,
+    mode: 'SHIELD', // SHIELD, FORGE, ETHER
+    isPaused: false
+};
+
+// --- AUDIO/HAPTIC ENGINE ---
+const AudioEngine = {
+    ctx: null,
+    gain: null,
+    isInit: false,
+    init() {
+        if (this.isInit) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+        this.gain = this.ctx.createGain();
+        this.gain.gain.value = 0.1; // Subtle
+        this.gain.connect(this.ctx.destination);
+        this.isInit = true;
+    },
+    tick(freq = 800) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const env = this.ctx.createGain();
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        osc.connect(env);
+        env.connect(this.gain);
+        env.gain.setValueAtTime(0, this.ctx.currentTime);
+        env.gain.linearRampToValueAtTime(1, this.ctx.currentTime + 0.01);
+        env.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.06);
+    }
+};
+
+const Haptics = {
+    trigger(ms = 5) {
+        if (navigator.vibrate) navigator.vibrate(ms);
+    }
+};
+
+// --- WEBGL CORE ---
+let gl, program, moshProgram;
+let texFeedback = [], fbFeedback = [];
+let texMosh, texPrev, fbMosh;
+let bufferPlane;
+let uLocs = {}, uMoshLocs = {};
+let webcam, frameBuffer = [];
+let currentIdx = 0;
+let time = 0;
+
+function initWebGL() {
+    const cvs = document.getElementById('display');
+    gl = cvs.getContext('webgl', { alpha: false, preserveDrawingBuffer: false });
+    if (!gl) return alert('WebGL failed');
+
+    // Programs
+    program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
+    moshProgram = createProgram(VERTEX_SHADER, DATAMOSH_SHADER);
+
+    // Geometry
+    bufferPlane = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferPlane);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+    // Textures/FBOs
+    for(let i=0; i<2; i++) {
+        texFeedback[i] = createTexture();
+        fbFeedback[i] = createFBO(texFeedback[i]);
+    }
+    texMosh = createTexture();
+    texPrev = createTexture();
+    fbMosh = createFBO(texMosh);
+
+    // Uniforms
+    ['uFrame','uFeedback','uTime','uResolution','uParamCore','uParamInner','uParamOuter','uParamEdge','uModeForge','uModeEther']
+        .forEach(u => uLocs[u] = gl.getUniformLocation(program, u));
+    
+    ['uCurrent','uPrevious','uMoshIntensity','uDisplacement','uResolution']
+        .forEach(u => uMoshLocs[u] = gl.getUniformLocation(moshProgram, u));
+
+    window.addEventListener('resize', resize);
+    resize();
+}
+
+function createProgram(vs, fs) {
+    const p = gl.createProgram();
+    const add = (src, type) => {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+        gl.attachShader(p, s);
+    };
+    add(vs, gl.VERTEX_SHADER);
+    add(fs, gl.FRAGMENT_SHADER);
+    gl.linkProgram(p);
+    return p;
+}
+
+function createTexture() {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return t;
+}
+
+function createFBO(tex) {
+    const f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    return f;
+}
+
+function resize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const cvs = document.getElementById('display');
+    cvs.width = w; cvs.height = h;
+    gl.viewport(0, 0, w, h);
+    
+    // Resize textures
+    [texMosh, texPrev, ...texFeedback].forEach(t => {
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    });
+}
+
+// --- VIDEO & LOOP ---
+async function startStream() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment', width: {ideal:1280}, height: {ideal:720} }, 
+            audio: false 
+        });
+        webcam = document.createElement('video');
+        webcam.autoplay = true;
+        webcam.muted = true;
+        webcam.playsInline = true;
+        webcam.srcObject = stream;
+        await webcam.play();
+        
+        // Check for multiple cams
+        const devs = await navigator.mediaDevices.enumerateDevices();
+        if(devs.filter(d=>d.kind==='videoinput').length > 1) {
+            document.getElementById('camera-switch').style.display = 'block';
+        }
+    } catch(e) {
+        document.getElementById('error-msg').innerText = e.message;
+        document.getElementById('error-msg').style.display = 'block';
+    }
+}
+
+function render() {
+    if(!webcam || STATE.isPaused) {
+        requestAnimationFrame(render);
+        return;
+    }
+
+    time += 0.01 * STATE.speed;
+
+    // 1. Feedback Pass
+    const inputTex = createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, inputTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, webcam);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbFeedback[1 - currentIdx]);
+    gl.useProgram(program);
+    
+    // Attr
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferPlane);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    // Uniforms
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, inputTex);
+    gl.uniform1i(uLocs.uFrame, 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texFeedback[currentIdx]);
+    gl.uniform1i(uLocs.uFeedback, 1);
+
+    gl.uniform1f(uLocs.uTime, time);
+    gl.uniform2f(uLocs.uResolution, gl.canvas.width, gl.canvas.height);
+    
+    // State Uniforms
+    gl.uniform1f(uLocs.uParamCore, STATE.core);
+    gl.uniform1f(uLocs.uParamInner, STATE.inner);
+    gl.uniform1f(uLocs.uParamOuter, STATE.outer);
+    gl.uniform1f(uLocs.uParamEdge, STATE.edge);
+    gl.uniform1f(uLocs.uModeForge, STATE.mode === 'FORGE' ? 1.0 : 0.0);
+    gl.uniform1f(uLocs.uModeEther, STATE.mode === 'ETHER' ? 1.0 : 0.0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // 2. Datamosh Pass (Screen Output)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.useProgram(moshProgram);
+    
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texFeedback[1 - currentIdx]); // Current feedback result
+    gl.uniform1i(uMoshLocs.uCurrent, 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texPrev); // Previous frame
+    gl.uniform1i(uMoshLocs.uPrevious, 1);
+
+    gl.uniform1f(uMoshLocs.uMoshIntensity, STATE.inner);
+    gl.uniform1f(uMoshLocs.uDisplacement, STATE.edge);
+    gl.uniform2f(uMoshLocs.uResolution, gl.canvas.width, gl.canvas.height);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // Copy to prev for next frame
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texFeedback[1 - currentIdx]);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texPrev);
+    gl.copyTexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 0, 0, gl.canvas.width, gl.canvas.height, 0);
+
+    // Cleanup input texture
+    gl.deleteTexture(inputTex);
+    
+    currentIdx = 1 - currentIdx;
+    requestAnimationFrame(render);
+}
+
+// --- UI BINDING ---
+function initUI() {
+    // Mode Buttons
+    const modes = ['shield', 'forge', 'ether'];
+    modes.forEach(m => {
+        const btn = document.getElementById(`mode-${m}`);
+        btn.addEventListener('click', () => {
+            STATE.mode = m.toUpperCase();
+            Haptics.trigger(10);
+            modes.forEach(om => {
+                const b = document.getElementById(`mode-${om}`);
+                b.style.color = om === m ? (m==='shield'?'#00ffff':'#ffffff') : '#888';
+                b.style.backgroundColor = om === m ? (m==='shield'?'rgba(0,255,255,0.1)':'rgba(255,255,255,0.1)') : 'transparent';
+            });
+        });
+    });
+
+    // Sliders
+    const bindSlider = (id, key, scale = 1) => {
+        const el = document.getElementById(id);
+        const valEl = document.getElementById(id.replace('param', 'val').replace('speed', 'val')); // hacky but works for param-*
+        el.addEventListener('input', e => {
+            const v = parseFloat(e.target.value);
+            STATE[key] = v;
+            if(valEl) valEl.innerText = v.toFixed(2);
+            
+            // Audio/Haptic Feedback based on speed of change?
+            // Simple tick on change
+            if(Math.random() > 0.8) {
+                AudioEngine.tick(800 + v * 400);
+                Haptics.trigger(5);
+            }
+        });
+    };
+
+    bindSlider('speed-slider', 'speed');
+    bindSlider('param-core', 'core');
+    bindSlider('param-inner', 'inner');
+    bindSlider('param-outer', 'outer');
+    bindSlider('param-edge', 'edge');
+
+    // Bottom Bar
+    const btnPause = document.getElementById('pause-btn');
+    btnPause.addEventListener('click', () => {
+        STATE.isPaused = !STATE.isPaused;
+        btnPause.innerText = STATE.isPaused ? "RESUME" : "PAUSE";
+        btnPause.classList.toggle('active', STATE.isPaused);
+        Haptics.trigger(15);
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        STATE.core = 0.85; document.getElementById('param-core').value = 0.85;
+        STATE.inner = 0.50; document.getElementById('param-inner').value = 0.50;
+        STATE.outer = 0.20; document.getElementById('param-outer').value = 0.20;
+        STATE.edge = 0.60; document.getElementById('param-edge').value = 0.60;
+        Haptics.trigger([10, 50, 10]);
+    });
+
+    // Start
+    document.getElementById('start-btn').addEventListener('click', async () => {
+        AudioEngine.init();
+        document.getElementById('permission-overlay').style.display = 'none';
+        initWebGL();
+        await startStream();
+        requestAnimationFrame(render);
+    });
+}
+
+window.onload = initUI;
+
+</script>
+</body>
+</html>
