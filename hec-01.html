@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonic Ephemeris Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header {
+            padding: 12px 16px;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+            border-bottom: 1px solid #333;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        #title {
+            font-weight: bold;
+            color: #00ffcc;
+            margin-bottom: 4px;
+        }
+
+        #subtitle {
+            color: #888;
+            font-size: 9px;
+        }
+
+        #score-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: #111;
+            border-bottom: 1px solid #333;
+            font-size: 10px;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .score-label {
+            color: #666;
+        }
+
+        .score-value {
+            color: #00ffcc;
+            font-weight: bold;
+        }
+
+        #main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px;
+        }
+
+        #disc-stack {
+            position: relative;
+            width: min(85vw, 400px);
+            height: min(85vw, 400px);
+            filter: drop-shadow(0 0 40px rgba(0, 255, 204, 0.3));
+        }
+
+        .disc-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .disc {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            cursor: grab;
+            transition: filter 0.2s, transform 0.3s ease-out;
+        }
+
+        .disc:active {
+            cursor: grabbing;
+        }
+
+        #base-disc {
+            background: radial-gradient(circle at 30% 30%, rgba(20, 30, 40, 0.9), rgba(10, 15, 20, 0.95));
+            border: 2px solid rgba(200, 200, 200, 0.3);
+            z-index: 1;
+        }
+
+        #middle-disc {
+            background: radial-gradient(circle at 50% 50%, rgba(60, 20, 20, 0.6), rgba(40, 10, 10, 0.7));
+            border: 2px solid rgba(255, 100, 100, 0.4);
+            z-index: 2;
+            mix-blend-mode: screen;
+        }
+
+        #top-disc {
+            background: radial-gradient(circle at 70% 40%, rgba(20, 60, 60, 0.5), rgba(10, 40, 40, 0.6));
+            border: 2px solid rgba(100, 255, 255, 0.4);
+            z-index: 3;
+            mix-blend-mode: screen;
+        }
+
+        .lattice-pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        #glow-base {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.95); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90%;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            background: rgba(30, 30, 30, 0.9);
+            border: 1px solid #555;
+            color: #00ffcc;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .control-btn:active {
+            background: rgba(0, 255, 204, 0.2);
+            border-color: #00ffcc;
+        }
+
+        .control-btn.active {
+            background: rgba(0, 255, 204, 0.3);
+            border-color: #00ffcc;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+
+        #challenge-panel {
+            position: absolute;
+            top: 60px;
+            left: 16px;
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid #333;
+            padding: 12px;
+            font-size: 9px;
+            max-width: 200px;
+            border-radius: 3px;
+        }
+
+        #output-panel {
+            position: absolute;
+            top: 60px;
+            right: 16px;
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid #333;
+            padding: 12px;
+            font-size: 9px;
+            max-width: 200px;
+            border-radius: 3px;
+        }
+
+        .panel-label {
+            color: #00ffcc;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .panel-value {
+            color: #888;
+            margin-bottom: 8px;
+            font-family: monospace;
+        }
+
+        .target-chord {
+            color: #ffcc00;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 204, 0, 0.1);
+            border-radius: 3px;
+            margin-top: 6px;
+        }
+
+        .intersection-marker {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 100, 0.8);
+            box-shadow: 0 0 10px rgba(255, 255, 100, 0.6);
+            pointer-events: none;
+            animation: flicker 0.5s ease-in-out;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1.3); }
+            100% { opacity: 0.8; transform: scale(1); }
+        }
+
+        .target-marker {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #ffcc00;
+            background: rgba(255, 204, 0, 0.2);
+            pointer-events: none;
+            animation: targetPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes targetPulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .feedback-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            animation: flashFeedback 0.5s ease-out;
+        }
+
+        .feedback-flash.success {
+            background: radial-gradient(circle, rgba(0, 255, 100, 0.3) 0%, transparent 70%);
+        }
+
+        .feedback-flash.fail {
+            background: radial-gradient(circle, rgba(255, 0, 0, 0.3) 0%, transparent 70%);
+        }
+
+        @keyframes flashFeedback {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        #info-footer {
+            padding: 8px 16px;
+            background: #0f0f0f;
+            border-top: 1px solid #333;
+            font-size: 8px;
+            color: #555;
+            text-align: center;
+        }
+
+        .combo-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffcc00;
+            text-shadow: 0 0 20px rgba(255, 204, 0, 0.8);
+            pointer-events: none;
+            animation: comboAppear 1s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes comboAppear {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -70%) scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            #challenge-panel, #output-panel {
+                position: relative;
+                top: auto;
+                left: auto;
+                right: auto;
+                max-width: 100%;
+                margin: 10px 16px;
+            }
+            
+            #main-container {
+                justify-content: flex-start;
+                padding-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div id="title">⚙ HARMONIC EPHEMERIS GAME ⚙</div>
+        <div id="subtitle">Align the celestial discs to match the target harmony</div>
+    </div>
+
+    <div id="score-bar">
+        <div class="score-item">
+            <span class="score-label">SCORE:</span>
+            <span class="score-value" id="score">0</span>
+        </div>
+        <div class="score-item">
+            <span class="score-label">COMBO:</span>
+            <span class="score-value" id="combo">0x</span>
+        </div>
+        <div class="score-item">
+            <span class="score-label">LEVEL:</span>
+            <span class="score-value" id="level">1</span>
+        </div>
+        <div class="score-item">
+            <span class="score-label">TIME:</span>
+            <span class="score-value" id="timer">30</span>
+        </div>
+    </div>
+
+    <div id="main-container">
+        <div id="challenge-panel">
+            <div class="panel-label">🎯 TARGET HARMONY</div>
+            <div class="target-chord" id="target-chord">C Major</div>
+            <div class="panel-label" style="margin-top: 12px;">ALIGNMENT</div>
+            <div class="panel-value" id="alignment-accuracy">0%</div>
+            <div class="panel-label">MOVES</div>
+            <div class="panel-value" id="moves-count">0</div>
+        </div>
+
+        <div id="glow-base"></div>
+        <div id="disc-stack">
+            <div class="disc-container" style="z-index: 1;">
+                <svg class="disc" id="base-disc" viewBox="0 0 400 400">
+                    <defs>
+                        <pattern id="tonnetz" x="0" y="0" width="40" height="34.64" patternUnits="userSpaceOnUse">
+                            <path d="M0,17.32 L20,0 M20,0 L40,17.32 M0,17.32 L20,34.64 M20,34.64 L40,17.32" 
+                                  stroke="rgba(200,200,200,0.3)" stroke-width="0.5" fill="none"/>
+                        </pattern>
+                    </defs>
+                    <circle cx="200" cy="200" r="195" fill="url(#tonnetz)" opacity="0.8"/>
+                    <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(200,200,200,0.2)" stroke-width="1"/>
+                    <circle cx="200" cy="200" r="140" fill="none" stroke="rgba(200,200,200,0.15)" stroke-width="1"/>
+                    <circle cx="200" cy="200" r="100" fill="none" stroke="rgba(200,200,200,0.1)" stroke-width="1"/>
+                </svg>
+            </div>
+
+            <div class="disc-container" style="z-index: 2;">
+                <svg class="disc" id="middle-disc" viewBox="0 0 400 400" data-rotation="0">
+                    <g class="lattice-pattern">
+                        <path d="M200,50 Q250,100 200,150 Q150,100 200,50" 
+                              stroke="#ff6666" stroke-width="2" fill="none" opacity="0.6"/>
+                        <path d="M280,120 Q320,170 280,220 Q240,170 280,120" 
+                              stroke="#ff4444" stroke-width="2" fill="none" opacity="0.6"/>
+                        <path d="M120,120 Q80,170 120,220 Q160,170 120,120" 
+                              stroke="#ff5555" stroke-width="2" fill="none" opacity="0.6"/>
+                        <circle cx="200" cy="100" r="3" fill="#ff8888"/>
+                        <circle cx="280" cy="170" r="3" fill="#ff8888"/>
+                        <circle cx="120" cy="170" r="3" fill="#ff8888"/>
+                        <circle cx="200" cy="240" r="3" fill="#ff8888"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="disc-container" style="z-index: 3;">
+                <svg class="disc" id="top-disc" viewBox="0 0 400 400" data-rotation="0">
+                    <g class="lattice-pattern">
+                        <ellipse cx="200" cy="200" rx="80" ry="60" 
+                                 fill="rgba(0,255,255,0.15)" stroke="#00ffcc" stroke-width="1.5" opacity="0.7"/>
+                        <ellipse cx="150" cy="150" rx="50" ry="40" 
+                                 fill="rgba(100,255,200,0.12)" stroke="#66ffaa" stroke-width="1.5" opacity="0.6"/>
+                        <ellipse cx="250" cy="250" rx="60" ry="50" 
+                                 fill="rgba(0,200,200,0.13)" stroke="#00ccaa" stroke-width="1.5" opacity="0.6"/>
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <div id="controls">
+            <button class="control-btn" id="new-game-btn">NEW GAME</button>
+            <button class="control-btn" id="hint-btn">HINT (-50)</button>
+            <button class="control-btn" id="skip-btn">SKIP (-100)</button>
+        </div>
+
+        <div id="output-panel">
+            <div class="panel-label">CURRENT HARMONY</div>
+            <div class="panel-value" id="chord-output">C Major</div>
+            <div class="panel-label">ROTATION (M/T)</div>
+            <div class="panel-value" id="rotation-output">0° / 0°</div>
+            <div class="panel-label">RESONANCE</div>
+            <div class="panel-value" id="intersection-output">0</div>
+        </div>
+    </div>
+
+    <div id="info-footer">
+        🎮 MATCH THE TARGET CHORD • FASTER = MORE POINTS • BUILD COMBOS FOR BONUSES
+    </div>
+
+    <script>
+        const chords = ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim', 'CMaj7', 'Dm7', 'G7', 'Am7', 'FMaj7', 
+                        'C7', 'Fmaj7', 'Em7', 'Asus4', 'Gsus4', 'Dsus2'];
+        
+        // Game state
+        let gameState = {
+            score: 0,
+            combo: 0,
+            level: 1,
+            timeRemaining: 30,
+            targetChord: 'C',
+            targetRotation: {middle: 0, top: 0},
+            moves: 0,
+            isPlaying: false,
+            timerInterval: null
+        };
+
+        let middleRotation = 0;
+        let topRotation = 0;
+        let isDragging = false;
+        let currentDisc = null;
+        let startAngle = 0;
+
+        const middleDisc = document.getElementById('middle-disc');
+        const topDisc = document.getElementById('top-disc');
+        const discStack = document.getElementById('disc-stack');
+        const chordOutput = document.getElementById('chord-output');
+        const rotationOutput = document.getElementById('rotation-output');
+        const intersectionOutput = document.getElementById('intersection-output');
+        const targetChordEl = document.getElementById('target-chord');
+        const scoreEl = document.getElementById('score');
+        const comboEl = document.getElementById('combo');
+        const levelEl = document.getElementById('level');
+        const timerEl = document.getElementById('timer');
+        const alignmentEl = document.getElementById('alignment-accuracy');
+        const movesEl = document.getElementById('moves-count');
+
+        function getAngle(centerX, centerY, pointX, pointY) {
+            return Math.atan2(pointY - centerY, pointX - centerX) * 180 / Math.PI;
+        }
+
+        function normalizeAngle(angle) {
+            return ((angle % 360) + 360) % 360;
+        }
+
+        function getCurrentChord() {
+            const normalizedMiddle = normalizeAngle(middleRotation);
+            const normalizedTop = normalizeAngle(topRotation);
+            const chordIndex = Math.floor((normalizedMiddle + normalizedTop) / 60) % chords.length;
+            return chords[chordIndex];
+        }
+
+        function calculateAlignment() {
+            const middleDiff = Math.abs(normalizeAngle(middleRotation) - gameState.targetRotation.middle);
+            const topDiff = Math.abs(normalizeAngle(topRotation) - gameState.targetRotation.top);
+            
+            const middleError = Math.min(middleDiff, 360 - middleDiff);
+            const topError = Math.min(topDiff, 360 - topDiff);
+            
+            const totalError = (middleError + topError) / 2;
+            const accuracy = Math.max(0, 100 - (totalError / 180 * 100));
+            
+            return accuracy;
+        }
+
+        function checkWinCondition() {
+            const currentChord = getCurrentChord();
+            const accuracy = calculateAlignment();
+            
+            if (currentChord === gameState.targetChord && accuracy > 85) {
+                handleSuccess();
+                return true;
+            }
+            return false;
+        }
+
+        function handleSuccess() {
+            const timeBonus = Math.floor(gameState.timeRemaining * 10);
+            const comboBonus = gameState.combo * 50;
+            const movesPenalty = Math.max(0, (gameState.moves - 5) * 10);
+            const points = 100 + timeBonus + comboBonus - movesPenalty;
+            
+            gameState.score += points;
+            gameState.combo += 1;
+            
+            showFeedback('success');
+            showCombo();
+            
+            setTimeout(() => {
+                nextLevel();
+            }, 1000);
+        }
+
+        function handleFailure() {
+            gameState.combo = 0;
+            showFeedback('fail');
+        }
+
+        function showFeedback(type) {
+            const flash = document.createElement('div');
+            flash.className = `feedback-flash ${type}`;
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 500);
+        }
+
+        function showCombo() {
+            if (gameState.combo > 1) {
+                const combo = document.createElement('div');
+                combo.className = 'combo-indicator';
+                combo.textContent = `${gameState.combo}x COMBO!`;
+                document.body.appendChild(combo);
+                setTimeout(() => combo.remove(), 1000);
+            }
+        }
+
+        function newChallenge() {
+            gameState.targetChord = chords[Math.floor(Math.random() * chords.length)];
+            gameState.targetRotation = {
+                middle: Math.floor(Math.random() * 12) * 30,
+                top: Math.floor(Math.random() * 12) * 30
+            };
+            gameState.moves = 0;
+            gameState.timeRemaining = Math.max(15, 30 - gameState.level * 2);
+            
+            targetChordEl.textContent = gameState.targetChord;
+            updateUI();
+        }
+
+        function nextLevel() {
+            gameState.level += 1;
+            newChallenge();
+        }
+
+        function startGame() {
+            gameState = {
+                score: 0,
+                combo: 0,
+                level: 1,
+                timeRemaining: 30,
+                targetChord: 'C',
+                targetRotation: {middle: 0, top: 0},
+                moves: 0,
+                isPlaying: true,
+                timerInterval: null
+            };
+            
+            middleRotation = 0;
+            topRotation = 0;
+            middleDisc.style.transform = 'rotate(0deg)';
+            topDisc.style.transform = 'rotate(0deg)';
+            
+            newChallenge();
+            startTimer();
+        }
+
+        function startTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            gameState.timerInterval = setInterval(() => {
+                if (gameState.isPlaying && gameState.timeRemaining > 0) {
+                    gameState.timeRemaining -= 1;
+                    timerEl.textContent = gameState.timeRemaining;
+                    
+                    if (gameState.timeRemaining === 0) {
+                        handleFailure();
+                        nextLevel();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateUI() {
+            scoreEl.textContent = gameState.score;
+            comboEl.textContent = `${gameState.combo}x`;
+            levelEl.textContent = gameState.level;
+            timerEl.textContent = gameState.timeRemaining;
+            movesEl.textContent = gameState.moves;
+            
+            const accuracy = calculateAlignment();
+            alignmentEl.textContent = `${Math.round(accuracy)}%`;
+            
+            chordOutput.textContent = getCurrentChord();
+            rotationOutput.textContent = `${Math.round(normalizeAngle(middleRotation))}° / ${Math.round(normalizeAngle(topRotation))}°`;
+        }
+
+        function startDrag(e, disc) {
+            isDragging = true;
+            currentDisc = disc;
+            const rect = discStack.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const touch = e.touches ? e.touches[0] : e;
+            startAngle = getAngle(centerX, centerY, touch.clientX, touch.clientY);
+            e.preventDefault();
+        }
+
+        function drag(e) {
+            if (!isDragging || !currentDisc) return;
+            const rect = discStack.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const touch = e.touches ? e.touches[0] : e;
+            const currentAngle = getAngle(centerX, centerY, touch.clientX, touch.clientY);
+            const deltaAngle = currentAngle - startAngle;
+
+            if (currentDisc === middleDisc) {
+                middleRotation += deltaAngle;
+                middleDisc.style.transform = `rotate(${middleRotation}deg)`;
+            } else if (currentDisc === topDisc) {
+                topRotation += deltaAngle;
+                topDisc.style.transform = `rotate(${topRotation}deg)`;
+            }
+
+            startAngle = currentAngle;
+            updateUI();
+            generateIntersections();
+            
+            if (gameState.isPlaying) {
+                checkWinCondition();
+            }
+        }
+
+        function endDrag() {
+            if (isDragging && gameState.isPlaying) {
+                gameState.moves += 1;
+            }
+            isDragging = false;
+            currentDisc = null;
+        }
+
+        function generateIntersections() {
+            document.querySelectorAll('.intersection-marker').forEach(m => m.remove());
+            
+            const alignment = Math.abs(((middleRotation - topRotation) % 360 + 360) % 360);
+            const numIntersections = Math.floor(Math.abs(Math.sin(alignment * Math.PI / 180)) * 5);
+            
+            intersectionOutput.textContent = numIntersections;
+            
+            for (let i = 0; i < numIntersections; i++) {
+                const marker = document.createElement('div');
+                marker.className = 'intersection-marker';
+                const angle = (360 / numIntersections) * i + middleRotation;
+                const rad = angle * Math.PI / 180;
+                const distance = 120 + Math.random() * 60;
+                const x = 50 + Math.cos(rad) * distance / 4;
+                const y = 50 + Math.sin(rad) * distance / 4;
+                marker.style.left = `${x}%`;
+                marker.style.top = `${y}%`;
+                discStack.appendChild(marker);
+            }
+        }
+
+        // Event listeners
+        middleDisc.addEventListener('mousedown', (e) => startDrag(e, middleDisc));
+        middleDisc.addEventListener('touchstart', (e) => startDrag(e, middleDisc));
+        topDisc.addEventListener('mousedown', (e) => startDrag(e, topDisc));
+        topDisc.addEventListener('touchstart', (e) => startDrag(e, topDisc));
+
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, {passive: false});
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        document.getElementById('new-game-btn').addEventListener('click', startGame);
+
+        document.getElementById('hint-btn').addEventListener('click', () => {
+            if (gameState.score >= 50) {
+                gameState.score -= 50;
+                const avgRotation = (gameState.targetRotation.middle + gameState.targetRotation.top) / 2;
+                middleRotation = gameState.targetRotation.middle + (Math.random() - 0.5) * 60;
+                topRotation = gameState.targetRotation.top + (Math.random() - 0.5) * 60;
+                middleDisc.style.transform = `rotate(${middleRotation}deg)`;
+                topDisc.style.transform = `rotate(${topRotation}deg)`;
+                updateUI();
+                generateIntersections();
+            }
+        });
+
+        document.getElementById('skip-btn').addEventListener('click', () => {
+            if (gameState.score >= 100) {
+                gameState.score -= 100;
+                gameState.combo = 0;
+                nextLevel();
+            }
+        });
+
+        // Initialize
+        updateUI();
+        generateIntersections();
+    </script>
+</body>
+</html>
