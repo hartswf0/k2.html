@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ADHB 1950 | Definitive Command Loom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@300;500&display=swap');
+
+        :root {
+            --brass: #c5b358;
+            --ink-red: #ff3333;
+            --ink-blue: #3388ff;
+            --ink-green: #33ff88;
+            --glass-sheen: rgba(200, 245, 235, 0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            background-color: #000;
+            color: var(--brass);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            perspective: 2500px;
+            width: 100%; height: 100%;
+        }
+
+        /* HEAVENLY ATMOSPHERE */
+        .light-table {
+            position: fixed; inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 85%), #000;
+            z-index: -1;
+        }
+
+        .scanlines {
+            position: fixed; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
+            pointer-events: none; z-index: 2000;
+            opacity: 0.3;
+        }
+
+        .grain {
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.05; pointer-events: none; z-index: 2001;
+        }
+
+        /* CHASSIS & PLATES */
+        .chassis-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 92vmin; height: 92vmin;
+            max-width: 800px; max-height: 800px;
+            transform: translate(-50%, -50%);
+            transform-style: preserve-3d;
+            display: flex;
+            align-items: center; justify-content: center;
+            transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
+        }
+
+        .glass-plate {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, var(--glass-sheen) 0%, transparent 85%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
+            backdrop-filter: blur(0.1px);
+            mix-blend-mode: screen;
+            pointer-events: none;
+            transform-style: preserve-3d;
+            will-change: transform, opacity, filter;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s, filter 0.5s;
+        }
+
+        #plate-0 { width: 100%; height: 100%; }
+        #plate-1 { width: 70%; height: 70%; }
+        #plate-2 { width: 40%; height: 40%; }
+
+        .control-surface {
+            position: absolute; inset: 0;
+            z-index: 500; border-radius: 50%;
+            cursor: move;
+        }
+
+        .meridian {
+            position: absolute; top: 0; bottom: 50%; left: 50%;
+            width: 2px; z-index: 450; pointer-events: none;
+            transform-origin: bottom center;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        /* COMMAND GUI */
+        #top-hud {
+            position: absolute; top: 0; left: 0; right: 0; 
+            background: linear-gradient(to bottom, rgba(0,0,0,1) 60%, transparent);
+            display: flex; flex-wrap: wrap; align-items: center; padding: 15px 25px;
+            z-index: 1500; gap: 20px;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #top-hud.minimized { transform: translateY(-82%); }
+        #hud-tab {
+            position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
+            background: #111; padding: 2px 30px; border-radius: 0 0 15px 15px;
+            font-size: 9px; color: #00ffff; cursor: pointer; border: 1px solid #333;
+            border-top: none; pointer-events: auto; letter-spacing: 3px;
+        }
+
+        .tool-btn {
+            padding: 8px 14px; border: 1px solid #444;
+            font-size: 10px; letter-spacing: 2px;
+            color: #666; background: transparent;
+            cursor: pointer; transition: all 0.2s;
+            text-transform: uppercase; min-width: 90px;
+        }
+        .tool-btn.active { border-color: #00ffff; color: #00ffff; background: rgba(0, 255, 255, 0.15); }
+        .tool-btn:hover { border-color: #fff; color: #fff; }
+
+        .pack-btn {
+            padding: 6px 10px; border: 1px solid #222; font-size: 9px;
+            color: #444; cursor: pointer; text-transform: uppercase;
+        }
+        .pack-btn.active { color: #fff; border-color: var(--brass); background: rgba(197, 179, 88, 0.2); }
+
+        .star-itinerary {
+            position: absolute; left: 25px; bottom: 100px; width: 220px;
+            background: rgba(0,0,0,0.9); border: 1px solid rgba(0,255,255,0.2);
+            padding: 15px; pointer-events: none; opacity: 0;
+            transition: opacity 0.4s; z-index: 1000; backdrop-filter: blur(15px);
+            border-left: 3px solid #00ffff;
+        }
+
+        .telemetry-panel {
+            position: absolute; left: 25px; bottom: 25px;
+            pointer-events: none; font-size: 9px; opacity: 0.6;
+            text-transform: uppercase; line-height: 2;
+            background: rgba(0,0,0,0.7); padding: 10px 20px;
+            border-bottom: 1px solid var(--brass); z-index: 1000;
+        }
+
+        /* CONTEXT MENU */
+        #ctx-menu {
+            position: fixed; background: #0a0a0a; border: 1px solid var(--brass);
+            display: none; flex-direction: column; z-index: 3000;
+            min-width: 180px; box-shadow: 0 15px 50px rgba(0,0,0,0.9);
+        }
+        .ctx-item {
+            padding: 14px 20px; font-size: 10px; color: #777;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+            border-bottom: 1px solid #222;
+        }
+        .ctx-item:hover { background: rgba(197, 179, 88, 0.2); color: #fff; }
+
+        /* SELECTION FEEDBACK */
+        #magnetic-beam {
+            position: fixed; width: 100px; height: 100px;
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            border-radius: 50%; pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            z-index: 2500;
+        }
+
+        .impact-ripple {
+            position: absolute; border: 1px solid white; border-radius: 50%;
+            pointer-events: none; transform: scale(0); opacity: 1;
+            transition: transform 1.2s ease-out, opacity 1.2s ease-out;
+        }
+
+        .boot-shield {
+            position: fixed; inset: 0;
+            background: #000; z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        .isolated { filter: blur(0px) brightness(1.3) !important; opacity: 1 !important; z-index: 100 !important; }
+        .receded { filter: blur(12px) brightness(0.2) !important; opacity: 0.05 !important; pointer-events: none !important; }
+
+        .const-wire { stroke-width: 0.8; opacity: 0.4; stroke-dasharray: 3 2; }
+    </style>
+</head>
+<body>
+
+    <div id="boot-shield" class="boot-shield">
+        <div class="text-[14px] tracking-[1.8em] text-cyan-400 mb-6 animate-pulse uppercase text-center">Command Auth v9</div>
+        <div class="text-white text-[26px] tracking-[0.4em] mb-16 font-serif italic text-center px-10 leading-tight">ADHB Archival Loom<br>Bloemfontein Station</div>
+        <div class="text-[10px] opacity-20 uppercase border border-white/10 px-12 py-6 hover:bg-white/5 transition-colors">Initialize Steering Controls</div>
+    </div>
+
+    <div class="scanlines"></div>
+    <div class="grain"></div>
+    <div id="magnetic-beam"></div>
+
+    <div id="ctx-menu">
+        <div class="ctx-item" id="ctx-freeze">Temporal Stasis</div>
+        <div class="ctx-item" id="ctx-clear">Purge Ink Plate</div>
+        <div class="ctx-item" id="ctx-seed">Re-Seed Survey</div>
+        <div class="ctx-item" id="ctx-close">Cancel Control</div>
+    </div>
+
+    <div id="star-hud" class="star-itinerary">
+        <div class="text-[10px] text-cyan-400 mb-4 font-bold border-b border-white/10 pb-2">STELLAR_ITINERARY_LOCK</div>
+        <div id="hud-content" class="text-[10px] text-white/70 space-y-3 leading-loose">-- SCANNING --</div>
+    </div>
+
+    <div id="top-hud">
+        <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+                <div id="status-dot" class="w-2 h-2 rounded-full bg-red-600 shadow-[0_0_10px_red]"></div>
+                <div class="text-[11px] tracking-[0.4em] text-[#00ffff] font-bold">STATION_BLOEMFONTEIN</div>
+            </div>
+            <div class="flex gap-1" id="pack-selector">
+                <button class="pack-btn active" onclick="setPack(0)">SOLITUDE</button>
+                <button class="pack-btn" onclick="setPack(1)">ANOMALY</button>
+                <button class="pack-btn" onclick="setPack(2)">DISCOVERY</button>
+                <button class="pack-btn" onclick="setPack(3)">VOID</button>
+                <button class="pack-btn" onclick="setPack(4)">PULSAR</button>
+            </div>
+        </div>
+
+        <div class="ml-auto flex flex-col items-end gap-2">
+            <div class="flex gap-2">
+                <button class="tool-btn active" id="tool-steer" onclick="setTool('steer')">Pilot</button>
+                <button class="tool-btn" id="tool-link" onclick="setTool('link')">Stitch</button>
+                <button class="tool-btn" id="tool-ink" onclick="setTool('ink')">Ink+</button>
+            </div>
+            <div class="flex gap-2">
+                <button class="tool-btn" onclick="toggleZoom()" id="btn-zoom">Deep Focus</button>
+                <button class="tool-btn" onclick="resetSurvey()">Reset Roots</button>
+            </div>
+        </div>
+        <div id="hud-tab" onclick="toggleHud()">[ AUTHORITY_HUD ]</div>
+    </div>
+
+    <div class="telemetry-panel">
+        SURVEY_ID: 100047073_B<br>
+        STEERING: <span id="val-mode" class="text-white">NAVIGATE</span><br>
+        MAGNET_LOCK: <span id="val-lock" class="text-cyan-400">IDLE</span>
+    </div>
+
+    <div id="chassis" class="chassis-container">
+        <div id="surface" class="control-surface"></div>
+
+        <div id="plate-0" class="glass-plate" style="transform: translateZ(40px)">
+            <svg class="w-full h-full" viewBox="0 0 100 100"><g id="wires-0"></g><g id="stars-0"></g></svg>
+            <div class="meridian" id="head-0" style="background: var(--ink-red)"></div>
+        </div>
+
+        <div id="plate-1" class="glass-plate" style="transform: translateZ(100px)">
+            <svg class="w-full h-full" viewBox="0 0 100 100"><g id="wires-1"></g><g id="stars-1"></g></svg>
+            <div class="meridian" id="head-1" style="background: var(--ink-blue)"></div>
+        </div>
+
+        <div id="plate-2" class="glass-plate" style="transform: translateZ(160px)">
+            <svg class="w-full h-full" viewBox="0 0 100 100"><g id="wires-2"></g><g id="stars-2"></g></svg>
+            <div class="meridian" id="head-2" style="background: var(--ink-green)"></div>
+        </div>
+
+        <div id="central-node" class="absolute w-2 h-2 bg-white rounded-full shadow-[0_0_20px_#fff] z-[600]"></div>
+    </div>
+
+    <script>
+        // --- CINEMATIC SOUND PACKS ---
+        const SOUND_PACKS = [
+            { type: 'sine', bases: [55, 110, 440], filter: [200, 800, 3000], q: 1, decay: 1.2 },
+            { type: 'triangle', bases: [55, 220, 880], filter: [150, 1600, 6500], q: 15, decay: 0.25 },
+            { type: 'sawtooth', bases: [110, 330, 990], filter: [600, 1400, 4500], q: 4, decay: 0.5 },
+            { type: 'sine', bases: [27, 44, 1760], filter: [80, 200, 9500], q: 30, decay: 1.8 },
+            { type: 'square', bases: [65, 130, 261], filter: [400, 2200, 5000], q: 8, decay: 0.1 }
+        ];
+
+        let audioCtx, masterGain, delay, currentPackIdx = 0;
+
+        async function initAudio() {
+            if (audioCtx) return;
+            const AC = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AC();
+            masterGain = audioCtx.createGain(); masterGain.gain.value = 0.8;
+            delay = audioCtx.createDelay(); delay.delayTime.value = 0.45;
+            const feedback = audioCtx.createGain(); feedback.gain.value = 0.35;
+            delay.connect(feedback); feedback.connect(delay);
+            masterGain.connect(delay); delay.connect(audioCtx.destination);
+            masterGain.connect(audioCtx.destination);
+            await audioCtx.resume();
+            document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_12px_#0ff]";
+        }
+
+        function triggerStarTone(idx, mag, velocity, isChord = false) {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            const pack = SOUND_PACKS[currentPackIdx];
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filt = audioCtx.createBiquadFilter();
+
+            osc.type = pack.type;
+            const vMod = 1 + (Math.abs(velocity) / 40);
+            osc.frequency.setValueAtTime(pack.bases[idx] * mag * vMod, audioCtx.currentTime);
+            
+            filt.type = 'bandpass';
+            filt.frequency.setValueAtTime(pScale(idx) * vMod, audioCtx.currentTime);
+            filt.Q.value = isChord ? 5 : pack.q;
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(isChord ? 0.2 : 0.45, audioCtx.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + pack.decay);
+
+            osc.connect(filt); filt.connect(gain); gain.connect(masterGain);
+            osc.start(); osc.stop(audioCtx.currentTime + 2.0);
+            createImpactRipple(idx);
+        }
+
+        function pScale(idx) { return [200, 1400, 5000][idx]; }
+
+        function createImpactRipple(idx) {
+            const r = document.createElement('div');
+            r.className = 'impact-ripple';
+            r.style.borderColor = ['#ff4444','#4499ff','#44ff99'][idx];
+            document.getElementById('chassis').appendChild(r);
+            requestAnimationFrame(() => {
+                r.style.transform = 'scale(8)'; r.style.opacity = '0';
+                setTimeout(() => r.remove(), 1200);
+            });
+        }
+
+        // --- KINETIC SIMULATION ---
+        const plates = [
+            { id:0, rot:0, vel:0, friction:0.988, drift:0.012, stars:[], links:[], headRot:0, headSpeed:0.35, isFrozen: false },
+            { id:1, rot:45, vel:0, friction:0.978, drift:-0.045, stars:[], links:[], headRot:0, headSpeed:0.8, isFrozen: false },
+            { id:2, rot:120, vel:0, friction:0.965, drift:0.12, stars:[], links:[], headRot:0, headSpeed:1.45, isFrozen: false }
+        ];
+
+        let activePointers = new Map(), activeTool = 'steer', focalIdx = -1, linkSource = null, frameTime = 0, longPressTimer;
+
+        function populateArchive() {
+            plates.forEach((p, i) => seedBand(i));
+        }
+
+        function seedBand(id) {
+            const p = plates[id]; p.stars = [];
+            const inR = [35, 18, 0][id], outR = [52, 35, 18][id];
+            for(let j=0; j<20; j++) addStar(id, Math.random()*360, inR + Math.random()*(outR-inR), 0.5+Math.random());
+        }
+
+        function addStar(id, ang, r, mag) {
+            const s = { 
+                id: Math.random(), ang, r, mag, triggered: false, 
+                hAng: Math.random()*360, 
+                driftVel: (Math.random() - 0.5) * 0.15,
+                jitter: Math.random() * 15,
+                spectral: ["G2V (Solar)","K5III (Red Giant)","O9V (Blue Dwarf)","M4V (White Dwarf)"][Math.floor(Math.random()*4)],
+                planets: Math.floor(Math.random()*12)
+            };
+            plates[id].stars.push(s);
+            renderLayer(id);
+        }
+
+        function renderLayer(id) {
+            const sG = document.getElementById(`stars-${id}`), wG = document.getElementById(`wires-${id}`);
+            sG.innerHTML = ''; wG.innerHTML = '';
+            const p = plates[id], color = ['#ff4444','#4499ff','#44ff99'][id];
+            p.stars.forEach(s => {
+                s.ang += s.driftVel; // Living drift
+                const jitter = Math.sin(frameTime*0.05 + s.jitter)*0.4;
+                const x = 50+Math.cos(s.ang*Math.PI/180)*(s.r+jitter), y = 50+Math.sin(s.ang*Math.PI/180)*(s.r+jitter);
+                const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+                l.setAttribute("x1",x); l.setAttribute("y1",y); l.setAttribute("x2",x+Math.cos(s.hAng)*3); l.setAttribute("y2",y+Math.sin(s.hAng)*3);
+                l.setAttribute("stroke", color); l.setAttribute("opacity","0.4"); l.setAttribute("stroke-width","0.5"); sG.appendChild(l);
+                const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                c.setAttribute("cx",x); c.setAttribute("cy",y); c.setAttribute("r",0.12+(s.mag*0.35));
+                c.setAttribute("fill","white"); c.setAttribute("opacity",0.5+(s.mag*0.5)); sG.appendChild(c);
+            });
+            p.links.forEach(l => {
+                const s1 = p.stars.find(s=>s.id===l[0]), s2 = p.stars.find(s=>s.id===l[1]);
+                if(!s1 || !s2) return;
+                const wire = document.createElementNS("http://www.w3.org/2000/svg","line");
+                wire.setAttribute("x1", 50+Math.cos(s1.ang*Math.PI/180)*s1.r); wire.setAttribute("y1", 50+Math.sin(s1.ang*Math.PI/180)*s1.r);
+                wire.setAttribute("x2", 50+Math.cos(s2.ang*Math.PI/180)*s2.r); wire.setAttribute("y2", 50+Math.sin(s2.ang*Math.PI/180)*s2.r);
+                wire.setAttribute("stroke", color); wire.setAttribute("class","const-wire"); wG.appendChild(wire);
+            });
+        }
+
+        function mainLoop() {
+            frameTime++;
+            plates.forEach(p => {
+                if (!p.isFrozen) {
+                    p.headRot = (p.headRot + p.headSpeed) % 360;
+                    document.getElementById(`head-${p.id}`).style.transform = `rotate(${p.headRot}deg)`;
+                    
+                    let isHeld = false; activePointers.forEach(ptr => { if(ptr.idx===p.id) isHeld=true; });
+                    if (!isHeld) { p.rot += p.vel; p.vel *= p.friction; p.rot += p.drift; }
+
+                    p.stars.forEach(s => {
+                        let global = (p.rot + s.ang) % 360; if(global<0) global+=360;
+                        if (Math.abs(global - p.headRot) < (1.6+Math.abs(p.vel)) && !s.triggered) {
+                            const linked = p.links.some(l => l.includes(s.id));
+                            triggerStarTone(p.id, s.mag, p.vel, linked);
+                            if(linked) {
+                                p.links.filter(l => l.includes(s.id)).forEach(l => {
+                                    const partner = p.stars.find(st => st.id === (l[0]===s.id?l[1]:l[0]));
+                                    if(partner) triggerStarTone(p.id, partner.mag*0.6, p.vel, false);
+                                });
+                            }
+                            s.triggered = true; if(navigator.vibrate) navigator.vibrate(6);
+                        } else if (Math.abs(global-p.headRot)>12) s.triggered = false;
+                    });
+                }
+                const el = document.getElementById(`plate-${p.id}`);
+                let z = (p.id+1)*60, s = 1;
+                if(focalIdx===p.id) { z+=220; s=1.4; el.classList.add('isolated'); el.classList.remove('receded'); }
+                else if(focalIdx!==-1) { z-=120; s=0.6; el.classList.add('receded'); el.classList.remove('isolated'); }
+                else { el.classList.remove('isolated', 'receded'); }
+                el.style.transform = `translateZ(${z}px) rotate(${p.rot}deg) scale(${s})`;
+                renderLayer(p.id);
+            });
+            requestAnimationFrame(mainLoop);
+        }
+
+        // --- COMMAND AUTHORITY LOGIC ---
+        let cachedC = {x:0, y:0, rad:0};
+        function updateLayout() {
+            const r = document.getElementById('chassis').getBoundingClientRect();
+            cachedC = {x: r.left+r.width/2, y: r.top+r.height/2, rad: r.width/2};
+        }
+
+        function handleDown(e) {
+            if(!audioCtx) return; audioCtx.resume();
+            const x = e.clientX, y = e.clientY, dx = x-cachedC.x, dy = y-cachedC.y;
+            const dist = Math.sqrt(dx*dx+dy*dy) / (cachedC.rad/52);
+            let idx = -1; if(dist>35) idx=0; else if(dist>18) idx=1; else idx=2;
+            
+            activePointers.set(e.pointerId, { idx, lastA: Math.atan2(dy, dx)*(180/Math.PI), startX: x, startY: y, isDrag: false });
+            
+            const beam = document.getElementById('magnetic-beam');
+            beam.style.transform = 'translate(-50%, -50%) scale(1.1)';
+            beam.style.opacity = '1';
+            
+            clearTimeout(longPressTimer);
+            longPressTimer = setTimeout(() => triggerContext(idx, x, y), 600);
+            
+            if(window.innerWidth < 768) document.getElementById('top-hud').classList.add('minimized');
+            if(navigator.vibrate) navigator.vibrate(10);
+        }
+
+        function handleMove(e) {
+            const ptr = activePointers.get(e.pointerId);
+            const dx = e.clientX-cachedC.x, dy = e.clientY-cachedC.y;
+
+            if(!ptr) {
+                document.getElementById('chassis').style.transform = `translate(-50%, -50%) rotateX(${dy/60}deg) rotateY(${-dx/60}deg)`;
+                return;
+            }
+
+            if(Math.abs(e.clientX - ptr.startX) > 15 || Math.abs(e.clientY - ptr.startY) > 15) {
+                ptr.isDrag = true; clearTimeout(longPressTimer);
+            }
+
+            if(activeTool==='steer' && !plates[ptr.idx].isFrozen) {
+                const curA = Math.atan2(dy, dx)*(180/Math.PI);
+                let delta = curA - ptr.lastA; if(delta>180) delta-=360; if(delta<-180) delta+=360;
+                plates[ptr.idx].rot += delta; plates[ptr.idx].vel = delta; ptr.lastA = curA;
+            }
+
+            const beam = document.getElementById('magnetic-beam');
+            beam.style.left = e.clientX+'px'; beam.style.top = e.clientY+'px';
+            
+            // MAGNETIC LOCK PREDICTION
+            const clickA = (Math.atan2(dy,dx)*(180/Math.PI)) - plates[ptr.idx].rot;
+            let nearest = null, minDist = 25;
+            plates[ptr.idx].stars.forEach(s => {
+                let d = Math.abs((s.ang%360)-(clickA%360)); if(d>180) d=360-d;
+                if(d < minDist) { minDist = d; nearest = s; }
+            });
+            document.getElementById('val-lock').innerText = nearest ? "LOCK_ON" : "IDLE";
+        }
+
+        function handleUp(e) {
+            const ptr = activePointers.get(e.pointerId);
+            clearTimeout(longPressTimer);
+            if(ptr && !ptr.isDrag) {
+                const dx = e.clientX-cachedC.x, dy = e.clientY-cachedC.y;
+                const r = Math.sqrt(dx*dx+dy*dy)/(cachedC.rad/50), clickA = (Math.atan2(dy,dx)*(180/Math.PI)) - plates[ptr.idx].rot;
+                
+                // MAGNETIC PRECISION
+                let nearest = null, minDist = 30; 
+                plates[ptr.idx].stars.forEach(s => {
+                    let d = Math.abs((s.ang%360)-(clickA%360)); if(d>180) d=360-d;
+                    if(d < minDist) { minDist = d; nearest = s; }
+                });
+
+                if(activeTool==='ink') addStar(ptr.idx, clickA, r, 1.2);
+                else if(activeTool==='steer' && nearest) showStarHud(nearest);
+                else if(activeTool==='link' && nearest) {
+                    if(!linkSource) linkSource = {id:nearest.id, idx:ptr.idx};
+                    else if(linkSource.idx===ptr.idx && linkSource.id!==nearest.id) {
+                        plates[ptr.idx].links.push([linkSource.id, nearest.id]);
+                        linkSource=null; renderLayer(ptr.idx); if(navigator.vibrate) navigator.vibrate(25);
+                    } else linkSource=null;
+                }
+            }
+            document.getElementById('magnetic-beam').style.transform = 'translate(-50%, -50%) scale(0)';
+            activePointers.delete(e.pointerId);
+        }
+
+        function triggerContext(idx, x, y) {
+            const menu = document.getElementById('ctx-menu');
+            contextIdx = idx; menu.style.display = 'flex'; menu.style.left = x+'px'; menu.style.top = y+'px';
+            if(navigator.vibrate) navigator.vibrate([15, 30]);
+        }
+
+        document.getElementById('ctx-freeze').onclick = () => { plates[contextIdx].isFrozen = !plates[contextIdx].isFrozen; closeCtx(); };
+        document.getElementById('ctx-clear').onclick = () => { plates[contextIdx].stars = []; plates[contextIdx].links = []; renderLayer(contextIdx); closeCtx(); };
+        document.getElementById('ctx-seed').onclick = () => { seedBand(contextIdx); closeCtx(); };
+        document.getElementById('ctx-close').onclick = closeCtx;
+        function closeCtx() { document.getElementById('ctx-menu').style.display = 'none'; }
+
+        function showStarHud(s) {
+            const h = document.getElementById('star-hud');
+            document.getElementById('hud-content').innerHTML = `MAGNITUDE: +${s.mag.toFixed(2)}<br>SPECTRAL: ${s.spectral}<br>PLANETS: ${s.planets}<br>DRIFT: ${s.driftVel.toFixed(4)}`;
+            h.style.opacity = 1; setTimeout(()=>h.style.opacity=0, 5000);
+            triggerStarTone(2, s.mag, 60, true);
+        }
+
+        function toggleHud() { document.getElementById('top-hud').classList.toggle('minimized'); }
+        function setTool(t) { activeTool = t; document.querySelectorAll('.tool-btn').forEach(b=>b.classList.toggle('active', b.id.includes(t))); linkSource=null; document.getElementById('val-mode').innerText = t.toUpperCase(); }
+        function toggleZoom() { if(focalIdx===-1) focalIdx=0; else if(focalIdx===2) focalIdx=-1; else focalIdx++; }
+        function setPack(i) { currentPackIdx=i; document.querySelectorAll('.pack-btn').forEach((b,idx)=>b.classList.toggle('active',idx===i)); }
+        function resetSurvey() { plates.forEach(p=>{p.rot=0; p.vel=0; p.isFrozen=false; seedBand(p.id);}); focalIdx=-1; }
+
+        document.getElementById('boot-shield').onclick = async (e) => {
+            await initAudio(); updateLayout(); e.currentTarget.style.display='none';
+            populateArchive(); mainLoop();
+        };
+
+        window.addEventListener('pointerdown', handleDown);
+        window.addEventListener('pointermove', handleMove);
+        window.addEventListener('pointerup', handleUp);
+        window.addEventListener('contextmenu', e => e.preventDefault());
+        window.addEventListener('resize', updateLayout);
+    </script>
+</body>
+</html>
+
