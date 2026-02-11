@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TX-160 MK.IV // PERPETUAL RESONANCE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;800&display=swap');
+        :root {
+            --bg: #010103;
+            --active: #00f2ff;
+            --ghost: #ff0055;
+            --panel-bg: rgba(5, 7, 12, 0.95);
+        }
+        body {
+            margin: 0; background: var(--bg); color: #fff;
+            font-family: 'JetBrains Mono', monospace; overflow: hidden; text-transform: uppercase;
+        }
+        canvas#three-canvas { position: fixed; top: 0; left: 0; z-index: 1; }
+        .hud { position: fixed; z-index: 10; pointer-events: none; }
+        .interactive { pointer-events: auto; }
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            backdrop-filter: blur(20px); padding: 1.25rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        .btn {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem; font-size: 10px; cursor: pointer; transition: 0.3s;
+        }
+        .btn:hover { background: rgba(0, 242, 255, 0.1); border-color: var(--active); }
+        .btn.active { 
+            color: var(--active); border-color: var(--active); 
+            background: rgba(0, 242, 255, 0.05); animation: pulse-glow 2s infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: inset 0 0 5px var(--active); }
+            50% { box-shadow: inset 0 0 20px var(--active); }
+        }
+        #terminal-box {
+            font-size: 9px; color: var(--active); height: 100px;
+            overflow: hidden; display: flex; flex-direction: column-reverse;
+        }
+        input[type=range] { -webkit-appearance: none; background: #222; height: 2px; width: 100%; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 4px; background: var(--active); cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="three-canvas"></canvas>
+
+    <!-- STATUS HUD -->
+    <div class="hud top-8 left-8 flex flex-col gap-4 w-72">
+        <div class="panel">
+            <div class="text-[10px] font-bold text-active mb-2 flex justify-between">
+                <span>SYSTEM_DAEMON</span>
+                <span id="epoch-label">EPOCH_01</span>
+            </div>
+            <div id="terminal-box"></div>
+        </div>
+        
+        <div class="panel flex flex-col gap-2">
+            <div class="flex justify-between text-[10px]"><span>AGENT_FITNESS</span><span id="fit-val">0%</span></div>
+            <div class="h-1 bg-white/5"><div id="fit-bar" class="h-full bg-active transition-all duration-500" style="width: 0%"></div></div>
+            <div class="flex justify-between text-[8px] opacity-40 mt-1">
+                <span>GEN: <span id="gen-count">0</span></span>
+                <span>STATE: <span id="state-label">IDLE</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTROL HUD -->
+    <div class="hud top-8 right-8 w-80 interactive flex flex-col gap-4">
+        <div class="panel flex flex-col gap-4">
+            <div class="text-[10px] font-bold border-b border-white/10 pb-2">ACOUSTIC DNA</div>
+            
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[9px] opacity-60"><span>Vocal Length (cm)</span><span id="vtl-num">17.5</span></div>
+                <input type="range" id="vtl-slider" min="8" max="28" step="0.01" value="17.5">
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[9px] opacity-60"><span>Glottal Flux</span><span id="jit-num">0.2</span></div>
+                <input type="range" id="jit-slider" min="0" max="4" step="0.01" value="0.2">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button id="btn-loop" class="btn">CYCLES: OFF</button>
+                <button id="btn-agent" class="btn">EVOLVE: OFF</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="text-[10px] font-bold border-b border-white/10 pb-2 mb-2">PHONETIC LATTICE</div>
+            <textarea id="phrase-input" class="w-full bg-black/50 border border-white/10 p-3 text-[10px] outline-none h-20 lowercase leading-relaxed" spellcheck="false">the phonetic ghost explores perpetual resonance</textarea>
+        </div>
+    </div>
+
+    <!-- SPECTRAL HUD -->
+    <div class="hud bottom-8 left-8 right-8 flex justify-between items-end">
+        <div class="panel py-2 px-4 flex gap-8">
+            <div class="flex flex-col"><span class="text-[8px] opacity-50">F1_PEAK</span><span id="f1-val" class="text-active font-bold">--</span></div>
+            <div class="flex flex-col"><span class="text-[8px] opacity-50">F2_PEAK</span><span id="f1-val" class="text-active font-bold">--</span></div>
+            <div class="flex flex-col"><span class="text-[8px] opacity-50">CLOCK</span><span id="clock-val" class="font-bold">0:0:0</span></div>
+        </div>
+        <div class="text-right opacity-30 text-[8px] leading-relaxed">
+            TX-160 PERPETUAL_RESONANCE_ENGINE<br>
+            STABLE_BUILD_4.0.1 // UNINTERRUPTED_PROCESS
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TX-160 MK.IV // ARCHITECTURE
+         * - Loop System: Uses Tone.Transport for frame-perfect continuous cycles.
+         * - Evolutionary Agent: A hill-climbing daemon with automatic target drift.
+         */
+
+        let scene, camera, renderer, terrain, geometry;
+        const GRID_SIZE = 64;
+
+        // --- AUDIO STATE ---
+        const synth = {
+            osc: new Tone.Oscillator(120, "sawtooth").start(),
+            noise: new Tone.Noise("white").start(),
+            gain: new Tone.Gain(0).toDestination(),
+            f1: new Tone.Filter(700, "bandpass", -24),
+            f2: new Tone.Filter(1200, "bandpass", -24),
+            reverb: new Tone.Reverb({ decay: 4, wet: 0.4 }).toDestination()
+        };
+
+        synth.osc.fan(synth.f1, synth.f2);
+        synth.noise.connect(new Tone.Gain(0.05)).fan(synth.f1, synth.f2);
+        synth.f1.connect(synth.gain);
+        synth.f2.connect(synth.gain);
+        synth.gain.connect(synth.reverb);
+
+        // --- EVOLUTIONARY DAEMON ---
+        const daemon = {
+            active: false,
+            gen: 0,
+            epoch: 1,
+            fitness: 0,
+            bestFitness: -1,
+            targetVTL: 12.0,
+            targetJit: 1.5,
+            vtl: 17.5,
+            jit: 0.2,
+            
+            mutate() {
+                if(!this.active) return;
+                this.gen++;
+                
+                // Hill Climbing: Propose mutation
+                const step = 0.15;
+                const trialVTL = this.vtl + (Math.random() - 0.5) * step;
+                const trialJit = this.jit + (Math.random() - 0.5) * step;
+
+                // Calculate distance to current target DNA
+                const score = 1 / (1 + Math.abs(trialVTL - this.targetVTL) + Math.abs(trialJit - this.targetJit));
+
+                if (score > this.bestFitness) {
+                    this.bestFitness = score;
+                    this.vtl = trialVTL;
+                    this.jit = trialJit;
+                    
+                    // Update Physical UI
+                    document.getElementById('vtl-slider').value = this.vtl;
+                    document.getElementById('jit-slider').value = this.jit;
+                    applyParams();
+                    
+                    if(this.gen % 10 === 0) log(`[EPOCH ${this.epoch}] GEN ${this.gen}: FIT ${(score * 100).toFixed(1)}%`);
+                }
+
+                document.getElementById('fit-val').innerText = (this.bestFitness * 100).toFixed(1) + "%";
+                document.getElementById('fit-bar').style.width = (this.bestFitness * 100) + "%";
+
+                // Automatic Drift: If reached target, set new destination
+                if (this.bestFitness > 0.99) {
+                    this.epoch++;
+                    log(`TARGET ACHIEVED. SHIFTING DNA LATTICE...`);
+                    this.targetVTL = 10 + Math.random() * 15;
+                    this.targetJit = Math.random() * 3;
+                    this.bestFitness = 0;
+                    document.getElementById('epoch-label').innerText = `EPOCH_${this.epoch.toString().padStart(2,'0')}`;
+                }
+            }
+        };
+
+        // --- PHONETIC LOOP ---
+        const PHONEMES = {
+            A: { f1: 700, f2: 1200 }, E: { f1: 400, f2: 2000 }, 
+            I: { f1: 300, f2: 2300 }, O: { f1: 500, f2: 800 }, 
+            U: { f1: 350, f2: 650 },  G: { f1: 200, f2: 500 }
+        };
+
+        let seq = new Tone.Sequence((time, char) => {
+            const p = PHONEMES[char.toUpperCase()] || PHONEMES.A;
+            const vtlScale = 17.5 / parseFloat(document.getElementById('vtl-slider').value);
+            
+            synth.f1.frequency.setTargetAtTime(p.f1 * vtlScale, time, 0.1);
+            synth.f2.frequency.setTargetAtTime(p.f2 * vtlScale, time, 0.1);
+            
+            synth.gain.gain.setTargetAtTime(0.5, time, 0.05);
+            synth.gain.gain.setTargetAtTime(0, time + 0.15, 0.1);
+            
+            // Subtle pitch modulation
+            synth.osc.frequency.setTargetAtTime(110 + (Math.random() * 5), time, 0.1);
+        }, [], "8n");
+
+        // --- 3D ENVIRONMENT ---
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            geometry = new THREE.PlaneBufferGeometry(150, 150, GRID_SIZE - 1, GRID_SIZE - 1);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x00f2ff, wireframe: true, transparent: true, opacity: 0.15,
+                emissive: 0x00f2ff, emissiveIntensity: 0.4
+            });
+
+            terrain = new THREE.Mesh(geometry, material);
+            terrain.rotation.x = -Math.PI / 2.5;
+            scene.add(terrain);
+
+            const light = new THREE.PointLight(0xff0055, 2, 200);
+            light.position.set(0, 30, 50);
+            scene.add(light);
+            camera.position.set(0, 40, 80);
+            camera.lookAt(0,0,0);
+        }
+
+        // --- CORE FUNCTIONS ---
+        function log(msg) {
+            const b = document.getElementById('terminal-box');
+            const d = document.createElement('div');
+            d.innerText = `> ${msg}`;
+            b.prepend(d);
+            if(b.childNodes.length > 8) b.removeChild(b.lastChild);
+        }
+
+        function applyParams() {
+            const vtl = parseFloat(document.getElementById('vtl-slider').value);
+            const jit = parseFloat(document.getElementById('jit-slider').value);
+            document.getElementById('vtl-num').innerText = vtl.toFixed(2);
+            document.getElementById('jit-num').innerText = jit.toFixed(2);
+            daemon.vtl = vtl;
+            daemon.jit = jit;
+        }
+
+        function updatePhrase() {
+            const text = document.getElementById('phrase-input').value.replace(/[^a-zA-Z]/g, '');
+            seq.events = text.split('');
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Run Mutation Loop (Independently of Audio)
+            if(daemon.active) daemon.mutate();
+
+            // Animate Terrain
+            const pos = geometry.attributes.position.array;
+            const time = Date.now() * 0.001;
+            const jit = daemon.jit;
+
+            for (let i = 0; i < pos.length; i += 3) {
+                const x = pos[i];
+                const y = pos[i+1];
+                const dist = Math.sqrt(x*x + y*y);
+                
+                // Peak logic + Jitter Turbulence
+                const peak = Math.exp(-dist * 0.04) * 20 * synth.gain.gain.value;
+                const wave = Math.sin(x * 0.05 + time) * Math.cos(y * 0.05 + time) * (2 + jit);
+                const noise = (Math.random() - 0.5) * jit * 2;
+
+                pos[i+2] = peak + wave + noise;
+            }
+            geometry.attributes.position.needsUpdate = true;
+
+            // Audio Jitter
+            if(synth.gain.gain.value > 0) {
+                synth.osc.detune.value = (Math.random() - 0.5) * jit * 150;
+            }
+
+            // HUD updates
+            document.getElementById('clock-val').innerText = Tone.Transport.position.toString().split('.')[0];
+            document.getElementById('gen-count').innerText = daemon.gen;
+            
+            renderer.render(scene, camera);
+        }
+
+        // --- EVENT HANDLERS ---
+        document.getElementById('btn-loop').onclick = async function() {
+            await Tone.start();
+            if (Tone.Transport.state !== "started") {
+                updatePhrase();
+                Tone.Transport.start();
+                seq.start(0);
+                this.classList.add('active');
+                this.innerText = "CYCLES: ACTIVE";
+                document.getElementById('state-label').innerText = "RESONATING";
+                log("PERPETUAL_LOOP_ENGAGED");
+            } else {
+                Tone.Transport.stop();
+                seq.stop();
+                this.classList.remove('active');
+                this.innerText = "CYCLES: OFF";
+                document.getElementById('state-label').innerText = "HALTED";
+                log("LOOP_TERMINATED");
+            }
+        };
+
+        document.getElementById('btn-agent').onclick = function() {
+            daemon.active = !daemon.active;
+            this.classList.toggle('active', daemon.active);
+            this.innerText = daemon.active ? "EVOLVE: ACTIVE" : "EVOLVE: OFF";
+            if(daemon.active) log("DAEMON_PROCESS_START...");
+        };
+
+        document.getElementById('phrase-input').oninput = updatePhrase;
+        document.getElementById('vtl-slider').oninput = applyParams;
+        document.getElementById('jit-slider').oninput = applyParams;
+
+        window.onload = () => {
+            init3D();
+            animate();
+            log("TX-160 MK.IV ONLINE.");
+            log("WAITING_FOR_USER_SIGNAL...");
+        };
+
+        window.onresize = () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+    </script>
+</body>
+</html>
