@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Liquid Metal // Epistemic Engine</title>
+    <style>
+        :root {
+            --accent: #00ffcc;
+            --bg: #050505;
+            --panel-bg: rgba(10, 10, 10, 0.85);
+            --touch-target: 44px; /* Mobile touch standard */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg);
+            font-family: 'Courier New', Courier, monospace;
+            color: #888;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            touch-action: none;
+        }
+
+        /* --- REDESIGN: Mobile-First Epistemic HUD --- */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            width: 280px;
+            max-width: calc(100vw - 40px);
+            padding: 20px;
+            background: var(--panel-bg);
+            border: 1px solid #222;
+            border-radius: 8px;
+            backdrop-filter: blur(12px);
+            pointer-events: auto;
+            transition: opacity 0.3s;
+        }
+
+        .hud-header {
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            color: #aaa;
+        }
+
+        /* Mobile-friendly sliders */
+        input[type=range] {
+            width: 100%;
+            appearance: none;
+            background: #222;
+            height: 4px; /* Thicker track */
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px; /* Larger touch target */
+            height: 24px;
+            background: var(--accent);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #000;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+        }
+
+        .stats {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #222;
+            font-size: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat-value {
+            color: #eee;
+            font-weight: bold;
+        }
+
+        .mode-toggle {
+            cursor: pointer;
+            color: #444;
+            transition: color 0.2s;
+            padding: 5px;
+            border: 1px solid transparent;
+        }
+
+        .mode-toggle.active {
+            color: var(--accent);
+            border-color: rgba(0, 255, 204, 0.3);
+            border-radius: 4px;
+            background: rgba(0, 255, 204, 0.05);
+        }
+
+        #audio-status {
+            font-size: 9px;
+            color: #444;
+            margin-left: 10px;
+        }
+        #audio-status.active { color: var(--accent); }
+
+        #ui-hint {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            letter-spacing: 1px;
+            z-index: 5;
+            color: #555;
+            pointer-events: none;
+            mix-blend-mode: difference;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        <div class="hud-header">
+            <span>FLUID_OS v2</span>
+            <div>
+                <span id="toggle-audio" class="mode-toggle">AUDIO</span>
+                <span id="toggle-wireframe" class="mode-toggle">WIRE</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Viscosity (Time Delta)</label>
+            <input type="range" id="param-viscosity" min="0.0001" max="0.015" step="0.0001" value="0.002">
+        </div>
+
+        <div class="control-group">
+            <label>Wave Frequency</label>
+            <input type="range" id="param-freq" min="0.1" max="2.0" step="0.05" value="0.4">
+        </div>
+
+        <div class="control-group">
+            <label>Surface Tension</label>
+            <input type="range" id="param-amp" min="0.1" max="1.5" step="0.05" value="0.6">
+        </div>
+
+        <div class="stats">
+            <div>IMPULSE: <span id="stat-impulse" class="stat-value">0.00</span></div>
+            <div>FPS: <span id="stat-fps" class="stat-value">60</span></div>
+        </div>
+    </div>
+
+    <div id="ui-hint">TAP TO RESONATE // DRAG TO ROTATE</div>
+    <div id="canvas-container"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+                "simplex-noise": "https://unpkg.com/simplex-noise@4.0.1/dist/esm/simplex-noise.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        import { createNoise3D } from 'simplex-noise';
+
+        // --- AUDIO ENGINE ---
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.osc = null;
+                this.filter = null;
+                this.gain = null;
+                this.lfo = null;
+                this.lfoGain = null;
+                this.isPlaying = false;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+
+                // Master Gain
+                this.gain = this.ctx.createGain();
+                this.gain.gain.value = 0;
+                this.gain.connect(this.ctx.destination);
+
+                // Lowpass Filter
+                this.filter = this.ctx.createBiquadFilter();
+                this.filter.type = 'lowpass';
+                this.filter.frequency.value = 100;
+                this.filter.Q.value = 1;
+                this.filter.connect(this.gain);
+
+                // Main Oscillator (Drone)
+                this.osc = this.ctx.createOscillator();
+                this.osc.type = 'sawtooth';
+                this.osc.frequency.value = 50; // Low drone
+                this.osc.connect(this.filter);
+
+                // LFO for organic movement
+                this.lfo = this.ctx.createOscillator();
+                this.lfo.frequency.value = 0.1;
+                this.lfoGain = this.ctx.createGain();
+                this.lfoGain.gain.value = 50;
+                this.lfo.connect(this.lfoGain);
+                this.lfoGain.connect(this.filter.frequency);
+
+                this.osc.start();
+                this.lfo.start();
+                this.isPlaying = true;
+
+                // Fade in
+                this.gain.gain.setTargetAtTime(0.15, this.ctx.currentTime, 2);
+            }
+
+            update(impulse, viscosity) {
+                if (!this.ctx) return;
+
+                // Pitch modulation based on impulse
+                const targetFreq = 50 + (impulse * 100);
+                this.osc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
+
+                // Filter opens up on impulse
+                const targetFilter = 100 + (impulse * 2000) + (viscosity * 5000);
+                this.filter.frequency.setTargetAtTime(targetFilter, this.ctx.currentTime, 0.1);
+            }
+
+            toggle() {
+                if (!this.ctx) {
+                    this.init();
+                    return true;
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                    return true;
+                } else {
+                    this.ctx.suspend();
+                    return false;
+                }
+            }
+        }
+
+        const audio = new AudioEngine();
+
+
+        // --- STATE & CONFIG ---
+        const state = {
+            viscosity: 0.002,
+            noiseFrequency: 0.4,
+            noiseStrength: 0.6,
+            rippleImpulse: 0,
+            isWireframe: false,
+            blobSize: 1.8,
+            audioEnabled: false
+        };
+
+        const RIPPLE_DECAY = 0.95;
+        const MAX_IMPULSE = 0.8;
+
+        // --- SCENE SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 6);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap at 2x for mobile perf
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        container.appendChild(renderer.domElement);
+
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+        controls.enablePan = false;
+
+        // --- OBJECTS ---
+        // Optimization: Use SphereGeometry instead of Icosahedron for better mobile vertex density control
+        // 96x96 is dense enough for smooth noise but lighter than high-detail Icosahedron
+        const geometry = new THREE.SphereGeometry(state.blobSize, 96, 96); 
+        geometry.userData.originalPositions = geometry.attributes.position.clone();
+
+        const material = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            metalness: 1.0,
+            roughness: 0.0,
+            clearcoat: 1.0,
+            ior: 1.5,
+            envMapIntensity: 1.0
+        });
+
+        const blob = new THREE.Mesh(geometry, material);
+        scene.add(blob);
+
+        const noise3D = createNoise3D();
+        let time = 0;
+
+        // --- UI INTERACTION ---
+        const hudInputs = {
+            viscosity: document.getElementById('param-viscosity'),
+            freq: document.getElementById('param-freq'),
+            amp: document.getElementById('param-amp'),
+            wireframe: document.getElementById('toggle-wireframe'),
+            audio: document.getElementById('toggle-audio'),
+            statImpulse: document.getElementById('stat-impulse'),
+            statFps: document.getElementById('stat-fps')
+        };
+
+        hudInputs.viscosity.oninput = (e) => state.viscosity = parseFloat(e.target.value);
+        hudInputs.freq.oninput = (e) => state.noiseFrequency = parseFloat(e.target.value);
+        hudInputs.amp.oninput = (e) => state.noiseStrength = parseFloat(e.target.value);
+        
+        hudInputs.wireframe.onclick = () => {
+            state.isWireframe = !state.isWireframe;
+            material.wireframe = state.isWireframe;
+            hudInputs.wireframe.classList.toggle('active', state.isWireframe);
+        };
+
+        hudInputs.audio.onclick = () => {
+            const isActive = audio.toggle();
+            state.audioEnabled = isActive;
+            hudInputs.audio.classList.toggle('active', isActive);
+        };
+
+        // Raycasting for "Direct Manipulation"
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+
+        function handleInteraction(clientX, clientY) {
+            pointer.x = (clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(pointer, camera);
+            
+            if (raycaster.intersectObject(blob).length > 0) {
+                state.rippleImpulse = MAX_IMPULSE;
+                
+                // Enhanced Haptics
+                if (navigator.vibrate) {
+                    // Pattern: Sharp tap followed by decaying rumbles
+                    navigator.vibrate([15, 10, 10]); 
+                }
+
+                // Auto-start audio if first touch and user hasn't explicitly toggled
+                if (!audio.ctx) {
+                   audio.init();
+                   state.audioEnabled = true;
+                   hudInputs.audio.classList.add('active');
+                }
+            }
+        }
+
+        window.addEventListener('pointerdown', (e) => {
+            handleInteraction(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- ANIMATION ---
+        let lastTime = 0;
+        function animate(now) {
+            requestAnimationFrame(animate);
+            
+            const delta = now - lastTime;
+            lastTime = now;
+            
+            // FPS Limiter for stats (update every ~500ms)
+            if (now % 20 < 1) hudInputs.statFps.innerText = Math.round(1000/delta);
+
+            time += state.viscosity;
+            state.rippleImpulse *= RIPPLE_DECAY;
+            
+            // Update stats visual
+            if (state.rippleImpulse > 0.01) {
+                 hudInputs.statImpulse.innerText = state.rippleImpulse.toFixed(2);
+            } else {
+                 hudInputs.statImpulse.innerText = "0.00";
+            }
+
+            // Update Audio Engine
+            audio.update(state.rippleImpulse, state.viscosity);
+
+            // --- Vertex Manipulation ---
+            const positions = geometry.attributes.position;
+            const originals = geometry.userData.originalPositions;
+            const count = positions.count;
+
+            const freq = state.noiseFrequency + (state.rippleImpulse * 0.4);
+            const amp = state.noiseStrength + (state.rippleImpulse * 0.5);
+
+            // Reuse vectors to prevent garbage collection
+            const v = new THREE.Vector3();
+
+            for (let i = 0; i < count; i++) {
+                const ox = originals.getX(i);
+                const oy = originals.getY(i);
+                const oz = originals.getZ(i);
+
+                const noise = noise3D(ox * freq + time, oy * freq + time, oz * freq + time);
+                
+                v.set(ox, oy, oz);
+                v.normalize().multiplyScalar(state.blobSize + (noise * amp));
+
+                positions.setXYZ(i, v.x, v.y, v.z);
+            }
+
+            positions.needsUpdate = true;
+            geometry.computeVertexNormals();
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate(0);
+    </script>
+</body>
+</html>
