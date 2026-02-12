@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>XR Spatial Sequencer v2</title>
+    <style>
+        :root {
+            --c-drums: #FFC107;
+            --c-bass: #FF5722;
+            --c-synth: #E91E63;
+            --c-fx: #CDDC39;
+            --c-bg: #e0e0e0;
+            --c-text: #222;
+            --font-stack: 'Courier New', Courier, monospace;
+            --hud-bg: rgba(240, 240, 240, 0.85);
+            --hud-border: #999;
+        }
+
+        /* Dark Mode / Mood overrides applied via JS to body */
+        body.mood-neon {
+            --c-bg: #050508;
+            --c-text: #0ff;
+            --hud-bg: rgba(10, 10, 15, 0.85);
+            --hud-border: #0ff;
+        }
+        body.mood-abyss {
+            --c-bg: #020a14;
+            --c-text: #88ccff;
+            --hud-bg: rgba(5, 15, 25, 0.85);
+            --hud-border: #4488aa;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--c-bg);
+            font-family: var(--font-stack);
+            color: var(--c-text);
+            font-size: 12px;
+            font-weight: bold;
+            transition: background-color 0.5s, color 0.5s;
+        }
+
+        /* Scanline Overlay */
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 10;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 4px, 6px 100%;
+            opacity: 0.8;
+            mix-blend-mode: overlay;
+        }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 20; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 10px;
+        }
+
+        .hud-panel {
+            pointer-events: auto;
+            background: var(--hud-bg);
+            border: 1px solid var(--hud-border);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            padding: 8px; border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 8px;
+            transition: all 0.5s;
+        }
+
+        .row { display: flex; align-items: center; gap: 8px; }
+        .btn {
+            background: transparent;
+            border: 1px solid var(--hud-border);
+            color: var(--c-text);
+            padding: 6px 10px; font-family: var(--font-stack);
+            text-transform: uppercase; font-weight: bold; font-size: 12px;
+            cursor: pointer; border-radius: 2px; min-width: 45px; text-align: center;
+            transition: all 0.2s;
+        }
+        .btn:active { background: var(--c-text); color: var(--c-bg); }
+        .btn.active { background: var(--c-text); color: var(--c-bg); }
+
+        #top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
+        #status-display { display: flex; flex-direction: column; gap: 4px; font-size: 10px; letter-spacing: 1px; }
+        .stat-line { border-left: 2px solid var(--hud-border); padding-left: 6px; }
+        .stat-val { font-size: 14px; }
+
+        #reticle {
+            position: absolute; top: 50%; left: 50%; width: 40px; height: 40px;
+            transform: translate(-50%, -50%); pointer-events: none;
+            border: 1px dashed var(--hud-border); border-radius: 50%; opacity: 0.5;
+            transition: all 0.3s;
+        }
+        #reticle.snapped { border: 2px solid var(--c-drums); transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        #reticle::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 4px; height: 4px; background: var(--hud-border);
+            transform: translate(-50%, -50%);
+        }
+
+        #bottom-controls { display: flex; flex-direction: column; gap: 15px; padding-bottom: 25px; }
+
+        #instrument-selector { display: flex; justify-content: center; gap: 12px; pointer-events: auto; }
+        .inst-btn { width: 45px; height: 45px; border-radius: 8px; border: 2px solid rgba(0,0,0,0.5); position: relative; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: inset 0 2px 5px rgba(255,255,255,0.3); }
+        .inst-btn.selected { border: 2px solid #fff; transform: scale(1.15) translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.5); }
+        .inst-btn[data-type="drums"] { background: var(--c-drums); }
+        .inst-btn[data-type="bass"] { background: var(--c-bass); }
+        .inst-btn[data-type="synth"] { background: var(--c-synth); }
+        .inst-btn[data-type="fx"] { background: var(--c-fx); }
+
+        #action-bar { display: flex; justify-content: center; align-items: center; gap: 20px; pointer-events: auto; }
+        
+        .layer-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--hud-bg);
+            border: 1px solid var(--hud-border); color: var(--c-text);
+            font-size: 16px; font-weight: bold; display: flex; justify-content: center; align-items: center;
+        }
+        .layer-btn:active { transform: scale(0.9); }
+
+        #btn-place {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: var(--c-text); color: var(--c-bg); border: 4px solid var(--hud-border);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5); font-size: 16px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; transition: transform 0.1s;
+        }
+        #btn-place:active { transform: scale(0.92); }
+
+        #state-panel {
+            display: none; position: absolute; bottom: 140px; left: 10px; right: 10px;
+            background: rgba(0,0,0,0.9); color: #0f0; font-family: monospace;
+            padding: 10px; height: 150px; overflow-y: auto; font-size: 10px; pointer-events: auto; border: 1px solid #0f0;
+        }
+        #state-panel.visible { display: block; }
+        
+        #context-menu {
+            display: none; position: absolute; flex-direction: column; gap: 5px; z-index: 100;
+        }
+        #context-menu.visible { display: flex; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="overlay"></div>
+    <div id="reticle"></div>
+
+    <div id="ui-layer">
+        <div id="top-bar">
+            <div class="hud-panel" id="status-display">
+                <div class="stat-line">OP: <span class="stat-val">SPATIAL SEQ</span></div>
+                <div class="stat-line">DAY: <span class="stat-val" id="disp-day">--</span></div>
+                <div class="stat-line">LAYER: <span class="stat-val" id="disp-layer">0</span></div>
+            </div>
+            <div class="hud-panel row" style="flex-wrap: wrap; justify-content: flex-end; max-width: 180px;">
+                <button class="btn" id="btn-mood">LAB</button>
+                <button class="btn" id="btn-play">PLAY</button>
+                <button class="btn" id="btn-json">DAT</button>
+            </div>
+        </div>
+
+        <pre id="state-panel"></pre>
+
+        <div id="context-menu" class="hud-panel">
+            <button class="btn" id="ctx-del">DEL</button>
+            <button class="btn" id="ctx-dup">DUP</button>
+        </div>
+
+        <div id="bottom-controls">
+            <div id="instrument-selector">
+                <div class="inst-btn selected" data-type="drums"></div>
+                <div class="inst-btn" data-type="bass"></div>
+                <div class="inst-btn" data-type="synth"></div>
+                <div class="inst-btn" data-type="fx"></div>
+            </div>
+
+            <div id="action-bar">
+                <div class="layer-btn" id="btn-layer-dn">▼</div>
+                <div id="btn-place">PLACE</div>
+                <div class="layer-btn" id="btn-layer-up">▲</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { XRButton } from 'three/addons/webxr/XRButton.js';
+
+        // --- CONFIG ---
+        const DATES = [23, 24, 27, 30, 33, 34];
+        const COLORS = { drums: 0xFFC107, bass: 0xFF5722, synth: 0xE91E63, fx: 0xCDDC39 };
+        const MOODS = ['LAB', 'NEON', 'ABYSS'];
+        
+        const state = {
+            blocks: [],
+            isPlaying: false, playheadX: 0,
+            selectedInst: 'drums', selectedBlockId: null,
+            nextId: 1, cursorDay: null,
+            manualLayerOffset: 0, moodIdx: 0
+        };
+
+        // --- THREE.JS SETUP ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 8, 16);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(XRButton.createButton(renderer));
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.1;
+
+        // Lighting
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+        scene.add(hemiLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // Environment
+        const gridHelper = new THREE.GridHelper(60, 60, 0x888888, 0xcccccc);
+        gridHelper.position.y = -0.01;
+        scene.add(gridHelper);
+
+        // Particle Dust (for Abyss mood)
+        const dustGeo = new THREE.BufferGeometry();
+        const dustPos = [];
+        for(let i=0; i<300; i++) dustPos.push((Math.random()-0.5)*40, Math.random()*15, (Math.random()-0.5)*40);
+        dustGeo.setAttribute('position', new THREE.Float32BufferAttribute(dustPos, 3));
+        const dustMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1, transparent: true, opacity: 0 });
+        const dust = new THREE.Points(dustGeo, dustMat);
+        scene.add(dust);
+
+        // --- TEXTURES & GEOMETRY ---
+        const blockGeometry = new THREE.BoxGeometry(2.8, 1.0, 1.5);
+
+        function createTextTexture(text, colorHex, subtext = "", isNeon = false) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = colorHex;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (isNeon) {
+                ctx.fillStyle = '#050508'; ctx.fillRect(4, 4, canvas.width-8, canvas.height-8);
+                ctx.shadowColor = colorHex; ctx.shadowBlur = 15;
+                ctx.fillStyle = colorHex;
+            } else {
+                ctx.strokeStyle = "rgba(0,0,0,0.1)"; ctx.lineWidth = 2;
+                for(let i=0; i<canvas.width; i+=64) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
+                ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 10; ctx.strokeRect(0,0, canvas.width, canvas.height);
+                ctx.fillStyle = '#111';
+            }
+
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.font = 'bold 80px Courier New, monospace';
+            ctx.fillText(text.toUpperCase(), canvas.width/2, canvas.height/2 - 20);
+            ctx.font = '30px Courier New, monospace';
+            ctx.fillText(subtext || "MOD-01", canvas.width/2, canvas.height/2 + 50);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // --- TIMELINE RAIL ---
+        const railGroup = new THREE.Group();
+        const datePositions = {};
+        DATES.forEach((date, i) => {
+            const xPos = (i - DATES.length/2) * 5;
+            datePositions[date] = xPos;
+
+            const c = document.createElement('canvas'); c.width=256; c.height=256;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = 'rgba(100,100,100,0.2)'; ctx.font = 'bold 120px monospace';
+            ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(date, 128, 128);
+            
+            const mat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true });
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(4,4).rotateX(-Math.PI/2), mat);
+            mesh.position.set(xPos, 0.02, 0);
+            railGroup.add(mesh);
+
+            const hitMesh = new THREE.Mesh(new THREE.BoxGeometry(4, 15, 4), new THREE.MeshBasicMaterial({ visible: false }));
+            hitMesh.position.set(xPos, 7.5, 0);
+            hitMesh.userData = { isDaySlot: true, day: date, x: xPos };
+            railGroup.add(hitMesh);
+        });
+        scene.add(railGroup);
+
+        const scanner = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 10, 8),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1, wireframe: true, blending: THREE.AdditiveBlending })
+        );
+        scene.add(scanner);
+
+        // --- MYSTICAL GHOST (HOLOGRAPHIC TARGETING) ---
+        const ghostGroup = new THREE.Group();
+        ghostGroup.visible = false;
+        scene.add(ghostGroup);
+
+        const gOuterMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.6 });
+        const gInnerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+        const gOuter = new THREE.Mesh(blockGeometry, gOuterMat);
+        const gInner = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.8, 1.3), gInnerMat);
+        ghostGroup.add(gOuter); ghostGroup.add(gInner);
+
+        // Targeting Beam
+        const beamGeo = new THREE.CylinderGeometry(1.2, 1.2, 20, 16);
+        beamGeo.translate(0, -10, 0); // Origin at top
+        const beamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false });
+        const beam = new THREE.Mesh(beamGeo, beamMat);
+        ghostGroup.add(beam);
+
+        // --- BLOCK SYSTEM ---
+        function createBlockMesh(data) {
+            const hex = COLORS[data.type] || 0xcccccc;
+            const isNeon = MOODS[state.moodIdx] === 'NEON';
+            
+            const labelTex = createTextTexture(data.type, '#' + new THREE.Color(hex).getHexString(), data.label, isNeon);
+            
+            const solidMat = new THREE.MeshStandardMaterial({ 
+                color: hex, roughness: 0.7, 
+                emissive: isNeon ? hex : 0x000000, emissiveIntensity: isNeon ? 0.5 : 0
+            });
+            const faceMat = new THREE.MeshStandardMaterial({ 
+                map: labelTex, roughness: 0.8,
+                emissive: isNeon ? hex : 0x000000, emissiveIntensity: isNeon ? 0.8 : 0
+            });
+
+            const materials = [solidMat, solidMat, solidMat, solidMat, faceMat, solidMat];
+            const mesh = new THREE.Mesh(blockGeometry, materials);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+            mesh.userData = { isBlock: true, id: data.id, baseHex: hex };
+            
+            mesh.position.set(datePositions[data.day], 0.5 + (data.layer * 1.1), 0);
+            return mesh;
+        }
+
+        // --- MOOD SYSTEM ---
+        function applyMood() {
+            const m = MOODS[state.moodIdx];
+            document.body.className = `mood-${m.toLowerCase()}`;
+            document.getElementById('btn-mood').innerText = m;
+
+            if (m === 'LAB') {
+                scene.background = new THREE.Color(0xe0e0e0);
+                scene.fog = new THREE.FogExp2(0xe0e0e0, 0.02);
+                hemiLight.intensity = 0.8; dirLight.intensity = 0.8;
+                gridHelper.material.color.setHex(0x888888);
+                dustMat.opacity = 0;
+            } else if (m === 'NEON') {
+                scene.background = new THREE.Color(0x050508);
+                scene.fog = new THREE.FogExp2(0x050508, 0.04);
+                hemiLight.intensity = 0.1; dirLight.intensity = 1.2;
+                gridHelper.material.color.setHex(0x00aaaa);
+                dustMat.opacity = 0;
+            } else if (m === 'ABYSS') {
+                scene.background = new THREE.Color(0x020a14);
+                scene.fog = new THREE.FogExp2(0x020a14, 0.06);
+                hemiLight.intensity = 0.3; dirLight.intensity = 0.2;
+                gridHelper.material.color.setHex(0x224466);
+                dustMat.opacity = 0.5;
+            }
+
+            // Re-render blocks for texture/emissive changes
+            const existingBlocks = scene.children.filter(c => c.userData.isBlock);
+            existingBlocks.forEach(mesh => {
+                const bData = state.blocks.find(b => b.id === mesh.userData.id);
+                const newMesh = createBlockMesh(bData);
+                scene.remove(mesh); scene.add(newMesh);
+            });
+        }
+
+        // --- AUDIO ENGINE ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+
+            if (type === 'drums') {
+                osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.3);
+                gain.gain.setValueAtTime(1, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+                osc.start(t); osc.stop(t + 0.3);
+            } else if (type === 'bass') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(55, t);
+                gain.gain.setValueAtTime(0.5, t); gain.gain.linearRampToValueAtTime(0, t + 0.3);
+                osc.start(t); osc.stop(t + 0.3);
+            } else if (type === 'synth') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(330, t); osc.frequency.linearRampToValueAtTime(660, t + 0.1);
+                gain.gain.setValueAtTime(0.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                osc.start(t); osc.stop(t + 0.2);
+            } else if (type === 'fx') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1800, t);
+                gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                osc.start(t); osc.stop(t + 0.5);
+            }
+        }
+
+        // --- LOGIC / LOOP ---
+        const raycaster = new THREE.Raycaster();
+        const clock = new THREE.Clock();
+
+        function render() {
+            const dt = clock.getDelta();
+            const time = clock.getElapsedTime();
+            controls.update();
+
+            // Ghost & Reticle Logic
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            const hits = raycaster.intersectObjects(railGroup.children);
+            const reticle = document.getElementById('reticle');
+
+            if (hits.length > 0 && hits[0].object.userData.isDaySlot) {
+                const day = hits[0].object.userData.day;
+                const xPos = hits[0].object.userData.x;
+                
+                state.cursorDay = day;
+                const baseLayer = state.blocks.filter(b => b.day === day).length;
+                const targetLayer = Math.max(0, baseLayer + state.manualLayerOffset);
+                
+                ghostGroup.position.set(xPos, 0.5 + (targetLayer * 1.1), 0);
+                ghostGroup.visible = true;
+
+                // Mystical Animation
+                gOuter.scale.setScalar(1 + Math.sin(time * 6) * 0.03);
+                gOuter.rotation.y = Math.sin(time * 2) * 0.1;
+                ghostGroup.position.y += Math.sin(time * 4) * 0.05; // Hover
+
+                // Color sync
+                const hex = COLORS[state.selectedInst];
+                gOuterMat.color.setHex(hex);
+                gInnerMat.color.setHex(hex);
+                beamMat.color.setHex(hex);
+
+                document.getElementById('disp-day').innerText = day;
+                document.getElementById('disp-layer').innerText = targetLayer;
+                reticle.classList.add('snapped');
+                reticle.style.borderColor = '#' + new THREE.Color(hex).getHexString();
+            } else {
+                state.cursorDay = null;
+                ghostGroup.visible = false;
+                document.getElementById('disp-day').innerText = "--";
+                reticle.classList.remove('snapped');
+                reticle.style.borderColor = 'var(--hud-border)';
+            }
+
+            // Abyss Dust Animation
+            if (MOODS[state.moodIdx] === 'ABYSS') {
+                dust.rotation.y += dt * 0.05;
+                const positions = dustGeo.attributes.position.array;
+                for(let i=1; i<positions.length; i+=3) {
+                    positions[i] -= dt * 0.5;
+                    if(positions[i] < 0) positions[i] = 15;
+                }
+                dustGeo.attributes.position.needsUpdate = true;
+            }
+
+            // Sequencer Playback
+            if (state.isPlaying) {
+                const duration = 6; 
+                const progress = (time % duration) / duration;
+                state.playheadX = -15 + (progress * 30);
+                scanner.position.x = state.playheadX;
+
+                state.blocks.forEach(block => {
+                    const blockX = datePositions[block.day];
+                    if (Math.abs(state.playheadX - blockX) < 0.2) {
+                        if (!block.hasTriggered) {
+                            playSound(block.type); block.hasTriggered = true;
+                            // Flash
+                            const m = scene.children.find(c => c.userData.id === block.id);
+                            if(m) {
+                                m.material[4].emissiveIntensity = 2;
+                                setTimeout(() => { if(m) m.material[4].emissiveIntensity = MOODS[state.moodIdx]==='NEON'?0.8:0; }, 150);
+                            }
+                        }
+                    } else if (Math.abs(state.playheadX - blockX) > 1.0) {
+                        block.hasTriggered = false;
+                    }
+                });
+            }
+
+            renderer.render(scene, camera);
+        }
+        renderer.setAnimationLoop(render);
+
+        // --- DOM EVENTS ---
+        document.querySelectorAll('.inst-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.inst-btn').forEach(b => b.classList.remove('selected'));
+                e.target.classList.add('selected');
+                state.selectedInst = e.target.dataset.type;
+            });
+        });
+
+        // Layer Nudging
+        document.getElementById('btn-layer-up').addEventListener('click', () => { state.manualLayerOffset++; });
+        document.getElementById('btn-layer-dn').addEventListener('click', () => { state.manualLayerOffset--; });
+
+        // Mood Toggle
+        document.getElementById('btn-mood').addEventListener('click', () => {
+            state.moodIdx = (state.moodIdx + 1) % MOODS.length;
+            applyMood();
+        });
+
+        // Place
+        document.getElementById('btn-place').addEventListener('click', () => {
+            if (state.cursorDay !== null) {
+                const baseLayer = state.blocks.filter(b => b.day === state.cursorDay).length;
+                const targetLayer = Math.max(0, baseLayer + state.manualLayerOffset);
+                
+                const count = state.blocks.filter(b => b.type === state.selectedInst).length + 1;
+                const newBlock = {
+                    id: state.nextId++, type: state.selectedInst, day: state.cursorDay,
+                    layer: targetLayer, label: `${state.selectedInst} ${count < 10 ? '0'+count : count}`, hasTriggered: false
+                };
+                
+                state.blocks.push(newBlock);
+                scene.add(createBlockMesh(newBlock));
+                
+                state.manualLayerOffset = 0; // Reset offset after placing
+                updateJSON();
+            }
+        });
+
+        // Selection / Deletion
+        renderer.domElement.addEventListener('pointerdown', (e) => {
+            const rect = renderer.domElement.getBoundingClientRect();
+            raycaster.setFromCamera({ x: ((e.clientX - rect.left) / rect.width) * 2 - 1, y: -((e.clientY - rect.top) / rect.height) * 2 + 1 }, camera);
+            
+            const hits = raycaster.intersectObjects(scene.children.filter(c => c.userData.isBlock));
+            if (hits.length > 0) {
+                state.selectedBlockId = hits[0].object.userData.id;
+                const menu = document.getElementById('context-menu');
+                menu.classList.add('visible');
+                menu.style.top = (e.clientY - 60) + 'px'; menu.style.left = e.clientX + 'px';
+            } else {
+                state.selectedBlockId = null;
+                document.getElementById('context-menu').classList.remove('visible');
+            }
+        });
+
+        document.getElementById('ctx-del').addEventListener('click', () => {
+            if (!state.selectedBlockId) return;
+            const idx = state.blocks.findIndex(b => b.id === state.selectedBlockId);
+            if (idx > -1) {
+                const mesh = scene.children.find(m => m.userData.id === state.selectedBlockId);
+                scene.remove(mesh);
+                state.blocks.splice(idx, 1);
+                updateJSON();
+            }
+            document.getElementById('context-menu').classList.remove('visible');
+        });
+
+        // UI Basic
+        document.getElementById('btn-play').addEventListener('click', () => {
+            state.isPlaying = !state.isPlaying;
+            document.getElementById('btn-play').innerText = state.isPlaying ? "PAUSE" : "PLAY";
+            document.getElementById('btn-play').classList.toggle('active');
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        });
+
+        document.getElementById('btn-json').addEventListener('click', () => {
+            document.getElementById('state-panel').classList.toggle('visible');
+        });
+
+        function updateJSON() {
+            document.getElementById('state-panel').innerText = JSON.stringify(
+                state.blocks.map(b => ({id: b.id, type: b.type, day: b.day, layer: b.layer})), null, 2
+            );
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        applyMood(); // Initialize default mood
+    </script>
+</body>
+</html>
