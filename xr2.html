@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>ORBITAL LOOM 3D</title>
+    <style>
+        :root {
+            --c-cyan: #00ffff;
+            --c-magenta: #ff00ff;
+            --c-yellow: #ffff00;
+            --c-white: #e0e0e0;
+            --c-bg: #020202;
+            --font-stack: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            margin: 0; overflow: hidden;
+            background-color: var(--c-bg);
+            font-family: var(--font-stack);
+            color: var(--c-cyan);
+        }
+
+        /* HUD LAYOUT */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .hud-block {
+            pointer-events: auto;
+            background: rgba(0, 5, 10, 0.85);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+            padding: 10px; margin: 10px;
+            border-radius: 4px;
+        }
+
+        /* Top Info */
+        #header {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .title { font-size: 14px; letter-spacing: 2px; font-weight: bold; color: var(--c-white); text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        .sub-stat { font-size: 10px; color: var(--c-cyan); }
+
+        /* Controls */
+        #controls {
+            display: flex; flex-direction: column; align-items: center; gap: 15px; padding-bottom: 30px;
+        }
+
+        /* Instrument Ring Selector */
+        #inst-ring {
+            display: flex; gap: 15px;
+        }
+        .inst-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: bold; color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+        }
+        .inst-btn.active { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
+
+        /* Action Buttons */
+        #actions { display: flex; gap: 20px; align-items: center; }
+        
+        #btn-place {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: transparent;
+            border: 2px dashed var(--c-cyan);
+            color: var(--c-cyan);
+            font-size: 16px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+            animation: pulse 4s infinite;
+        }
+        #btn-place:active { background: var(--c-cyan); color: #000; }
+
+        #btn-play {
+            width: 50px; height: 50px;
+            border: 1px solid var(--c-white);
+            background: transparent; color: var(--c-white);
+            font-family: var(--font-stack);
+            font-size: 10px; cursor: pointer;
+        }
+
+        /* Reticle */
+        #reticle {
+            position: absolute; top: 50%; left: 50%; width: 20px; height: 20px;
+            transform: translate(-50%, -50%);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 50%;
+            pointer-events: none; z-index: 5;
+        }
+        #reticle.active {
+            border-color: var(--c-cyan); border-width: 2px;
+            width: 40px; height: 40px;
+            transition: all 0.2s ease-out;
+        }
+
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        
+        /* Scanlines */
+        #scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;
+            background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);
+            background-size: 100% 4px; opacity: 0.5;
+        }
+    </style>
+    <!-- Three.js Import -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="scanline"></div>
+    <div id="reticle"></div>
+
+    <div id="ui-layer">
+        <div id="header" class="hud-block">
+            <div>
+                <div class="title">ORBITAL LOOM</div>
+                <div class="sub-stat">SYS: ONLINE // <span id="bpm-disp">110</span> BPM</div>
+            </div>
+            <button id="btn-play">INIT_AUDIO</button>
+        </div>
+
+        <div id="controls">
+            <!-- Instrument Selector -->
+            <div id="inst-ring" class="hud-block">
+                <div class="inst-btn active" data-id="0" style="color:var(--c-cyan); border-color:var(--c-cyan)">PAD</div>
+                <div class="inst-btn" data-id="1" style="color:var(--c-magenta); border-color:var(--c-magenta)">ARP</div>
+                <div class="inst-btn" data-id="2" style="color:var(--c-yellow); border-color:var(--c-yellow)">BASS</div>
+                <div class="inst-btn" data-id="3" style="color:#fff; border-color:#fff">KICK</div>
+            </div>
+
+            <div id="actions">
+                <button id="btn-del" class="inst-btn" style="border-radius: 4px; color: #ff4444; border-color: #ff4444;">DEL</button>
+                <div id="btn-place">PLACE</div>
+                <button id="btn-clear" class="inst-btn" style="border-radius: 4px;">CLR</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { XRButton } from 'three/addons/webxr/XRButton.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // --- CONSTANTS ---
+        const STEPS = 16;
+        const TUBE_RADIUS = 4;
+        const STEP_HEIGHT = 1.2;
+        const SECTORS = 4; // 4 instruments around the circle
+        
+        const COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0xffffff]; // Pad, Arp, Bass, Kick
+
+        // --- STATE ---
+        const state = {
+            blocks: [], // { id, step, sector, type, mesh }
+            isPlaying: false,
+            bpm: 110,
+            playheadY: 0,
+            currentStep: 0,
+            selectedInst: 0,
+            hoverStep: null,
+            hoverSector: null,
+            nextId: 1
+        };
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020202);
+        scene.fog = new THREE.FogExp2(0x020202, 0.04);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 8, 14);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false }); // False for retro feel
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(XRButton.createButton(renderer));
+
+        // Post Processing (Bloom)
+        const composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0;
+        bloomPass.strength = 1.2;
+        bloomPass.radius = 0.5;
+        composer.addPass(bloomPass);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 6;
+        controls.maxDistance = 25;
+        controls.target.set(0, (STEPS * STEP_HEIGHT)/2, 0);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+        
+        // --- GEOMETRY: THE LOOM TOWER ---
+        
+        const towerGroup = new THREE.Group();
+        scene.add(towerGroup);
+
+        // 1. Central Core (Wireframe Tube)
+        const coreGeo = new THREE.CylinderGeometry(TUBE_RADIUS - 0.2, TUBE_RADIUS - 0.2, STEPS * STEP_HEIGHT, 16, STEPS, true);
+        const coreMat = new THREE.MeshBasicMaterial({ 
+            color: 0x111111, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.3 
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        coreMesh.position.y = (STEPS * STEP_HEIGHT) / 2 - (STEP_HEIGHT/2);
+        towerGroup.add(coreMesh);
+
+        // 2. Step Indicators (Rings)
+        for(let i=0; i<STEPS; i++) {
+            const ringGeo = new THREE.TorusGeometry(TUBE_RADIUS, 0.02, 4, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI/2;
+            ring.position.y = i * STEP_HEIGHT;
+            towerGroup.add(ring);
+        }
+
+        // 3. Sector Dividers (Vertical Lines)
+        for(let i=0; i<SECTORS; i++) {
+            const angle = (i / SECTORS) * Math.PI * 2;
+            const lineGeo = new THREE.BoxGeometry(0.05, STEPS * STEP_HEIGHT, 0.05);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.1 });
+            const line = new THREE.Mesh(lineGeo, lineMat);
+            line.position.set(Math.cos(angle)*TUBE_RADIUS, (STEPS * STEP_HEIGHT)/2 - (STEP_HEIGHT/2), Math.sin(angle)*TUBE_RADIUS);
+            towerGroup.add(line);
+        }
+
+        // 4. Hit Cylinder (Invisible, for raycasting)
+        const hitGeo = new THREE.CylinderGeometry(TUBE_RADIUS + 0.5, TUBE_RADIUS + 0.5, STEPS * STEP_HEIGHT, 16, 1);
+        const hitMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
+        const hitCylinder = new THREE.Mesh(hitGeo, hitMat);
+        hitCylinder.position.y = (STEPS * STEP_HEIGHT) / 2 - (STEP_HEIGHT/2);
+        hitCylinder.userData = { isHitSurface: true };
+        towerGroup.add(hitCylinder);
+
+        // 5. The Scanner (Playhead)
+        const scanGeo = new THREE.TorusGeometry(TUBE_RADIUS + 1, 0.05, 4, 64);
+        const scanMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+        const scanner = new THREE.Mesh(scanGeo, scanMat);
+        scanner.rotation.x = Math.PI / 2;
+        scene.add(scanner);
+
+        // 6. Ghost Block (Cursor)
+        const ghostGeo = new THREE.BoxGeometry(1.5, 0.8, 0.5);
+        const ghostMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.5 });
+        const ghost = new THREE.Mesh(ghostGeo, ghostMat);
+        scene.add(ghost);
+
+        // Stars
+        const starsGeo = new THREE.BufferGeometry();
+        const starsPos = [];
+        for(let i=0; i<1000; i++) {
+            starsPos.push((Math.random()-0.5)*100, (Math.random()-0.5)*100, (Math.random()-0.5)*100);
+        }
+        starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsPos, 3));
+        const stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({color: 0x555555, size: 0.2}));
+        scene.add(stars);
+
+
+        // --- AUDIO ENGINE (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.4;
+        
+        // Delay Chain (The "Loom" Vibe)
+        const delay = audioCtx.createDelay();
+        delay.delayTime.value = 0.3; // 300ms echo
+        const delayFeedback = audioCtx.createGain();
+        delayFeedback.gain.value = 0.4;
+        const delayFilter = audioCtx.createBiquadFilter();
+        delayFilter.frequency.value = 1000; // Lowpass echoes
+
+        delay.connect(delayFeedback);
+        delayFeedback.connect(delayFilter);
+        delayFilter.connect(delay);
+        delay.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+
+        const SCALE = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88]; // C Major
+
+        function playSound(type, stepIndex) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            // Connect
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            // Note logic based on step height (higher step = higher pitch)
+            const noteIdx = stepIndex % SCALE.length;
+            const freq = SCALE[noteIdx];
+
+            if (type === 0) { // PAD (Cyan) - Long, airy
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, t);
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.3, t + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+                gain.connect(delay); // Send to delay
+                osc.start(t); osc.stop(t + 1.5);
+            }
+            else if (type === 1) { // ARP (Magenta) - Short, plucky
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq * 2, t);
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+                gain.connect(delay);
+                osc.start(t); osc.stop(t + 0.3);
+            }
+            else if (type === 2) { // BASS (Yellow) - Deep
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(freq / 2, t);
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(400, t);
+                filter.frequency.linearRampToValueAtTime(100, t + 0.4);
+                
+                osc.disconnect(); osc.connect(filter); filter.connect(gain);
+                
+                gain.gain.setValueAtTime(0.5, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.4);
+                osc.start(t); osc.stop(t + 0.4);
+            }
+            else if (type === 3) { // KICK (White) - Noise/Thump
+                osc.frequency.setValueAtTime(150, t);
+                osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.5);
+                gain.gain.setValueAtTime(1, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                osc.start(t); osc.stop(t + 0.5);
+            }
+        }
+
+
+        // --- INTERACTION LOGIC ---
+        const raycaster = new THREE.Raycaster();
+
+        // Convert world position on hit cylinder to Step/Sector
+        function getGridPos(point) {
+            // 1. Height -> Step
+            let y = point.y;
+            // Shift y to start at 0
+            // The hit cylinder goes from 0 to MAX_HEIGHT basically (visuals shift slightly)
+            // Clamp
+            if (y < 0) y = 0;
+            const step = Math.floor(y / STEP_HEIGHT);
+            
+            // 2. Angle -> Sector
+            const angle = Math.atan2(point.z, point.x); // -PI to PI
+            let normAngle = angle;
+            if (normAngle < 0) normAngle += Math.PI * 2; // 0 to 2PI
+            
+            // 4 sectors
+            // Sector 0 centered at 0 rads? Let's align visually.
+            // 0 to PI/2, etc.
+            // Rotate by PI/4 to align centers of sectors
+            let shifted = normAngle + (Math.PI / 4);
+            if (shifted > Math.PI*2) shifted -= Math.PI*2;
+            
+            const sector = Math.floor( (shifted / (Math.PI*2)) * SECTORS );
+
+            return { step: Math.min(step, STEPS-1), sector };
+        }
+
+        // Helper to place ghost or block mesh based on grid
+        function alignObjToGrid(obj, step, sector) {
+            const angleStep = (Math.PI * 2) / SECTORS;
+            const angle = sector * angleStep;
+            
+            const r = TUBE_RADIUS;
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            const y = (step * STEP_HEIGHT) + (STEP_HEIGHT/2); // Center of step
+
+            obj.position.set(x, y, z);
+            obj.rotation.y = -angle + Math.PI/2; // Rotate to face outward
+        }
+
+        function createBlock(step, sector, type) {
+            const geo = new THREE.BoxGeometry(1.5, 0.8, 0.5);
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: COLORS[type], 
+                emissive: COLORS[type],
+                emissiveIntensity: 0.5,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            
+            alignObjToGrid(mesh, step, sector);
+            
+            mesh.userData = { isBlock: true, id: state.nextId };
+            towerGroup.add(mesh);
+            
+            state.blocks.push({
+                id: state.nextId++,
+                step, sector, type, mesh
+            });
+        }
+
+        function removeBlock(block) {
+            towerGroup.remove(block.mesh);
+            state.blocks = state.blocks.filter(b => b.id !== block.id);
+        }
+
+
+        // --- ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+
+        function render() {
+            // Update Raycaster for Ghost
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera); // Center of screen (Mobile style)
+            const hits = raycaster.intersectObject(hitCylinder);
+            const reticle = document.getElementById('reticle');
+
+            if (hits.length > 0) {
+                const p = hits[0].point;
+                const grid = getGridPos(p);
+                
+                state.hoverStep = grid.step;
+                state.hoverSector = grid.sector;
+
+                alignObjToGrid(ghost, grid.step, grid.sector);
+                ghost.visible = true;
+
+                // Color ghost by instrument
+                ghost.material.color.setHex(COLORS[state.selectedInst]);
+
+                reticle.classList.add('active');
+                reticle.style.borderColor = '#' + new THREE.Color(COLORS[state.selectedInst]).getHexString();
+            } else {
+                ghost.visible = false;
+                state.hoverStep = null;
+                reticle.classList.remove('active');
+            }
+
+            // Sequencer Logic
+            if (state.isPlaying) {
+                const dt = clock.getDelta();
+                const totalHeight = STEPS * STEP_HEIGHT;
+                const speed = (state.bpm / 60) * STEP_HEIGHT * 4; // Arbitrary speed scaling
+                
+                state.playheadY += speed * dt * 0.1; 
+                if (state.playheadY > totalHeight) state.playheadY = 0;
+
+                scanner.position.y = state.playheadY;
+
+                // Check Triggers
+                // Convert Y to step index
+                const currentScanStep = Math.floor(state.playheadY / STEP_HEIGHT);
+                
+                if (currentScanStep !== state.currentStep) {
+                    // We entered a new step
+                    state.currentStep = currentScanStep;
+                    
+                    // Find blocks on this step
+                    const hits = state.blocks.filter(b => b.step === currentScanStep);
+                    hits.forEach(b => {
+                        playSound(b.type, b.step);
+                        // Visual flash
+                        b.mesh.scale.set(1.2, 1.2, 1.2);
+                    });
+                }
+            }
+            
+            // Animate Blocks (Decay flash)
+            state.blocks.forEach(b => {
+                b.mesh.scale.lerp(new THREE.Vector3(1,1,1), 0.1);
+            });
+
+            // Animate Core
+            coreMesh.rotation.y += 0.002;
+
+            controls.update();
+            composer.render();
+        }
+
+        renderer.setAnimationLoop(render);
+
+
+        // --- DOM EVENTS ---
+        
+        // Instrument Select
+        document.querySelectorAll('.inst-btn[data-id]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.inst-btn[data-id]').forEach(b => b.classList.remove('active'));
+                const t = e.target;
+                t.classList.add('active');
+                state.selectedInst = parseInt(t.dataset.id);
+                
+                // Color UI
+                const hex = '#' + new THREE.Color(COLORS[state.selectedInst]).getHexString();
+                document.getElementById('btn-place').style.color = hex;
+                document.getElementById('btn-place').style.borderColor = hex;
+            });
+        });
+
+        // Place
+        document.getElementById('btn-place').addEventListener('click', () => {
+            if (state.hoverStep !== null) {
+                // Check if block exists
+                const existing = state.blocks.find(b => b.step === state.hoverStep && b.sector === state.hoverSector);
+                if (!existing) {
+                    createBlock(state.hoverStep, state.hoverSector, state.selectedInst);
+                } else {
+                    // Replace type?
+                    removeBlock(existing);
+                    createBlock(state.hoverStep, state.hoverSector, state.selectedInst);
+                }
+            }
+        });
+
+        // Delete
+        document.getElementById('btn-del').addEventListener('click', () => {
+            if (state.hoverStep !== null) {
+                const existing = state.blocks.find(b => b.step === state.hoverStep && b.sector === state.hoverSector);
+                if (existing) removeBlock(existing);
+            }
+        });
+
+        // Clear
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            [...state.blocks].forEach(b => removeBlock(b));
+        });
+
+        // Play/Init
+        document.getElementById('btn-play').addEventListener('click', (e) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            state.isPlaying = !state.isPlaying;
+            e.target.innerText = state.isPlaying ? "STOP" : "PLAY";
+            e.target.style.background = state.isPlaying ? "#fff" : "transparent";
+            e.target.style.color = state.isPlaying ? "#000" : "#fff";
+        });
+
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
