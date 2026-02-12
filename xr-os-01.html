@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>ORBITAL LOOM AR [PRO]</title>
+    <style>
+        :root {
+            --c-cyan: #00ffff;
+            --c-magenta: #ff00ff;
+            --c-yellow: #ffff00;
+            --c-white: #ffffff;
+            --c-bg: #020202;
+            --font-stack: 'Courier New', Courier, monospace;
+            --glass: rgba(10, 10, 10, 0.6);
+            --border: rgba(255, 255, 255, 0.15);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            margin: 0; overflow: hidden;
+            background-color: var(--c-bg);
+            font-family: var(--font-stack);
+            color: var(--c-white);
+        }
+
+        /* --- UI LAYER --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* Top HUD */
+        #top-hud {
+            padding: 20px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            pointer-events: auto;
+        }
+
+        .brand {
+            font-size: 12px; letter-spacing: 3px; font-weight: bold;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            opacity: 0.8;
+        }
+        
+        #bpm-display {
+            font-size: 10px; color: #888; margin-top: 4px;
+        }
+
+        #btn-play-toggle {
+            background: transparent; border: 1px solid var(--c-white);
+            color: var(--c-white); font-family: var(--font-stack);
+            font-size: 10px; padding: 8px 16px; cursor: pointer;
+            backdrop-filter: blur(4px);
+            transition: all 0.3s;
+        }
+        #btn-play-toggle.active {
+            background: var(--c-white); color: #000; box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        /* Toast */
+        #toast-box {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--c-cyan); font-size: 14px; letter-spacing: 2px; font-weight: bold;
+            text-shadow: 0 0 10px var(--c-cyan);
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
+            text-align: center; white-space: nowrap;
+        }
+        #toast-box.show { opacity: 1; }
+
+        /* --- DJ CONSOLE (Bottom) --- */
+        #console-deck {
+            pointer-events: auto;
+            width: 100%;
+            padding-bottom: env(safe-area-inset-bottom);
+            background: linear-gradient(to top, #000 0%, rgba(0,0,0,0.8) 60%, transparent 100%);
+            display: flex; flex-direction: column; gap: 15px;
+            align-items: center;
+        }
+
+        /* Parameter Strip (Mode/Tune) */
+        #param-strip {
+            display: flex; align-items: center; gap: 20px;
+            margin-bottom: 5px;
+        }
+
+        .lcd-screen {
+            background: rgba(0, 20, 20, 0.9);
+            border: 1px solid #333;
+            color: var(--c-cyan);
+            font-family: monospace; font-size: 11px;
+            width: 160px; padding: 8px; text-align: center;
+            white-space: nowrap; overflow: hidden;
+            text-shadow: 0 0 5px var(--c-cyan);
+            border-radius: 2px;
+        }
+
+        .deck-btn {
+            background: transparent; border: none; color: #666;
+            font-size: 18px; font-weight: bold; cursor: pointer;
+            padding: 10px; transition: color 0.2s;
+        }
+        .deck-btn:active { color: #fff; transform: scale(0.9); }
+
+        .mode-tag {
+            font-size: 9px; color: #fff; background: #333; padding: 2px 4px; border-radius: 2px;
+            position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+        }
+
+        /* Action Row */
+        #action-row {
+            display: flex; align-items: center; gap: 40px;
+            width: 100%; justify-content: center;
+        }
+
+        #btn-place {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid var(--c-white);
+            color: var(--c-white);
+            font-size: 12px; font-weight: bold; letter-spacing: 1px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            transition: all 0.1s;
+        }
+        #btn-place:active { transform: scale(0.92); background: rgba(255,255,255,0.2); }
+
+        .side-tool {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            border: 1px solid #444; color: #666;
+            background: rgba(0,0,0,0.5);
+            font-size: 10px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .side-tool.active { border-color: #f44; color: #f44; box-shadow: 0 0 10px #f44; }
+        .side-tool:active { transform: scale(0.9); }
+
+        /* Track Pads */
+        #track-pads {
+            display: flex; width: 100%; height: 70px;
+            border-top: 1px solid #222;
+        }
+
+        .pad {
+            flex: 1;
+            background: rgba(20,20,20,0.8);
+            border: none; border-right: 1px solid #111;
+            color: #444; font-size: 10px; font-weight: bold;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .pad:last-child { border-right: none; }
+        
+        .pad::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+            background: currentColor; opacity: 0; transition: opacity 0.2s;
+        }
+
+        .pad.active {
+            background: linear-gradient(to top, rgba(255,255,255,0.1), transparent);
+            color: #fff;
+            text-shadow: 0 0 10px currentColor;
+        }
+        .pad.active::after { opacity: 1; }
+
+        /* Scanline Overlay */
+        #scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;
+            background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);
+            background-size: 100% 4px; opacity: 0.3;
+        }
+
+        /* Reticle */
+        #reticle {
+            position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
+            transform: translate(-50%, -50%);
+            background: #fff; border-radius: 50%;
+            pointer-events: none; z-index: 5; opacity: 0.5;
+            box-shadow: 0 0 5px #fff;
+            transition: all 0.2s;
+        }
+        #reticle.active {
+            width: 40px; height: 40px; background: transparent;
+            border: 2px solid var(--c-cyan); opacity: 1;
+        }
+
+    </style>
+    <!-- Three.js Import -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="scanline"></div>
+    <div id="reticle"></div>
+
+    <div id="ui-layer">
+        <!-- Top Left / Right -->
+        <div id="top-hud">
+            <div>
+                <div class="brand">ORBITAL LOOM</div>
+                <div id="bpm-display">110 BPM // ONLINE</div>
+            </div>
+            <button id="btn-play-toggle">START AUDIO</button>
+        </div>
+
+        <div id="toast-box">SYSTEM READY</div>
+
+        <!-- The Deck -->
+        <div id="console-deck">
+            
+            <!-- Contextual Controls -->
+            <div id="param-strip">
+                <button class="deck-btn" id="btn-prev">◀</button>
+                <div style="position:relative;">
+                    <div class="lcd-screen" id="track-info">SELECT TRACK</div>
+                    <div class="mode-tag" id="mode-tag">MP3</div>
+                </div>
+                <button class="deck-btn" id="btn-next">▶</button>
+                <button class="deck-btn" id="btn-mode" style="font-size:12px; border:1px solid #444; padding:5px 8px; border-radius:4px; margin-left:10px;">MODE</button>
+            </div>
+
+            <!-- Main Triggers -->
+            <div id="action-row">
+                <button id="btn-del" class="side-tool">DEL</button>
+                <button id="btn-place">PLACE</button>
+                <button id="btn-clear" class="side-tool">CLR</button>
+            </div>
+
+            <!-- Track Selectors -->
+            <div id="track-pads">
+                <div class="pad active" data-id="0" style="color:var(--c-cyan);">TRK 1</div>
+                <div class="pad" data-id="1" style="color:var(--c-magenta);">TRK 2</div>
+                <div class="pad" data-id="2" style="color:var(--c-yellow);">TRK 3</div>
+                <div class="pad" data-id="3" style="color:var(--c-white);">TRK 4</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { XRButton } from 'three/addons/webxr/XRButton.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // --- DATA: STATIONS & MP3s ---
+        const GOLD_STATIONS = [
+            { name: "GROOVE SALAD", url: "https://ice6.somafm.com/groovesalad-256-mp3" },
+            { name: "DRONE ZONE", url: "https://ice6.somafm.com/dronezone-256-mp3" },
+            { name: "DEF CON", url: "https://ice6.somafm.com/defcon-256-mp3" },
+            { name: "SPACE STATION", url: "https://ice6.somafm.com/spacestation-128-mp3" },
+            { name: "SECRET AGENT", url: "https://ice6.somafm.com/secretagent-128-mp3" },
+            { name: "SUBURBS OF GOA", url: "https://ice6.somafm.com/suburbsofgoa-128-mp3" },
+            { name: "MISSION CONTROL", url: "https://ice6.somafm.com/missioncontrol-128-mp3" }
+        ];
+
+        const LOCAL_MP3_CRATE = [
+            { name: "ISTANA", file: "audio/Istana.mp3", bpm: 85 },
+            { name: "HOLY ERROR", file: "audio/Sote - Holy Error.mp3", bpm: 120 },
+            { name: "AGOSTO", file: "audio/Nicolas Jaar - Agosto.mp3", bpm: 95 },
+            { name: "EXCAVATION", file: "audio/Excavation.mp3", bpm: 70 },
+            { name: "TEST PATTERN", file: "audio/test pattern.mp3", bpm: 140 },
+            { name: "AMBIENT 1", file: "audio/ambient1.mp3", bpm: 0 },
+            { name: "GLITCH 002", file: "audio/glitch2.mp3", bpm: 130 }
+        ];
+
+        // --- AUDIO ENGINE CLASS ---
+        class LoomAudio {
+            constructor() {
+                this.ctx = null;
+                this.master = null;
+                this.compressor = null;
+                // 4 Tracks matching the 4 colors
+                this.tracks = [];
+                this.stationList = [...GOLD_STATIONS];
+            }
+
+            async init() {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AC();
+                
+                // Master Chain
+                this.compressor = this.ctx.createDynamicsCompressor();
+                this.compressor.threshold.value = -18;
+                this.master = this.ctx.createGain();
+                this.master.gain.value = 0.8;
+                
+                this.compressor.connect(this.master);
+                this.master.connect(this.ctx.destination);
+
+                // Initialize 4 Tracks
+                const colors = ['#00ffff', '#ff00ff', '#ffff00', '#ffffff'];
+                
+                for(let i=0; i<4; i++) {
+                    const t = {
+                        id: i,
+                        mode: 'MP3', // Default mode
+                        stationIdx: i % GOLD_STATIONS.length,
+                        mp3Idx: i % LOCAL_MP3_CRATE.length,
+                        pitchIdx: 0,
+                        
+                        // Audio Nodes
+                        filter: this.ctx.createBiquadFilter(),
+                        gate: this.ctx.createGain(),
+                        volume: this.ctx.createGain(),
+                        
+                        // Sources
+                        audioEl: new Audio(),
+                        sourceNode: null,
+                        osc: null,
+                        oscGain: null,
+                        
+                        color: colors[i]
+                    };
+
+                    // Chain: Source -> Filter -> Gate -> Volume -> Master
+                    t.filter.connect(t.gate);
+                    t.gate.connect(t.volume);
+                    t.volume.connect(this.compressor);
+
+                    // Defaults
+                    t.filter.type = 'lowpass';
+                    t.filter.frequency.value = 20000;
+                    t.gate.gain.value = 0; // Gated by default
+                    t.volume.gain.value = 0.8;
+                    
+                    t.audioEl.crossOrigin = "anonymous";
+                    t.audioEl.loop = true;
+
+                    this.tracks.push(t);
+                    this.setMode(i, 'MP3'); // Init mode
+                }
+                
+                await this.ctx.resume();
+                console.log("Audio Engine Started");
+            }
+
+            setMode(idx, mode) {
+                const t = this.tracks[idx];
+                const prevMode = t.mode;
+                t.mode = mode;
+
+                // Cleanup Previous
+                if (prevMode === 'RADIO' || prevMode === 'MP3') {
+                    if (t.sourceNode) { t.sourceNode.disconnect(); t.sourceNode = null; }
+                    t.audioEl.pause();
+                } else if (prevMode === 'DRONE') {
+                    if (t.osc) { t.osc.stop(); t.osc.disconnect(); t.osc = null; }
+                }
+
+                // Setup New
+                if (mode === 'RADIO') {
+                    t.sourceNode = this.ctx.createMediaElementSource(t.audioEl);
+                    t.sourceNode.connect(t.filter);
+                    this.tuneRadio(idx, t.stationIdx);
+                } 
+                else if (mode === 'MP3') {
+                    // Re-use audio element logic but switch source
+                    t.sourceNode = this.ctx.createMediaElementSource(t.audioEl);
+                    t.sourceNode.connect(t.filter);
+                    this.tuneMP3(idx, t.mp3Idx);
+                }
+                else if (mode === 'DRONE') {
+                    t.osc = this.ctx.createOscillator();
+                    t.osc.type = idx === 2 ? 'sawtooth' : (idx === 1 ? 'square' : 'triangle');
+                    t.oscGain = this.ctx.createGain();
+                    t.oscGain.gain.value = 0.4;
+                    t.osc.connect(t.oscGain);
+                    t.oscGain.connect(t.filter);
+                    t.osc.start();
+                    this.tuneDrone(idx, t.pitchIdx);
+                }
+            }
+
+            tuneRadio(idx, stIdx) {
+                const t = this.tracks[idx];
+                if (stIdx < 0) stIdx = this.stationList.length - 1;
+                if (stIdx >= this.stationList.length) stIdx = 0;
+                t.stationIdx = stIdx;
+                
+                if (t.mode === 'RADIO') {
+                    const station = this.stationList[stIdx];
+                    t.audioEl.src = station.url;
+                    t.audioEl.play().catch(e => console.warn("Stream blocked", e));
+                    return station.name;
+                }
+            }
+
+            tuneMP3(idx, mp3Idx) {
+                const t = this.tracks[idx];
+                if (mp3Idx < 0) mp3Idx = LOCAL_MP3_CRATE.length - 1;
+                if (mp3Idx >= LOCAL_MP3_CRATE.length) mp3Idx = 0;
+                t.mp3Idx = mp3Idx;
+
+                if (t.mode === 'MP3') {
+                    const mp3 = LOCAL_MP3_CRATE[mp3Idx];
+                    t.audioEl.src = mp3.file;
+                    t.audioEl.play().catch(e => console.warn("MP3 blocked", e));
+                    return mp3.name;
+                }
+            }
+
+            tuneDrone(idx, pitchIdx) {
+                const t = this.tracks[idx];
+                t.pitchIdx = pitchIdx;
+                if (t.mode === 'DRONE' && t.osc) {
+                    const freq = 55 * Math.pow(1.059463, pitchIdx + (idx * 12)); // Chromatic
+                    t.osc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.1);
+                    return `PITCH: ${Math.floor(freq)}Hz`;
+                }
+            }
+
+            trigger(idx, duration) {
+                const t = this.tracks[idx];
+                const now = this.ctx.currentTime;
+                // Open Gate
+                t.gate.gain.cancelScheduledValues(now);
+                t.gate.gain.setValueAtTime(t.gate.gain.value, now);
+                t.gate.gain.linearRampToValueAtTime(1.0, now + 0.02);
+                t.gate.gain.setTargetAtTime(0, now + duration, 0.1); // Smooth release
+            }
+        }
+
+        // --- CONSTANTS ---
+        const STEPS = 16;
+        const TUBE_RADIUS = 3;
+        const STEP_HEIGHT = 0.8;
+        const SECTORS = 4; 
+        const COLORS = [0x00ffff, 0xff00ff, 0xffff00, 0xffffff]; // Tracks 1-4
+
+        // --- STATE ---
+        const state = {
+            blocks: [], 
+            isPlaying: false,
+            bpm: 110,
+            playheadY: 0,
+            currentStep: 0,
+            selectedInst: 0,
+            hoverStep: null,
+            hoverSector: null,
+            nextId: 1
+        };
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020202);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 6, 10);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // --- AR SETUP ---
+        const xrButton = XRButton.createButton(renderer, {
+            optionalFeatures: ['dom-overlay'],
+            domOverlay: { root: document.getElementById('ui-layer') } 
+        });
+        document.body.appendChild(xrButton);
+
+        // --- POST PROCESS (2D) ---
+        const composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0; bloomPass.strength = 1.2; bloomPass.radius = 0.5;
+        composer.addPass(bloomPass);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.minDistance = 4; controls.maxDistance = 20;
+        controls.target.set(0, (STEPS * STEP_HEIGHT)/2, 0);
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+        
+        // --- TOWER GEOMETRY ---
+        const towerGroup = new THREE.Group();
+        scene.add(towerGroup);
+
+        // Central Core
+        const coreGeo = new THREE.CylinderGeometry(TUBE_RADIUS - 0.2, TUBE_RADIUS - 0.2, STEPS * STEP_HEIGHT, 16, STEPS, true);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0x111111, wireframe: true, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        coreMesh.position.y = (STEPS * STEP_HEIGHT) / 2 - (STEP_HEIGHT/2);
+        towerGroup.add(coreMesh);
+
+        // Rings
+        for(let i=0; i<STEPS; i++) {
+            const ringGeo = new THREE.TorusGeometry(TUBE_RADIUS, 0.02, 4, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI/2; ring.position.y = i * STEP_HEIGHT;
+            towerGroup.add(ring);
+        }
+
+        // Raycast Target
+        const hitGeo = new THREE.CylinderGeometry(TUBE_RADIUS + 0.5, TUBE_RADIUS + 0.5, STEPS * STEP_HEIGHT, 16, 1);
+        const hitMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
+        const hitCylinder = new THREE.Mesh(hitGeo, hitMat);
+        hitCylinder.position.y = (STEPS * STEP_HEIGHT) / 2 - (STEP_HEIGHT/2);
+        towerGroup.add(hitCylinder);
+
+        // Scanner
+        const scanGeo = new THREE.TorusGeometry(TUBE_RADIUS + 1, 0.05, 4, 64);
+        const scanMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+        const scanner = new THREE.Mesh(scanGeo, scanMat);
+        scanner.rotation.x = Math.PI / 2;
+        scene.add(scanner);
+
+        // Ghost
+        const ghostGeo = new THREE.BoxGeometry(1.2, 0.6, 0.4);
+        const ghostMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.5 });
+        const ghost = new THREE.Mesh(ghostGeo, ghostMat);
+        scene.add(ghost);
+
+        // --- AUDIO INSTANCE ---
+        const audioEngine = new LoomAudio();
+
+        // --- LOGIC ---
+        const raycaster = new THREE.Raycaster();
+        
+        function haptic(pattern = 10) { 
+            if (navigator.vibrate) navigator.vibrate(pattern); 
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast-box');
+            el.innerText = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        function updateTrackInfo() {
+            const t = audioEngine.tracks[state.selectedInst];
+            let msg = "";
+            if(t.mode === 'RADIO') msg = audioEngine.stationList[t.stationIdx].name;
+            else if(t.mode === 'MP3') msg = LOCAL_MP3_CRATE[t.mp3Idx].name;
+            else if(t.mode === 'DRONE') msg = `PITCH ${t.pitchIdx}`;
+            
+            document.getElementById('track-info').innerText = msg;
+            document.getElementById('mode-tag').innerText = t.mode;
+        }
+
+        function getGridPos(point) {
+            let y = point.y;
+            if (y < 0) y = 0;
+            const step = Math.floor(y / STEP_HEIGHT);
+            const angle = Math.atan2(point.z, point.x); 
+            let normAngle = angle;
+            if (normAngle < 0) normAngle += Math.PI * 2; 
+            let shifted = normAngle + (Math.PI / 4);
+            if (shifted > Math.PI*2) shifted -= Math.PI*2;
+            const sector = Math.floor( (shifted / (Math.PI*2)) * SECTORS );
+            return { step: Math.min(step, STEPS-1), sector };
+        }
+
+        function alignObjToGrid(obj, step, sector) {
+            const angleStep = (Math.PI * 2) / SECTORS;
+            const angle = sector * angleStep;
+            const x = Math.cos(angle) * TUBE_RADIUS;
+            const z = Math.sin(angle) * TUBE_RADIUS;
+            const y = (step * STEP_HEIGHT) + (STEP_HEIGHT/2); 
+            obj.position.set(x, y, z);
+            obj.rotation.y = -angle + Math.PI/2; 
+        }
+
+        function placeBlock() {
+            if (state.hoverStep === null) return;
+            haptic(15);
+            
+            const existing = state.blocks.find(b => b.step === state.hoverStep && b.sector === state.hoverSector);
+            
+            if (existing) {
+                removeBlock(existing);
+            } else {
+                const geo = new THREE.BoxGeometry(1.2, 0.6, 0.4);
+                const mat = new THREE.MeshStandardMaterial({ 
+                    color: COLORS[state.selectedInst], 
+                    emissive: COLORS[state.selectedInst],
+                    emissiveIntensity: 0.5, roughness: 0.2, metalness: 0.8
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                alignObjToGrid(mesh, state.hoverStep, state.hoverSector);
+                mesh.userData = { isBlock: true, id: state.nextId };
+                towerGroup.add(mesh);
+                
+                state.blocks.push({ id: state.nextId++, step: state.hoverStep, sector: state.hoverSector, type: state.selectedInst, mesh });
+            }
+        }
+
+        function removeBlock(block) {
+            haptic(10);
+            towerGroup.remove(block.mesh);
+            block.mesh.geometry.dispose();
+            state.blocks = state.blocks.filter(b => b.id !== block.id);
+        }
+
+        // --- LOOP ---
+        const clock = new THREE.Clock();
+        const controller = renderer.xr.getController(0);
+        controller.addEventListener('select', () => { if (state.hoverStep !== null) placeBlock(); });
+        scene.add(controller);
+
+        function render() {
+            if (renderer.xr.isPresenting) {
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            } else {
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+                controls.update();
+            }
+
+            const hits = raycaster.intersectObject(hitCylinder);
+            const reticle = document.getElementById('reticle');
+
+            if (hits.length > 0) {
+                const p = hits[0].point;
+                const grid = getGridPos(p);
+                state.hoverStep = grid.step;
+                state.hoverSector = grid.sector;
+                alignObjToGrid(ghost, grid.step, grid.sector);
+                ghost.visible = true;
+                ghost.material.color.setHex(COLORS[state.selectedInst]);
+                reticle.classList.add('active');
+                reticle.style.borderColor = '#' + new THREE.Color(COLORS[state.selectedInst]).getHexString();
+            } else {
+                ghost.visible = false;
+                state.hoverStep = null;
+                reticle.classList.remove('active');
+            }
+
+            if (state.isPlaying) {
+                const dt = clock.getDelta();
+                const totalHeight = STEPS * STEP_HEIGHT;
+                const speed = (state.bpm / 60) * STEP_HEIGHT * 4; 
+                state.playheadY += speed * dt * 0.1; 
+                if (state.playheadY > totalHeight) state.playheadY = 0;
+                scanner.position.y = state.playheadY;
+
+                const currentScanStep = Math.floor(state.playheadY / STEP_HEIGHT);
+                if (currentScanStep !== state.currentStep) {
+                    state.currentStep = currentScanStep;
+                    const hits = state.blocks.filter(b => b.step === currentScanStep);
+                    // Gate audio for active blocks
+                    hits.forEach(b => {
+                        // Calculate duration of one step in seconds
+                        const stepDur = (60 / state.bpm) / 4; 
+                        audioEngine.trigger(b.type, stepDur);
+                        b.mesh.scale.set(1.4, 1.4, 1.4);
+                    });
+                }
+            }
+            
+            state.blocks.forEach(b => b.mesh.scale.lerp(new THREE.Vector3(1,1,1), 0.1));
+            coreMesh.rotation.y += 0.002;
+
+            if (renderer.xr.isPresenting) renderer.render(scene, camera);
+            else composer.render();
+        }
+        renderer.setAnimationLoop(render);
+
+        // --- DOM UI EVENTS ---
+        
+        // Mode & Tune Logic
+        document.getElementById('btn-mode').addEventListener('click', () => {
+            haptic();
+            const modes = ['MP3', 'RADIO', 'DRONE'];
+            const t = audioEngine.tracks[state.selectedInst];
+            const nextMode = modes[(modes.indexOf(t.mode) + 1) % modes.length];
+            audioEngine.setMode(state.selectedInst, nextMode);
+            updateTrackInfo();
+        });
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            haptic();
+            const t = audioEngine.tracks[state.selectedInst];
+            if(t.mode === 'MP3') audioEngine.tuneMP3(state.selectedInst, t.mp3Idx - 1);
+            if(t.mode === 'RADIO') audioEngine.tuneRadio(state.selectedInst, t.stationIdx - 1);
+            if(t.mode === 'DRONE') audioEngine.tuneDrone(state.selectedInst, t.pitchIdx - 1);
+            updateTrackInfo();
+        });
+
+        document.getElementById('btn-next').addEventListener('click', () => {
+            haptic();
+            const t = audioEngine.tracks[state.selectedInst];
+            if(t.mode === 'MP3') audioEngine.tuneMP3(state.selectedInst, t.mp3Idx + 1);
+            if(t.mode === 'RADIO') audioEngine.tuneRadio(state.selectedInst, t.stationIdx + 1);
+            if(t.mode === 'DRONE') audioEngine.tuneDrone(state.selectedInst, t.pitchIdx + 1);
+            updateTrackInfo();
+        });
+
+        // Instrument Select (PADS)
+        document.querySelectorAll('.pad').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                haptic();
+                document.querySelectorAll('.pad').forEach(b => b.classList.remove('active'));
+                const t = e.target;
+                t.classList.add('active');
+                state.selectedInst = parseInt(t.dataset.id);
+                
+                // Color Sync for Place Button
+                const hex = '#' + new THREE.Color(COLORS[state.selectedInst]).getHexString();
+                const placeBtn = document.getElementById('btn-place');
+                placeBtn.style.color = hex;
+                placeBtn.style.borderColor = hex;
+                placeBtn.style.boxShadow = `0 0 20px ${hex}33`; // 33 for low opacity
+                
+                updateTrackInfo();
+            });
+        });
+
+        document.getElementById('btn-place').addEventListener('click', placeBlock);
+        
+        document.getElementById('btn-del').addEventListener('click', (e) => {
+            haptic();
+            if (state.hoverStep !== null) {
+                const existing = state.blocks.find(b => b.step === state.hoverStep && b.sector === state.hoverSector);
+                if (existing) removeBlock(existing);
+            }
+            e.target.classList.add('active');
+            setTimeout(() => e.target.classList.remove('active'), 200);
+        });
+        
+        document.getElementById('btn-clear').addEventListener('click', (e) => {
+            haptic(20);
+            [...state.blocks].forEach(b => removeBlock(b));
+            e.target.classList.add('active');
+            setTimeout(() => e.target.classList.remove('active'), 200);
+        });
+
+        document.getElementById('btn-play-toggle').addEventListener('click', async (e) => {
+            haptic();
+            if (!audioEngine.ctx) {
+                await audioEngine.init();
+                updateTrackInfo();
+            } else if (audioEngine.ctx.state === 'suspended') {
+                audioEngine.ctx.resume();
+            }
+            
+            state.isPlaying = !state.isPlaying;
+            const btn = e.target;
+            btn.innerText = state.isPlaying ? "STOP AUDIO" : "RESUME AUDIO";
+            btn.classList.toggle('active', state.isPlaying);
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
