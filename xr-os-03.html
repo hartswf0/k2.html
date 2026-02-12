@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>ORBITAL LOOM: MASON EDITION</title>
+    <style>
+        :root {
+            --c-gold: #D4AF37;
+            --c-stone: #4a4a4a;
+            --c-light: #e0e0e0;
+            --c-accent: #00ffaa;
+            --bg-dark: #050505;
+            --font-mono: 'Courier New', monospace;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            margin: 0; overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: var(--font-mono);
+            color: var(--c-light);
+        }
+
+        /* --- UI LAYER (AR DOM OVERLAY) --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* Top HUD */
+        #top-hud {
+            pointer-events: auto;
+            padding: 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+
+        .brand-block {
+            border-left: 3px solid var(--c-gold);
+            padding-left: 10px;
+        }
+        .title { font-size: 16px; font-weight: 900; letter-spacing: 2px; color: var(--c-gold); }
+        .subtitle { font-size: 10px; color: #888; text-transform: uppercase; margin-top: 2px; }
+
+        #btn-engine {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--c-gold);
+            color: var(--c-gold);
+            padding: 8px 12px; font-size: 10px; font-weight: bold;
+            cursor: pointer; transition: all 0.3s;
+            text-transform: uppercase;
+        }
+        #btn-engine.active { background: var(--c-gold); color: #000; box-shadow: 0 0 15px var(--c-gold); }
+
+        /* Force XR Button to Top Right to avoid cluttering the deck */
+        #XRButton {
+            bottom: auto !important;
+            top: 20px !important;
+            right: 20px !important;
+            left: auto !important;
+            width: auto !important;
+            transform: none !important;
+            background: rgba(0,0,0,0.8) !important;
+            border: 1px solid var(--c-accent) !important;
+            color: var(--c-accent) !important;
+            font-family: var(--font-mono) !important;
+            font-size: 10px !important;
+            padding: 8px 12px !important;
+            border-radius: 0 !important;
+        }
+
+        /* Toast Notification */
+        #toast {
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); border: 1px solid var(--c-accent);
+            color: var(--c-accent); padding: 8px 16px; font-size: 12px;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
+            text-align: center; white-space: nowrap; border-radius: 4px;
+        }
+        #toast.show { opacity: 1; }
+
+        /* --- BOTTOM DECK (Floating Console) --- */
+        #deck-container {
+            width: 100%;
+            display: flex; justify-content: center;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            pointer-events: none; /* Let clicks pass through outside the deck */
+        }
+
+        #deck {
+            pointer-events: auto;
+            width: 92%; max-width: 420px;
+            background: rgba(15, 15, 15, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 15px;
+            display: flex; flex-direction: column; gap: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+
+        /* 1. Display Strip */
+        #display-strip {
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.3); border-radius: 4px; padding: 4px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .lcd-text {
+            font-size: 11px; color: var(--c-accent); letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(0, 255, 170, 0.5);
+        }
+
+        /* 2. Track Selectors (8 Grid) */
+        #track-grid {
+            display: grid; grid-template-columns: repeat(8, 1fr);
+            gap: 4px; height: 36px;
+        }
+        .track-pad {
+            background: #222; border: none; border-radius: 2px;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: background 0.2s;
+        }
+        .track-pad::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+            background: var(--pad-color); opacity: 0.3;
+        }
+        .track-pad.active { background: #444; }
+        .track-pad.active::after { opacity: 1; height: 100%; mix-blend-mode: overlay; }
+
+        /* 3. Main Controls */
+        #controls-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 10px;
+        }
+
+        #btn-place {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid var(--c-light);
+            color: var(--c-light);
+            font-size: 10px; font-weight: bold; letter-spacing: 1px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(255,255,255,0.05);
+            transition: transform 0.1s;
+        }
+        #btn-place:active { transform: scale(0.92); background: rgba(255,255,255,0.15); }
+
+        .side-btn {
+            padding: 10px 20px;
+            background: transparent; border: 1px solid #444; color: #888;
+            font-size: 10px; font-weight: bold; border-radius: 4px;
+            cursor: pointer;
+        }
+        .side-btn:active { border-color: #fff; color: #fff; }
+        .side-btn.danger { color: #d44; border-color: #522; }
+        .side-btn.danger:active { color: #f00; border-color: #f00; }
+
+        /* Reticle */
+        #reticle {
+            position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
+            transform: translate(-50%, -50%);
+            background: #fff; border-radius: 50%;
+            pointer-events: none; z-index: 5;
+            box-shadow: 0 0 4px #fff;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #reticle.locked {
+            width: 32px; height: 32px; background: transparent;
+            border: 2px solid var(--c-accent); opacity: 1;
+            box-shadow: 0 0 15px var(--c-accent);
+        }
+
+        /* Scanline Overlay */
+        #scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;
+            background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 50%);
+            background-size: 100% 4px; opacity: 0.4;
+        }
+    </style>
+    <!-- Three.js Import -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="scanline"></div>
+    <div id="reticle"></div>
+
+    <div id="ui-layer">
+        <!-- Top HUD -->
+        <div id="top-hud">
+            <div class="brand-block">
+                <div class="title">ORBITAL LOOM</div>
+                <div class="subtitle">MASON EDITION // <span id="bpm-val">110</span> BPM</div>
+            </div>
+            <!-- We will append XR Button here or it floats via CSS -->
+            <button id="btn-engine">START ENGINE</button>
+        </div>
+
+        <div id="toast">SYSTEM READY</div>
+
+        <!-- The Floating Deck -->
+        <div id="deck-container">
+            <div id="deck">
+                
+                <!-- Display -->
+                <div id="display-strip">
+                    <div class="lcd-text" id="display-main">SELECT TRACK</div>
+                </div>
+
+                <!-- 8 Tracks -->
+                <div id="track-grid">
+                    <!-- JS Injected -->
+                </div>
+
+                <!-- Controls -->
+                <div id="controls-row">
+                    <button class="side-btn danger" id="btn-del">DEL</button>
+                    <button id="btn-place">PLACE</button>
+                    <button class="side-btn" id="btn-clear">CLR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { XRButton } from 'three/addons/webxr/XRButton.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // --- CONFIG ---
+        const CONFIG = {
+            STEPS: 16,
+            SECTORS: 8,
+            RADIUS: 3.5,
+            HEIGHT: 0.8,
+            BPM: 110
+        };
+
+        const TRACK_NAMES = ['KICK', 'SNARE', 'HIHAT', 'BASS', 'LEAD', 'PAD', 'ARP', 'NOISE'];
+        const PALETTE = [
+            '#FF0055', '#FF5500', '#FFCC00', '#00FF55', 
+            '#00CCFF', '#0055FF', '#AA00FF', '#FFFFFF'
+        ];
+
+        // --- STATE ---
+        const state = {
+            blocks: [],
+            isPlaying: false,
+            playheadY: 0,
+            currentStep: 0,
+            selectedTrack: 0,
+            hoverStep: null,
+            hoverSector: null,
+            nextId: 1
+        };
+
+        // --- AUDIO ENGINE ---
+        class AudioMason {
+            constructor() {
+                this.ctx = null;
+                this.master = null;
+                this.buffers = {};
+            }
+
+            async init() {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AC();
+                this.master = this.ctx.createGain();
+                this.master.gain.value = 0.6;
+                this.master.connect(this.ctx.destination);
+                await this.generateSamples();
+                await this.ctx.resume();
+            }
+
+            async generateSamples() {
+                const mkBuf = (len) => this.ctx.createBuffer(1, this.ctx.sampleRate * len, this.ctx.sampleRate);
+                
+                // Kick
+                this.buffers['0'] = (() => {
+                    const b = mkBuf(0.5); const d = b.getChannelData(0);
+                    for(let i=0; i<d.length; i++) {
+                        const t = i / this.ctx.sampleRate;
+                        d[i] = Math.sin(2 * Math.PI * (150 * Math.exp(-t*10)) * t) * Math.exp(-t*5);
+                    } return b;
+                })();
+
+                // Snare
+                this.buffers['1'] = (() => {
+                    const b = mkBuf(0.2); const d = b.getChannelData(0);
+                    for(let i=0; i<d.length; i++) {
+                        const t = i / this.ctx.sampleRate;
+                        d[i] = (Math.random() * 2 - 1) * Math.exp(-t*20);
+                    } return b;
+                })();
+
+                // HiHat
+                this.buffers['2'] = (() => {
+                    const b = mkBuf(0.05); const d = b.getChannelData(0);
+                    for(let i=0; i<d.length; i++) {
+                        const t = i / this.ctx.sampleRate;
+                        d[i] = (Math.random() * 2 - 1) * Math.exp(-t*80);
+                    } return b;
+                })();
+            }
+
+            trigger(trackId) {
+                if(!this.ctx) return;
+                const t = this.ctx.currentTime;
+
+                if(this.buffers[trackId]) {
+                    const src = this.ctx.createBufferSource();
+                    src.buffer = this.buffers[trackId];
+                    src.connect(this.master);
+                    src.start(t);
+                } else {
+                    // Synth tones for other tracks
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.connect(g); g.connect(this.master);
+                    
+                    const freqs = [0,0,0, 55, 220, 330, 440, 880]; // 0-2 are buffers
+                    const types = ['','','','sawtooth','square','triangle','sine','sawtooth'];
+                    
+                    if(freqs[trackId]) {
+                        osc.type = types[trackId];
+                        osc.frequency.value = freqs[trackId];
+                        g.gain.setValueAtTime(0.3, t);
+                        g.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                        osc.start(t); osc.stop(t + 0.2);
+                    } else {
+                        // Noise fallback (Track 7)
+                        const bSize = this.ctx.sampleRate * 0.1;
+                        const b = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
+                        const d = b.getChannelData(0);
+                        for(let i=0; i<bSize; i++) d[i] = Math.random() * 2 - 1;
+                        const src = this.ctx.createBufferSource();
+                        src.buffer = b;
+                        src.connect(this.master);
+                        src.start(t);
+                    }
+                }
+            }
+        }
+
+        // --- 3D SCENE ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.FogExp2(0x050505, 0.05);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 8, 12);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // XR Button (Configured to allow DOM Overlay)
+        const xrBtn = XRButton.createButton(renderer, {
+            optionalFeatures: ['dom-overlay'],
+            domOverlay: { root: document.getElementById('ui-layer') }
+        });
+        document.body.appendChild(xrBtn);
+
+        // PostFX
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloom.threshold = 0.1; bloom.strength = 0.8; bloom.radius = 0.3;
+        composer.addPass(bloom);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, (CONFIG.STEPS * CONFIG.HEIGHT)/2, 0);
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0x404040, 2));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 5);
+        scene.add(dirLight);
+
+        // --- GEOMETRY ---
+        const towerGroup = new THREE.Group();
+        scene.add(towerGroup);
+
+        const coreGeo = new THREE.CylinderGeometry(CONFIG.RADIUS-0.1, CONFIG.RADIUS-0.1, CONFIG.STEPS * CONFIG.HEIGHT, 8, 1);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0x111111, wireframe: true, transparent: true, opacity: 0.2 });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        core.position.y = (CONFIG.STEPS * CONFIG.HEIGHT) / 2 - (CONFIG.HEIGHT/2);
+        towerGroup.add(core);
+
+        const hitGeo = new THREE.CylinderGeometry(CONFIG.RADIUS+0.5, CONFIG.RADIUS+0.5, CONFIG.STEPS * CONFIG.HEIGHT, 8, 1);
+        hitGeo.rotateY(Math.PI/8);
+        const hitMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
+        const hitCylinder = new THREE.Mesh(hitGeo, hitMat);
+        hitCylinder.position.y = (CONFIG.STEPS * CONFIG.HEIGHT) / 2 - (CONFIG.HEIGHT/2);
+        towerGroup.add(hitCylinder);
+
+        for(let i=0; i<CONFIG.STEPS; i++) {
+            const rGeo = new THREE.TorusGeometry(CONFIG.RADIUS, 0.03, 4, 8);
+            rGeo.rotateY(Math.PI/8);
+            const rMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            const r = new THREE.Mesh(rGeo, rMat);
+            r.rotation.x = Math.PI/2; r.position.y = i * CONFIG.HEIGHT;
+            towerGroup.add(r);
+        }
+
+        const scanGeo = new THREE.TorusGeometry(CONFIG.RADIUS + 0.8, 0.05, 4, 8);
+        scanGeo.rotateY(Math.PI/8);
+        const scanner = new THREE.Mesh(scanGeo, new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.8 }));
+        scanner.rotation.x = Math.PI/2;
+        scene.add(scanner);
+
+        const ghost = new THREE.Mesh(
+            new THREE.BoxGeometry(1.5, 0.6, 0.5),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.5 })
+        );
+        scene.add(ghost);
+
+        // --- LOGIC ---
+        const engine = new AudioMason();
+        const raycaster = new THREE.Raycaster();
+        const clock = new THREE.Clock();
+
+        const haptic = (p=10) => { if(navigator.vibrate) navigator.vibrate(p); };
+        const showToast = (msg) => {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        };
+
+        const getGridPos = (pt) => {
+            let y = pt.y; if(y < 0) y = 0;
+            const step = Math.floor(y / CONFIG.HEIGHT);
+            const angle = Math.atan2(pt.z, pt.x);
+            let normAngle = angle; if(normAngle < 0) normAngle += Math.PI*2;
+            let shifted = normAngle + (Math.PI/8); if(shifted > Math.PI*2) shifted -= Math.PI*2;
+            const sector = Math.floor( (shifted / (Math.PI*2)) * CONFIG.SECTORS );
+            return { step: Math.min(step, CONFIG.STEPS-1), sector };
+        };
+
+        const alignObj = (obj, step, sector) => {
+            const angle = sector * (Math.PI * 2 / CONFIG.SECTORS);
+            obj.position.set(Math.cos(angle) * CONFIG.RADIUS, (step * CONFIG.HEIGHT) + (CONFIG.HEIGHT/2), Math.sin(angle) * CONFIG.RADIUS);
+            obj.rotation.y = -angle + Math.PI/2;
+        };
+
+        const placeBlock = () => {
+            if(state.hoverStep === null) return;
+            haptic(20);
+            const existingIdx = state.blocks.findIndex(b => b.step === state.hoverStep && b.sector === state.hoverSector);
+            if(existingIdx >= 0) {
+                towerGroup.remove(state.blocks[existingIdx].mesh);
+                state.blocks.splice(existingIdx, 1);
+            } else {
+                const type = state.selectedTrack;
+                const mesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.5, 0.6, 0.5),
+                    new THREE.MeshStandardMaterial({ color: PALETTE[type], emissive: PALETTE[type], emissiveIntensity: 0.6, roughness: 0.2 })
+                );
+                alignObj(mesh, state.hoverStep, state.hoverSector);
+                towerGroup.add(mesh);
+                state.blocks.push({ id: state.nextId++, step: state.hoverStep, sector: state.hoverSector, type: type, mesh: mesh });
+                if(engine.ctx) engine.trigger(type);
+            }
+        };
+
+        // --- RENDER ---
+        const controller = renderer.xr.getController(0);
+        controller.addEventListener('select', placeBlock);
+        scene.add(controller);
+
+        renderer.setAnimationLoop(() => {
+            if(renderer.xr.isPresenting) raycaster.setFromCamera({x:0,y:0}, camera);
+            else { raycaster.setFromCamera({x:0,y:0}, camera); controls.update(); }
+
+            const hits = raycaster.intersectObject(hitCylinder);
+            const reticle = document.getElementById('reticle');
+            if(hits.length > 0) {
+                const grid = getGridPos(hits[0].point);
+                state.hoverStep = grid.step; state.hoverSector = grid.sector;
+                alignObj(ghost, grid.step, grid.sector);
+                ghost.visible = true; ghost.material.color.set(PALETTE[state.selectedTrack]);
+                reticle.classList.add('locked'); reticle.style.borderColor = PALETTE[state.selectedTrack];
+            } else {
+                ghost.visible = false; state.hoverStep = null; reticle.classList.remove('locked');
+            }
+
+            if(state.isPlaying) {
+                const dt = clock.getDelta();
+                const totalH = CONFIG.STEPS * CONFIG.HEIGHT;
+                state.playheadY += ((CONFIG.BPM / 60) * CONFIG.HEIGHT * 4) * dt * 0.1;
+                if(state.playheadY > totalH) state.playheadY = 0;
+                scanner.position.y = state.playheadY;
+                const curStep = Math.floor(state.playheadY / CONFIG.HEIGHT);
+                if(curStep !== state.currentStep) {
+                    state.currentStep = curStep;
+                    state.blocks.filter(b => b.step === curStep).forEach(b => {
+                        if(engine.ctx) engine.trigger(b.type);
+                        b.mesh.scale.set(1.4, 1.4, 1.4);
+                    });
+                }
+            }
+            state.blocks.forEach(b => b.mesh.scale.lerp(new THREE.Vector3(1,1,1), 0.1));
+            core.rotation.y += 0.001;
+            if(renderer.xr.isPresenting) renderer.render(scene, camera); else composer.render();
+        });
+
+        // --- UI BINDINGS ---
+        const initAudio = async () => {
+            if(!engine.ctx) await engine.init();
+            else if(engine.ctx.state === 'suspended') engine.ctx.resume();
+            state.isPlaying = !state.isPlaying;
+            document.getElementById('btn-engine').innerText = state.isPlaying ? "STOP" : "RESUME";
+            document.getElementById('btn-engine').classList.toggle('active', state.isPlaying);
+            showToast(state.isPlaying ? "PLAYING" : "PAUSED");
+        };
+
+        const buildGrid = () => {
+            const grid = document.getElementById('track-grid');
+            for(let i=0; i<8; i++) {
+                const btn = document.createElement('div');
+                btn.className = `track-pad ${i===0?'active':''}`;
+                btn.style.setProperty('--pad-color', PALETTE[i]);
+                btn.onclick = () => {
+                    haptic();
+                    state.selectedTrack = i;
+                    document.querySelectorAll('.track-pad').forEach((b, idx) => b.classList.toggle('active', idx===i));
+                    document.getElementById('display-main').innerText = `TRK ${i+1}: ${TRACK_NAMES[i]}`;
+                    const pb = document.getElementById('btn-place');
+                    pb.style.borderColor = PALETTE[i]; pb.style.color = PALETTE[i];
+                    pb.style.boxShadow = `0 0 15px ${PALETTE[i]}44`;
+                };
+                grid.appendChild(btn);
+            }
+        };
+
+        document.getElementById('btn-engine').onclick = initAudio;
+        document.getElementById('btn-place').onclick = placeBlock;
+        document.getElementById('btn-del').onclick = () => {
+            haptic();
+            if(state.hoverStep !== null) {
+                const idx = state.blocks.findIndex(b => b.step === state.hoverStep && b.sector === state.hoverSector);
+                if(idx >= 0) { towerGroup.remove(state.blocks[idx].mesh); state.blocks.splice(idx, 1); }
+            }
+        };
+        document.getElementById('btn-clear').onclick = () => { haptic(50); state.blocks.forEach(b => towerGroup.remove(b.mesh)); state.blocks = []; };
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        buildGrid();
+    </script>
+</body>
+</html>
