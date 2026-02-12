@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>ORBITAL LOOM: MASONRY</title>
+    <style>
+        :root {
+            --c-gold: #D4AF37;
+            --c-dark: #050505;
+            --c-panel: rgba(10, 12, 14, 0.95);
+            --c-light: #e0e0e0;
+            --c-active: #00ffaa;
+            --font-stack: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            margin: 0; overflow: hidden;
+            background-color: var(--c-dark);
+            font-family: var(--font-stack);
+            color: var(--c-light);
+        }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* --- TOP HUD --- */
+        #top-hud {
+            pointer-events: auto;
+            padding: 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+            display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+        }
+
+        .brand-row {
+            display: flex; align-items: center; gap: 15px;
+        }
+
+        .brand {
+            border-left: 3px solid var(--c-gold); padding-left: 10px;
+        }
+        .title { font-size: 16px; font-weight: 900; letter-spacing: 1px; color: var(--c-gold); }
+        .subtitle { font-size: 10px; color: #888; text-transform: uppercase; }
+
+        #btn-engine {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--c-gold); color: var(--c-gold);
+            padding: 8px 12px; font-size: 10px; font-weight: bold;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            backdrop-filter: blur(4px); transition: all 0.3s;
+        }
+        #btn-engine.active { background: var(--c-gold); color: #000; box-shadow: 0 0 15px var(--c-gold); }
+
+        /* XR Button Override - Force Top Right */
+        #XRButton {
+            position: absolute !important;
+            top: 20px !important; right: 20px !important; bottom: auto !important; left: auto !important;
+            width: auto !important; background: rgba(0,20,10,0.9) !important;
+            border: 1px solid var(--c-active) !important; color: var(--c-active) !important;
+            font-family: var(--font-stack) !important; font-size: 11px !important;
+            padding: 8px 16px !important; border-radius: 2px !important;
+            box-shadow: 0 0 10px rgba(0,255,170,0.3) !important;
+        }
+
+        /* Toast */
+        #toast {
+            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); border: 1px solid var(--c-active);
+            color: var(--c-active); padding: 8px 16px; font-size: 12px; letter-spacing: 1px;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
+            text-align: center; white-space: nowrap; border-radius: 4px;
+        }
+        #toast.show { opacity: 1; }
+
+        /* --- BOTTOM DECK (MASON CONSOLE) --- */
+        #deck-container {
+            width: 100%; display: flex; justify-content: center;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            pointer-events: none;
+        }
+
+        #deck {
+            pointer-events: auto;
+            width: 95%; max-width: 440px;
+            background: var(--c-panel);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px 12px 0 0;
+            padding: 15px;
+            display: flex; flex-direction: column; gap: 12px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+        }
+
+        /* Mode Switcher */
+        #mode-switch {
+            display: flex; background: #000; border-radius: 6px; padding: 2px;
+            border: 1px solid #333;
+        }
+        .mode-btn {
+            flex: 1; background: transparent; border: none; color: #666;
+            padding: 8px; font-size: 10px; font-weight: bold; cursor: pointer;
+            transition: all 0.2s; border-radius: 4px;
+        }
+        .mode-btn.active { background: #333; color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.1); }
+
+        /* Track Grid */
+        #track-grid {
+            display: grid; grid-template-columns: repeat(8, 1fr);
+            gap: 4px; height: 32px;
+        }
+        .track-pad {
+            background: #151515; border: 1px solid #333; border-radius: 2px;
+            display: flex; align-items: flex-end; justify-content: center;
+            cursor: pointer; position: relative;
+        }
+        .track-pad.active { border-color: var(--t-color); background: #222; }
+        .track-pad .indicator {
+            width: 4px; height: 4px; border-radius: 50%;
+            background: var(--t-color); margin-bottom: 4px; opacity: 0.5;
+        }
+        .track-pad.active .indicator { opacity: 1; box-shadow: 0 0 8px var(--t-color); }
+
+        /* Info Display */
+        #info-panel {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 4px;
+        }
+        .info-label { font-size: 9px; color: #666; }
+        .info-val { font-size: 12px; color: var(--c-active); font-weight: bold; text-shadow: 0 0 8px rgba(0,255,170,0.3); }
+
+        /* Main Controls */
+        #controls {
+            display: flex; align-items: center; justify-content: center; gap: 25px;
+            margin-top: 5px;
+        }
+
+        #btn-place {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: rgba(255,255,255,0.05); border: 2px solid #fff;
+            color: #fff; font-size: 11px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+            cursor: pointer; transition: transform 0.1s;
+        }
+        #btn-place:active { transform: scale(0.92); background: #fff; color: #000; }
+
+        .tool-btn {
+            width: 44px; height: 44px; border-radius: 8px;
+            background: rgba(0,0,0,0.3); border: 1px solid #444; color: #888;
+            font-size: 10px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .tool-btn.danger { color: #f55; border-color: #522; }
+        .tool-btn:active { border-color: #fff; color: #fff; transform: scale(0.95); }
+
+        /* Reticle */
+        #reticle {
+            position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
+            transform: translate(-50%, -50%); background: #fff; border-radius: 50%;
+            pointer-events: none; opacity: 0.5; transition: all 0.2s; z-index: 5;
+        }
+        #reticle.active {
+            width: 40px; height: 40px; background: transparent;
+            border: 2px solid var(--c-active); opacity: 1;
+            box-shadow: 0 0 20px var(--c-active);
+        }
+
+        /* Scanlines */
+        #scanlines {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;
+            background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);
+            background-size: 100% 4px; opacity: 0.4;
+        }
+    </style>
+    <!-- Three.js Import -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="scanlines"></div>
+    <div id="reticle"></div>
+
+    <div id="ui-layer">
+        <div id="top-hud">
+            <div class="brand-row">
+                <div class="brand">
+                    <div class="title">ORBITAL LOOM</div>
+                    <div class="subtitle">MASONRY STACK</div>
+                </div>
+                <button id="btn-engine">START AUDIO</button>
+            </div>
+        </div>
+
+        <div id="toast">SYSTEM READY</div>
+
+        <div id="deck-container">
+            <div id="deck">
+                <div id="mode-switch">
+                    <button class="mode-btn active" id="mode-place">BUILD MODE</button>
+                    <button class="mode-btn" id="mode-tune">TUNE MODE</button>
+                </div>
+
+                <div id="track-grid"></div>
+
+                <div id="info-panel">
+                    <span class="info-label">TRACK / STATION</span>
+                    <span class="info-val" id="lcd-display">SELECT TRACK</span>
+                </div>
+
+                <div id="controls">
+                    <button class="tool-btn danger" id="btn-del">DEL</button>
+                    <button id="btn-place">PLACE</button>
+                    <button class="tool-btn" id="btn-clear">CLR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { XRButton } from 'three/addons/webxr/XRButton.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // --- CONFIG & DATA ---
+        const CONFIG = {
+            RINGS: 8,
+            SLOTS: 16,
+            RADIUS: 3.5,
+            HEIGHT: 0.9,
+            BPM: 110
+        };
+
+        const TRACKS = [
+            { name: "KICK", color: "#FF0055" }, { name: "SNARE", color: "#FF5500" },
+            { name: "HIHAT", color: "#FFCC00" }, { name: "BASS", color: "#00FF55" },
+            { name: "LEAD", color: "#00CCFF" }, { name: "PAD", color: "#0055FF" },
+            { name: "ARP", color: "#AA00FF" }, { name: "NOISE", color: "#FFFFFF" }
+        ];
+
+        const STATIONS = [
+            { name: "GROOVE SALAD", url: "https://ice6.somafm.com/groovesalad-256-mp3" },
+            { name: "DRONE ZONE", url: "https://ice6.somafm.com/dronezone-256-mp3" },
+            { name: "DEF CON", url: "https://ice6.somafm.com/defcon-256-mp3" },
+            { name: "SPACE STATION", url: "https://ice6.somafm.com/spacestation-128-mp3" },
+            { name: "SECRET AGENT", url: "https://ice6.somafm.com/secretagent-128-mp3" }
+        ];
+
+        const SAMPLES = [
+            { name: "KICK A", tone: 55 }, { name: "KICK B", tone: 60 }, 
+            { name: "SNARE A", tone: 150 }, { name: "HIHAT O", tone: 800 },
+            { name: "BASS 1", tone: 45 }, { name: "SAW LD", tone: 440 },
+            { name: "PAD SW", tone: 330 }, { name: "GLITCH", tone: 1000 }
+        ];
+
+        // --- STATE ---
+        const state = {
+            blocks: [],
+            isPlaying: false,
+            playheadAngle: 0,
+            currentStep: 0,
+            selectedTrack: 0,
+            interactionMode: 'PLACE', // 'PLACE' or 'TUNE'
+            hoverGrid: null,
+            dragStartX: null,
+            nextId: 1
+        };
+
+        // --- AUDIO ENGINE ---
+        class MasonAudio {
+            constructor() {
+                this.ctx = null;
+                this.master = null;
+                this.tracks = []; // 8 Tracks
+                
+                // Pre-init state
+                for(let i=0; i<CONFIG.RINGS; i++) {
+                    this.tracks.push({
+                        id: i,
+                        type: i < 3 ? 'RADIO' : 'SYNTH',
+                        stationIdx: i % STATIONS.length,
+                        sampleIdx: i % SAMPLES.length,
+                        audioEl: new Audio(),
+                        sourceNode: null,
+                        filter: null,
+                        gain: null
+                    });
+                    this.tracks[i].audioEl.crossOrigin = "anonymous";
+                    this.tracks[i].audioEl.loop = true;
+                }
+            }
+
+            async init() {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AC();
+                this.master = this.ctx.createGain();
+                this.master.gain.value = 0.5;
+                this.master.connect(this.ctx.destination);
+
+                // Build Graph
+                this.tracks.forEach(t => {
+                    t.filter = this.ctx.createBiquadFilter();
+                    t.gain = this.ctx.createGain();
+                    t.filter.connect(t.gain);
+                    t.gain.connect(this.master);
+                    t.gain.gain.value = 0;
+                    this.updateSource(t.id);
+                });
+                await this.ctx.resume();
+            }
+
+            updateSource(id) {
+                const t = this.tracks[id];
+                if(t.sourceNode) { try{t.sourceNode.disconnect();}catch(e){} t.sourceNode=null; }
+
+                if(t.type === 'RADIO') {
+                    const st = STATIONS[t.stationIdx];
+                    t.audioEl.src = st.url;
+                    if(this.ctx) {
+                        try {
+                            t.sourceNode = this.ctx.createMediaElementSource(t.audioEl);
+                            t.sourceNode.connect(t.filter);
+                            // t.audioEl.play().catch(()=>{}); // Auto-play gated
+                        } catch(e){}
+                    }
+                    return st.name;
+                } else {
+                    return SAMPLES[t.sampleIdx].name;
+                }
+            }
+
+            trigger(id, duration) {
+                if(!this.ctx) return;
+                const t = this.tracks[id];
+                const now = this.ctx.currentTime;
+
+                if(t.type === 'RADIO') {
+                    if(t.audioEl.paused) t.audioEl.play().catch(()=>{});
+                    t.gain.gain.cancelScheduledValues(now);
+                    t.gain.gain.setValueAtTime(0, now);
+                    t.gain.gain.linearRampToValueAtTime(0.8, now + 0.05);
+                    t.gain.gain.linearRampToValueAtTime(0, now + duration);
+                } else {
+                    const osc = this.ctx.createOscillator();
+                    const env = this.ctx.createGain();
+                    
+                    const freq = SAMPLES[t.sampleIdx].tone * (1 + (id * 0.1));
+                    osc.frequency.value = freq;
+                    osc.type = id % 2 === 0 ? 'square' : 'sawtooth';
+                    if(id===7) osc.type='triangle'; // Noise sub
+
+                    osc.connect(env);
+                    env.connect(this.master);
+                    
+                    env.gain.setValueAtTime(0.4, now);
+                    env.gain.exponentialRampToValueAtTime(0.01, now + duration);
+                    osc.start(now);
+                    osc.stop(now + duration);
+                }
+            }
+
+            tune(id, delta) {
+                const t = this.tracks[id];
+                if(t.type === 'RADIO') {
+                    let next = t.stationIdx + delta;
+                    if(next >= STATIONS.length) next = 0;
+                    if(next < 0) next = STATIONS.length - 1;
+                    t.stationIdx = next;
+                } else {
+                    let next = t.sampleIdx + delta;
+                    if(next >= SAMPLES.length) next = 0;
+                    if(next < 0) next = SAMPLES.length - 1;
+                    t.sampleIdx = next;
+                }
+                // Play tuning click
+                if(this.ctx) {
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.connect(g); g.connect(this.master);
+                    osc.frequency.value = 800;
+                    g.gain.value = 0.1;
+                    osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+                }
+                return this.updateSource(id);
+            }
+        }
+
+        // --- 3D SCENE ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.FogExp2(0x050505, 0.04);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 8, 14);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        const xrBtn = XRButton.createButton(renderer, {
+            optionalFeatures: ['dom-overlay'],
+            domOverlay: { root: document.getElementById('ui-layer') }
+        });
+        document.body.appendChild(xrBtn);
+
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloom.threshold = 0; bloom.strength = 1.2; bloom.radius = 0.5;
+        composer.addPass(bloom);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, (CONFIG.RINGS * CONFIG.HEIGHT)/2, 0);
+
+        scene.add(new THREE.AmbientLight(0x404040, 2));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 5);
+        scene.add(dirLight);
+
+        // --- GEOMETRY ---
+        const towerGroup = new THREE.Group();
+        scene.add(towerGroup);
+
+        // Core Texture (Matched to Masonry)
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024; canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#080808'; ctx.fillRect(0,0,1024,1024);
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+        
+        const rowH = 1024 / CONFIG.RINGS;
+        const slotW = 1024 / CONFIG.SLOTS;
+
+        for(let i=0; i<CONFIG.RINGS; i++) {
+            const y = i * rowH;
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+            
+            // Running Bond Offset
+            const offset = (i % 2 === 1) ? slotW / 2 : 0;
+            
+            for(let j=0; j<=CONFIG.SLOTS; j++) {
+                let x = (j * slotW) + offset;
+                if(x > 1024) x -= 1024;
+                ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y+rowH); ctx.stroke();
+            }
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+
+        const coreGeo = new THREE.CylinderGeometry(CONFIG.RADIUS-0.1, CONFIG.RADIUS-0.1, CONFIG.RINGS * CONFIG.HEIGHT, 32, 1);
+        // Correct rotation to align texture seam with slot 0
+        coreGeo.rotateY(-Math.PI / CONFIG.SLOTS); 
+        const coreMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        core.position.y = (CONFIG.RINGS * CONFIG.HEIGHT) / 2 - (CONFIG.HEIGHT/2);
+        towerGroup.add(core);
+
+        const hitGeo = new THREE.CylinderGeometry(CONFIG.RADIUS+0.5, CONFIG.RADIUS+0.5, CONFIG.RINGS * CONFIG.HEIGHT, 32, 1);
+        const hitMat = new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide });
+        const hitCylinder = new THREE.Mesh(hitGeo, hitMat);
+        hitCylinder.position.y = core.position.y;
+        towerGroup.add(hitCylinder);
+
+        // Scanner
+        const scanGeo = new THREE.BoxGeometry(0.1, CONFIG.RINGS * CONFIG.HEIGHT + 2, 0.5);
+        const scanMat = new THREE.MeshBasicMaterial({ color: 0x00ffaa, transparent: true, opacity: 0.5 });
+        const scanner = new THREE.Mesh(scanGeo, scanMat);
+        scanner.position.y = core.position.y;
+        scanner.position.z = CONFIG.RADIUS + 1;
+        const pivot = new THREE.Group();
+        pivot.add(scanner);
+        scene.add(pivot);
+
+        // Curved Block Generator
+        function createArcBlock(color) {
+            const innerR = CONFIG.RADIUS;
+            const outerR = CONFIG.RADIUS + 0.6;
+            const height = CONFIG.HEIGHT - 0.1;
+            const arc = (Math.PI * 2) / CONFIG.SLOTS;
+            
+            const shape = new THREE.Shape();
+            // Create arc shape (Top Down view)
+            shape.absarc(0, 0, outerR, -arc/2 + 0.05, arc/2 - 0.05, false);
+            shape.absarc(0, 0, innerR, arc/2 - 0.05, -arc/2 + 0.05, true); 
+            
+            const extrudeSettings = { depth: height, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: 0.05, bevelThickness: 0.05 };
+            const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            
+            // Align: Extrude creates along Z. We need to rotate to sit on XZ plane upright.
+            geo.rotateX(-Math.PI/2);
+            
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: color, emissive: color, emissiveIntensity: 0.5,
+                roughness: 0.3, metalness: 0.7
+            });
+            return new THREE.Mesh(geo, mat);
+        }
+
+        const ghost = createArcBlock(0xffffff);
+        ghost.material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.3 });
+        scene.add(ghost);
+
+        // --- LOGIC ---
+        const audio = new MasonAudio();
+        const raycaster = new THREE.Raycaster();
+        const clock = new THREE.Clock();
+
+        const haptic = (p=10) => { if(navigator.vibrate) navigator.vibrate(p); };
+        const showToast = (msg) => {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 1500);
+        };
+
+        const getGridPos = (pt) => {
+            let y = pt.y; if(y < 0) y = 0;
+            const ringIdx = Math.floor(y / CONFIG.HEIGHT);
+            
+            // Calculate Angle
+            const angle = Math.atan2(pt.x, pt.z); 
+            let normAngle = angle;
+            if(normAngle < 0) normAngle += Math.PI * 2;
+            
+            // Running Bond Logic
+            const stepRad = (Math.PI * 2) / CONFIG.SLOTS;
+            
+            // If Odd Ring, shift the grid logic by half step
+            if (ringIdx % 2 === 1) {
+                normAngle -= (stepRad / 2);
+                if(normAngle < 0) normAngle += Math.PI * 2;
+            }
+
+            const slotIdx = Math.floor( (normAngle / (Math.PI * 2)) * CONFIG.SLOTS ) % CONFIG.SLOTS;
+            return { ringIdx: Math.min(ringIdx, CONFIG.RINGS-1), slotIdx };
+        };
+
+        const placeGhost = (grid) => {
+            const angleStep = (Math.PI * 2) / CONFIG.SLOTS;
+            let angle = grid.slotIdx * angleStep + (angleStep/2); 
+            
+            // Physical Offset for Odd Rings
+            if (grid.ringIdx % 2 === 1) angle += (angleStep / 2);
+
+            const y = (grid.ringIdx * CONFIG.HEIGHT); // Bottom of block
+            
+            ghost.position.set(Math.sin(angle) * CONFIG.RADIUS, y + CONFIG.HEIGHT/2, Math.cos(angle) * CONFIG.RADIUS);
+            ghost.rotation.y = angle;
+        };
+
+        const handleInteract = () => {
+            if(!state.hoverGrid) return;
+            haptic(20);
+
+            if (state.interactionMode === 'PLACE') {
+                const existingIdx = state.blocks.findIndex(b => b.ring === state.hoverGrid.ringIdx && b.slot === state.hoverGrid.slotIdx);
+                
+                if (existingIdx >= 0) {
+                    towerGroup.remove(state.blocks[existingIdx].mesh);
+                    state.blocks.splice(existingIdx, 1);
+                } else {
+                    const ringId = state.hoverGrid.ringIdx; 
+                    // Use track color corresponding to Ring Height
+                    const color = TRACKS[ringId].color;
+                    const mesh = createArcBlock(color);
+                    
+                    mesh.position.copy(ghost.position);
+                    mesh.rotation.copy(ghost.rotation);
+                    
+                    towerGroup.add(mesh);
+                    state.blocks.push({ id: state.nextId++, ring: ringId, slot: state.hoverGrid.slotIdx, mesh });
+                    
+                    audio.trigger(ringId, 0.1);
+                }
+            }
+        };
+
+        // --- RENDER LOOP ---
+        const controller = renderer.xr.getController(0);
+        controller.addEventListener('select', handleInteract);
+        scene.add(controller);
+
+        renderer.setAnimationLoop(() => {
+            if(renderer.xr.isPresenting) raycaster.setFromCamera({x:0,y:0}, camera);
+            else raycaster.setFromCamera({x:0,y:0}, camera);
+
+            const hits = raycaster.intersectObject(hitCylinder);
+            const reticle = document.getElementById('reticle');
+
+            if(hits.length > 0) {
+                const grid = getGridPos(hits[0].point);
+                state.hoverGrid = grid;
+                
+                placeGhost(grid);
+                
+                // Visualize Mode
+                if(state.interactionMode === 'PLACE') {
+                    ghost.visible = true;
+                    const trackColor = TRACKS[grid.ringIdx].color;
+                    ghost.material.color.set(trackColor);
+                    reticle.classList.add('active');
+                    reticle.style.borderColor = trackColor;
+                } else {
+                    // Tune Mode: Highlight Ring
+                    ghost.visible = false;
+                    reticle.classList.add('active');
+                    reticle.style.borderColor = '#fff';
+                }
+            } else {
+                ghost.visible = false;
+                state.hoverGrid = null;
+                reticle.classList.remove('active');
+            }
+
+            // Tune Mode Drag Logic
+            if(state.interactionMode === 'TUNE' && state.dragStartX !== null && state.hoverGrid) {
+                // Not fully implemented yet, relying on UI buttons for tuning now for stability
+            }
+
+            // Sequencer
+            if(state.isPlaying) {
+                const dt = clock.getDelta();
+                const rps = (CONFIG.BPM / 60) / 4; 
+                pivot.rotation.y += rps * (Math.PI * 2) * dt;
+                
+                let normRot = (pivot.rotation.y % (Math.PI*2)) / (Math.PI*2);
+                if(normRot < 0) normRot += 1;
+                const currentStep = Math.floor(normRot * CONFIG.SLOTS);
+
+                if(currentStep !== state.currentStep) {
+                    state.currentStep = currentStep;
+                    const active = state.blocks.filter(b => b.slot === currentStep);
+                    active.forEach(b => {
+                        audio.trigger(b.ring, 0.2);
+                        b.mesh.scale.set(1.1, 1.1, 1.1);
+                    });
+                }
+            }
+
+            state.blocks.forEach(b => b.mesh.scale.lerp(new THREE.Vector3(1,1,1), 0.1));
+            
+            if(renderer.xr.isPresenting) renderer.render(scene, camera);
+            else composer.render();
+        });
+
+        // --- UI BINDINGS ---
+        const initBtn = document.getElementById('btn-engine');
+        initBtn.onclick = async () => {
+            if(!audio.ctx) await audio.init();
+            else if(audio.ctx.state === 'suspended') audio.ctx.resume();
+            state.isPlaying = !state.isPlaying;
+            initBtn.innerText = state.isPlaying ? "STOP AUDIO" : "RESUME";
+            initBtn.classList.toggle('active', state.isPlaying);
+        };
+
+        const gridUI = document.getElementById('track-grid');
+        TRACKS.forEach((t, i) => {
+            const div = document.createElement('div');
+            div.className = `track-pad`;
+            div.style.setProperty('--t-color', t.color);
+            div.innerHTML = `<div class="indicator"></div>`;
+            div.onclick = () => {
+                haptic();
+                // Just highlight logic for reference
+                document.querySelectorAll('.track-pad').forEach(p => p.classList.remove('active'));
+                div.classList.add('active');
+                state.selectedTrack = i;
+                document.getElementById('lcd-display').innerText = `${t.name}: ${audio.updateSource(i)}`;
+            };
+            gridUI.appendChild(div);
+        });
+
+        const setMode = (m) => {
+            haptic();
+            state.interactionMode = m;
+            document.getElementById('mode-place').classList.toggle('active', m === 'PLACE');
+            document.getElementById('mode-tune').classList.toggle('active', m === 'TUNE');
+            document.getElementById('btn-place').innerText = m === 'PLACE' ? 'PLACE' : 'TUNE';
+            showToast(m + " MODE");
+        };
+
+        document.getElementById('mode-place').onclick = () => setMode('PLACE');
+        document.getElementById('mode-tune').onclick = () => setMode('TUNE');
+
+        // Touch Drag for Tuning (Global Overlay)
+        const touchZone = document.getElementById('ui-layer');
+        let startX = 0;
+        let activeRing = -1;
+
+        touchZone.addEventListener('touchstart', (e) => {
+            if(state.interactionMode === 'TUNE' && state.hoverGrid) {
+                startX = e.touches[0].clientX;
+                activeRing = state.hoverGrid.ringIdx;
+            }
+        });
+
+        touchZone.addEventListener('touchmove', (e) => {
+            if(state.interactionMode === 'TUNE' && activeRing !== -1) {
+                const x = e.touches[0].clientX;
+                const diff = startX - x;
+                if(Math.abs(diff) > 50) { // Threshold
+                    haptic(15);
+                    const dir = diff > 0 ? 1 : -1;
+                    const name = audio.tune(activeRing, dir);
+                    document.getElementById('lcd-display').innerText = name;
+                    showToast(name);
+                    startX = x; // Reset
+                }
+            }
+        });
+
+        touchZone.addEventListener('touchend', () => { activeRing = -1; });
+
+        // Place Button
+        document.getElementById('btn-place').onclick = handleInteract;
+        
+        document.getElementById('btn-del').onclick = () => {
+            if(state.hoverGrid) {
+                haptic();
+                const idx = state.blocks.findIndex(b => b.ring === state.hoverGrid.ringIdx && b.slot === state.hoverGrid.slotIdx);
+                if(idx >= 0) { towerGroup.remove(state.blocks[idx].mesh); state.blocks.splice(idx, 1); }
+            }
+        };
+
+        document.getElementById('btn-clear').onclick = () => {
+            haptic(50);
+            state.blocks.forEach(b => towerGroup.remove(b.mesh));
+            state.blocks = [];
+        };
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
