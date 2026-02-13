@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>ORBITAL LOOM: MASON-TE PRO</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --te-orange: #ff4d00;
+            --te-bg: #111111;
+            --te-grey: #2e2e2e;
+            --lcd-text: #00ffaa;
+            --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
+        
+        body {
+            margin: 0; overflow: hidden;
+            background-color: #050505;
+            font-family: var(--font-mono);
+            color: #fff;
+        }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        /* --- ISOLATED DASHBOARD --- */
+        #top-hud {
+            pointer-events: auto; padding: 20px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+
+        .dashboard {
+            background: var(--te-bg); border: 1px solid #333; padding: 10px;
+            border-radius: 4px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        #btn-engine {
+            background: var(--te-orange); border: none; color: #fff;
+            padding: 8px 14px; font-size: 10px; font-weight: bold;
+            border-radius: 2px; cursor: pointer; text-transform: uppercase;
+        }
+        #btn-engine.active { background: #fff; color: var(--te-orange); }
+
+        /* Force XR Button to isolated Top Right */
+        #XRButton {
+            position: absolute !important; top: 20px !important; right: 20px !important;
+            bottom: auto !important; left: auto !important; width: auto !important;
+            background: #1a1a1a !important; border: 1px solid #444 !important;
+            font-family: var(--font-mono) !important; font-size: 11px !important;
+            padding: 10px 15px !important; border-radius: 4px !important;
+            opacity: 1 !important; z-index: 100 !important;
+        }
+
+        /* --- THE MASON CONSOLE --- */
+        #console-container {
+            width: 100%; display: flex; justify-content: center;
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+            pointer-events: none;
+        }
+
+        #console {
+            pointer-events: auto; width: 94%; max-width: 480px;
+            background: var(--te-bg); border-radius: 8px; padding: 12px;
+            display: flex; flex-direction: column; gap: 8px;
+            border: 1px solid #333; box-shadow: 0 30px 80px rgba(0,0,0,1);
+        }
+
+        #track-rack { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+        .track-mod {
+            height: 36px; background: #000; border: 1px solid #222;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; border-radius: 2px;
+        }
+        .track-mod.active { background: #333; border-color: var(--t-color); border-bottom: 3px solid var(--t-color); }
+        .track-mod .led { width: 4px; height: 4px; border-radius: 50%; background: #222; margin-bottom: 2px; }
+        .track-mod.active .led { background: var(--t-color); box-shadow: 0 0 6px var(--t-color); }
+
+        #lcd-screen {
+            background: #080a08; border: 1px inset #222; border-radius: 4px;
+            padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .lcd-val { color: var(--lcd-text); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .lcd-meta { color: #3a3; font-size: 9px; opacity: 0.6; }
+
+        /* TACTILE RULER STRIP */
+        #ruler-strip {
+            height: 38px; background: #000; border-radius: 4px;
+            border: 1px solid #333; position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            cursor: ew-resize;
+            background-image: repeating-linear-gradient(90deg, #222, #222 1px, transparent 1px, transparent 12px);
+        }
+        #ruler-strip::after { content:''; position:absolute; height:100%; width:2px; background:var(--te-orange); left:50%; transform:translateX(-50%); box-shadow:0 0 8px var(--te-orange); }
+
+        #action-row { display: flex; gap: 6px; }
+        .btn-act {
+            flex: 1; height: 44px; border: none; border-radius: 4px;
+            font-family: var(--font-mono); font-size: 10px; font-weight: bold;
+            cursor: pointer; text-transform: uppercase;
+        }
+        .btn-main { background: var(--te-orange); color: #fff; }
+        .btn-sec { background: #fff; color: #000; }
+        .btn-act:active { transform: translateY(1px); opacity: 0.8; }
+
+        /* Reticle */
+        #reticle {
+            position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
+            transform: translate(-50%, -50%); background: #fff; border-radius: 50%;
+            pointer-events: none; opacity: 0.5; transition: all 0.2s; z-index: 5;
+        }
+        #reticle.locked { width: 30px; height: 30px; background: transparent; border: 2px solid var(--te-orange); opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="top-hud">
+            <div class="dashboard">
+                <div>
+                    <div style="font-size:12px; font-weight:bold; letter-spacing:1px">ORBITAL LOOM</div>
+                    <div style="font-size:8px; color:#666">M_TE_PRO // 110 BPM</div>
+                </div>
+                <button id="btn-engine">OFF</button>
+            </div>
+        </div>
+
+        <div id="console-container">
+            <div id="console">
+                <div id="track-rack"></div>
+                
+                <div id="lcd-screen">
+                    <div>
+                        <div class="lcd-val" id="lcd-name">KICK_01</div>
+                        <div class="lcd-meta" id="lcd-mode">BUILD MODE</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="lcd-val" id="lcd-selection">1.0</div>
+                        <div class="lcd-meta" id="lcd-param">WIDTH</div>
+                    </div>
+                </div>
+
+                <div id="ruler-strip"></div>
+
+                <div id="action-row">
+                    <button class="btn-act btn-sec" id="btn-mode">BUILD</button>
+                    <button class="btn-act btn-main" id="btn-place">PLACE BRICK</button>
+                    <button class="btn-act btn-sec" id="btn-clear">CLEAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reticle"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { XRButton } from 'three/addons/webxr/XRButton.js';
+
+        // --- MASONRY CONFIG ---
+        const CFG = { RINGS: 8, SLOTS: 16, RADIUS: 4, HEIGHT: 0.95, BPM: 110 };
+        const PALETTE = ['#FF4D00', '#00FFAA', '#00CCFF', '#AA00FF', '#FFCC00', '#FF0055', '#55FF00', '#FFFFFF'];
+        const TRACK_NAMES = ['KICK', 'SNARE', 'HIHAT', 'BASS', 'LEAD', 'PAD', 'ARP', 'NOISE'];
+        const MODES = ['BUILD', 'SCALE', 'TUNE'];
+
+        const state = {
+            isPlaying: false, focusTrack: 0, modeIdx: 0,
+            blocks: [], hoverPos: null, currentStep: 0, nextId: 1,
+            trackSettings: Array.from({length:8}, () => ({ scale: 1.0, filter: 2500, idx: 0, mode: 'MASON' }))
+        };
+
+        // --- AUDIO ENGINE ---
+        class TEAUMason {
+            constructor() {
+                this.ctx = null; this.master = null; this.tracks = [];
+                for(let i=0; i<8; i++) {
+                    this.tracks.push({ audio: new Audio(), gain: null, filter: null });
+                    this.tracks[i].audio.crossOrigin = "anonymous";
+                    this.tracks[i].audio.loop = true;
+                }
+            }
+            async init() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.master = this.ctx.createGain();
+                this.master.gain.value = 0.5;
+                this.master.connect(this.ctx.destination);
+                this.tracks.forEach((t, i) => {
+                    t.gain = this.ctx.createGain();
+                    t.gain.gain.value = 0;
+                    t.filter = this.ctx.createBiquadFilter();
+                    t.filter.type = 'lowpass';
+                    t.filter.frequency.value = state.trackSettings[i].filter;
+                    t.filter.connect(t.gain);
+                    t.gain.connect(this.master);
+                    const src = this.ctx.createMediaElementSource(t.audio);
+                    src.connect(t.filter);
+                });
+                await this.ctx.resume();
+            }
+            trigger(id, dur) {
+                if(!this.ctx) return;
+                const t = this.tracks[id];
+                const set = state.trackSettings[id];
+                const now = this.ctx.currentTime;
+                if(set.mode === 'RADIO') {
+                    t.gain.gain.cancelScheduledValues(now);
+                    t.gain.gain.setTargetAtTime(0.8, now, 0.02);
+                    t.gain.gain.setTargetAtTime(0, now + 0.05, 0.1);
+                } else {
+                    const osc = this.ctx.createOscillator();
+                    const env = this.ctx.createGain();
+                    osc.type = id % 2 === 0 ? 'square' : 'sawtooth';
+                    osc.frequency.value = (50 + (id * 12) + (set.idx * 5));
+                    const f = this.ctx.createBiquadFilter();
+                    f.type = 'lowpass'; f.frequency.value = set.filter;
+                    osc.connect(f); f.connect(env); env.connect(this.master);
+                    env.gain.setValueAtTime(0.4, now);
+                    env.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(); osc.stop(now + 0.2);
+                }
+            }
+        }
+        const audio = new TEAUMason();
+
+        // --- 3D ENGINE ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 6, 12);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(XRButton.createButton(renderer, {
+            optionalFeatures: ['dom-overlay'], domOverlay: { root: document.getElementById('ui-layer') }
+        }));
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.target.set(0, 4, 0);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+        const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5,10,5); scene.add(dl);
+
+        // --- MASONRY GEOMETRY ---
+        const towerGroup = new THREE.Group(); scene.add(towerGroup);
+
+        function createCore() {
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#080808'; ctx.fillRect(0,0,1024,1024);
+            ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+            const rH = 1024 / CFG.RINGS; const sW = 1024 / CFG.SLOTS;
+            for(let i=0; i<CFG.RINGS; i++) {
+                const y = i * rH; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+                const offset = (i % 2 === 1) ? sW / 2 : 0;
+                for(let j=0; j<=CFG.SLOTS; j++) {
+                    let x = (j * sW) + offset; if(x > 1024) x -= 1024;
+                    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + rH); ctx.stroke();
+                }
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, opacity: 0.7, side: THREE.DoubleSide, roughness: 0.3 });
+            const geo = new THREE.CylinderGeometry(CFG.RADIUS-0.01, CFG.RADIUS-0.01, CFG.RINGS * CFG.HEIGHT, 64, 1);
+            geo.rotateY(Math.PI); // ALIGNMENT: Match texture 0 with grid 0
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.y = (CFG.RINGS * CFG.HEIGHT)/2 - (CFG.HEIGHT/2);
+            return mesh;
+        }
+        towerGroup.add(createCore());
+
+        const hitCylinder = new THREE.Mesh(
+            new THREE.CylinderGeometry(CFG.RADIUS+0.5, CFG.RADIUS+0.5, CFG.RINGS * CFG.HEIGHT, 32, 1),
+            new THREE.MeshBasicMaterial({ visible: false })
+        );
+        hitCylinder.position.y = (CFG.RINGS * CFG.HEIGHT)/2 - (CFG.HEIGHT/2);
+        towerGroup.add(hitCylinder);
+
+        const scannerPivot = new THREE.Group();
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.1, CFG.RINGS*CFG.HEIGHT+2, 0.5), new THREE.MeshBasicMaterial({ color: 0xff4d00, transparent:true, opacity:0.6 }));
+        beam.position.set(0, 4, CFG.RADIUS+0.4); scannerPivot.add(beam); scene.add(scannerPivot);
+
+        // --- FIXED BRICK GEOMETRY ---
+        function createBrick(color, ring, slot, widthScale = 1.0) {
+            const baseArc = (Math.PI * 2) / CFG.SLOTS;
+            const arc = baseArc * widthScale;
+            
+            const shape = new THREE.Shape();
+            // Build arc on XZ (top-down view)
+            shape.absarc(0, 0, CFG.RADIUS+0.6, -arc/2, arc/2, false);
+            shape.absarc(0, 0, CFG.RADIUS, arc/2, -arc/2, true);
+            
+            const geo = new THREE.ExtrudeGeometry(shape, { depth: CFG.HEIGHT-0.1, bevelEnabled: true, bevelSize:0.04, bevelThickness:0.04 });
+            geo.rotateX(-Math.PI/2); // Sit flat on XZ
+            geo.center(); 
+            
+            const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ 
+                color, roughness:0.2, metalness:0.8, emissive:color, emissiveIntensity:0.2 
+            }));
+            
+            const stepRad = (Math.PI * 2) / CFG.SLOTS;
+            let angle = slot * stepRad;
+            if(ring % 2 === 1) angle += (stepRad / 2); // Running Bond Shift
+            
+            mesh.position.set(Math.sin(angle) * CFG.RADIUS, ring * CFG.HEIGHT + CFG.HEIGHT/2, Math.cos(angle) * CFG.RADIUS);
+            mesh.rotation.y = angle;
+            return mesh;
+        }
+
+        const ghost = createBrick(0xffffff, 0, 0);
+        ghost.material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent:true, opacity:0.2 });
+        scene.add(ghost);
+
+        // --- INTERACTION ---
+        const raycaster = new THREE.Raycaster();
+        const clock = new THREE.Clock();
+
+        function getGrid(pt) {
+            let y = Math.max(0, pt.y);
+            const ring = Math.min(Math.floor(y / CFG.HEIGHT), CFG.RINGS-1);
+            const angle = Math.atan2(pt.x, pt.z);
+            let nA = angle < 0 ? angle + Math.PI*2 : angle;
+            const stepRad = (Math.PI * 2) / CFG.SLOTS;
+            if(ring % 2 === 1) { nA -= (stepRad/2); if(nA < 0) nA += Math.PI*2; }
+            const slot = Math.round(nA / stepRad) % CFG.SLOTS;
+            return { ring, slot };
+        }
+
+        function toggleBrick() {
+            if(!state.hoverPos) return;
+            const { ring, slot } = state.hoverPos;
+            const set = state.trackSettings[ring];
+            if (navigator.vibrate) navigator.vibrate(20);
+            const idx = state.blocks.findIndex(b => b.ring===ring && b.slot===slot);
+            if(idx>=0) { towerGroup.remove(state.blocks[idx].mesh); state.blocks.splice(idx, 1); }
+            else {
+                const mesh = createBrick(PALETTE[ring], ring, slot, set.scale);
+                towerGroup.add(mesh);
+                state.blocks.push({ ring, slot, mesh });
+                audio.trigger(ring, 0.1);
+            }
+        }
+
+        renderer.setAnimationLoop(() => {
+            raycaster.setFromCamera({x:0,y:0}, camera);
+            const hits = raycaster.intersectObject(hitCylinder);
+            const reticle = document.getElementById('reticle');
+
+            if(hits.length > 0) {
+                state.hoverPos = getGrid(hits[0].point);
+                const { ring, slot } = state.hoverPos;
+                const set = state.trackSettings[ring];
+                
+                const stepRad = (Math.PI * 2) / CFG.SLOTS;
+                let angle = slot * stepRad;
+                if(ring % 2 === 1) angle += (stepRad / 2);
+                
+                ghost.position.set(Math.sin(angle)*CFG.RADIUS, ring*CFG.HEIGHT+CFG.HEIGHT/2, Math.cos(angle)*CFG.RADIUS);
+                ghost.rotation.y = angle; 
+                ghost.visible = (state.modeIdx === 0);
+
+                reticle.classList.add('locked'); reticle.style.borderColor = PALETTE[ring];
+            } else {
+                ghost.visible = false; state.hoverPos = null; reticle.classList.remove('locked');
+            }
+
+            if(state.isPlaying) {
+                const dt = clock.getDelta();
+                const rps = (CFG.BPM / 60) / 4; 
+                scannerPivot.rotation.y += rps * (Math.PI * 2) * dt;
+                let nR = (scannerPivot.rotation.y % (Math.PI*2)) / (Math.PI*2);
+                if(nR < 0) nR += 1;
+                const step = Math.floor(nR * CFG.SLOTS);
+                if(step !== state.currentStep) {
+                    state.currentStep = step;
+                    state.blocks.filter(b => b.slot === step).forEach(b => {
+                        audio.trigger(b.ring, 0.2);
+                        b.mesh.scale.set(1.1, 1.1, 1.1);
+                    });
+                }
+            }
+            state.blocks.forEach(b => b.mesh.scale.lerp(new THREE.Vector3(1,1,1), 0.1));
+            controls.update();
+            renderer.render(scene, camera);
+        });
+
+        // --- CONSOLE ---
+        const rack = document.getElementById('track-rack');
+        PALETTE.forEach((c, i) => {
+            const m = document.createElement('div');
+            m.className = `track-mod ${i===0?'active':''}`;
+            m.style.setProperty('--t-color', c);
+            m.innerHTML = `<div class="led"></div><div class="label" style="font-size:7px">R-${i+1}</div>`;
+            m.onclick = () => focus(i);
+            rack.appendChild(m);
+        });
+
+        function focus(id) {
+            state.focusTrack = id;
+            document.querySelectorAll('.track-mod').forEach((m,i)=>m.classList.toggle('active', i===id));
+            updateLCD();
+        }
+
+        function updateLCD() {
+            const id = state.focusTrack;
+            const set = state.trackSettings[id];
+            document.getElementById('lcd-name').innerText = TRACK_NAMES[id];
+            document.getElementById('lcd-mode').innerText = MODES[state.modeIdx] + " MODE";
+            
+            let val = ""; let p = "";
+            if(state.modeIdx === 0) { val = set.mode; p = "SOURCE"; }
+            if(state.modeIdx === 1) { val = set.scale.toFixed(1); p = "WIDTH"; }
+            if(state.modeIdx === 2) { val = set.idx + 1; p = "SELECT"; }
+            
+            document.getElementById('lcd-selection').innerText = val;
+            document.getElementById('lcd-param').innerText = p;
+        }
+
+        document.getElementById('btn-engine').onclick = async (e) => {
+            if(!audio.ctx) { await audio.init(); focus(0); }
+            else audio.ctx.resume();
+            state.isPlaying = !state.isPlaying;
+            e.target.innerText = state.isPlaying ? "ON" : "OFF";
+            e.target.classList.toggle('active', state.isPlaying);
+        };
+
+        document.getElementById('btn-mode').onclick = (e) => {
+            state.modeIdx = (state.modeIdx + 1) % MODES.length;
+            e.target.innerText = MODES[state.modeIdx];
+            updateLCD();
+        };
+
+        let sX = 0, sY = 0;
+        const ruler = document.getElementById('ruler-strip');
+        ruler.ontouchstart = (e) => { sX = e.touches[0].clientX; sY = e.touches[0].clientY; };
+        ruler.ontouchmove = (e) => {
+            const x = e.touches[0].clientX; const y = e.touches[0].clientY;
+            const dx = sX - x; const dy = sY - y;
+            const set = state.trackSettings[state.focusTrack];
+            if(Math.abs(dx) > 30) {
+                if (navigator.vibrate) navigator.vibrate(5);
+                const dir = dx > 0 ? 1 : -1;
+                if(state.modeIdx === 1) set.scale = Math.max(0.1, Math.min(2.0, set.scale - dir * 0.1));
+                if(state.modeIdx === 2) set.idx = (set.idx + dir + 10) % 10;
+                updateLCD(); sX = x;
+            }
+            if(Math.abs(dy) > 20) {
+                set.filter = Math.max(100, Math.min(8000, set.filter + (dy > 0 ? 150 : -150)));
+                if(audio.ctx) audio.tracks[state.focusTrack].filter.frequency.value = set.filter;
+                sY = y;
+            }
+        };
+
+        document.getElementById('btn-place').onclick = toggleBrick;
+        document.getElementById('btn-clear').onclick = () => {
+            state.blocks = state.blocks.filter(b => {
+                if(b.ring === state.focusTrack) { towerGroup.remove(b.mesh); return false; }
+                return true;
+            });
+        };
+
+        const con = renderer.xr.getController(0);
+        con.addEventListener('select', toggleBrick);
+        scene.add(con);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        focus(0);
+    </script>
+</body>
+</html>
