@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>ORBITAL LOOM: SENSOR GRID</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --te-orange: #ff4d00;
+            --te-bg: rgba(18, 18, 18, 0.9);
+            --font-mono: 'Courier New', monospace;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: var(--font-mono); color: #fff; }
+
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+        #top-hud { pointer-events: auto; padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 100; }
+        
+        .glass-panel { background: var(--te-bg); border: 1px solid #333; padding: 12px; border-radius: 4px; display: flex; align-items: center; gap: 15px; }
+        #btn-engine { background: var(--te-orange); border: none; color: #fff; padding: 8px 16px; font-weight: bold; cursor: pointer; }
+        
+        #debug-log {
+            position: absolute; top: 100px; left: 10px; 
+            font-size: 12px; color: #0f0; background: rgba(0,0,0,0.8);
+            padding: 10px; border: 1px solid #0f0; pointer-events: none;
+            width: 300px; white-space: pre-wrap; z-index: 9999;
+        }
+
+        #console-container { width: 100%; display: flex; justify-content: center; padding-bottom: 20px; pointer-events: none; }
+        #console { pointer-events: auto; width: 95%; max-width: 400px; background: var(--te-bg); border: 1px solid #333; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; }
+        
+        #track-rack { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+        .track-mod { height: 30px; background: #222; border: 1px solid #444; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .track-mod.active { background: #444; border-color: var(--t-color); }
+        .track-mod .led { width: 8px; height: 8px; border-radius: 50%; background: #000; }
+        .track-mod.active .led { background: var(--t-color); box-shadow: 0 0 5px var(--t-color); }
+
+        #XRButton { position: absolute; top: 20px; right: 20px; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="top-hud">
+            <div class="glass-panel">
+                <div>
+                    <div style="font-size:12px; font-weight:bold;">ORBITAL LOOM</div>
+                    <div id="status-bpm" style="font-size:10px; color:#aaa">SENSOR_GRID // REBOOT</div>
+                </div>
+                <button id="btn-engine">AUDIO START</button>
+            </div>
+        </div>
+        <div id="debug-log">System Initializing...</div>
+        <div id="console-container">
+            <div id="console">
+                <div id="track-rack"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { XRButton } from 'three/addons/webxr/XRButton.js';
+
+        // --- CONSTANTS ---
+        const RINGS = 8;
+        const SLOTS = 16;
+        const RADIUS = 2.0;
+        const HEIGHT = 0.6;
+        const PALETTE = ['#FF4D00', '#00FFAA', '#00CCFF', '#AA00FF', '#FFCC00', '#FF0055', '#55FF00', '#FFFFFF'];
+
+        // --- STATE ---
+        const state = {
+            isPlaying: false, focusTrack: 0,
+            blocks: [], // Stores placed bricks
+            hoverTarget: null, // Stores {ring, slot} from raycast
+            currentStep: 0,
+            bpm: 110,
+            settings: Array.from({length:8}, ()=>({ scale:1.0, filter:4000, idx:0 }))
+        };
+
+        // --- SETUP ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 1.6, 0); // Eye level
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(XRButton.createButton(renderer, {
+            optionalFeatures: ['dom-overlay'], domOverlay: { root: document.getElementById('ui-layer') }
+        }));
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1.6, -1);
+        controls.update();
+
+        scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        const headlight = new THREE.PointLight(0xffffff, 2, 10);
+        scene.add(headlight);
+
+        // --- THE STRUCTURE ---
+        const root = new THREE.Group();
+        scene.add(root);
+
+        // 1. Visual Wireframe (For Reference)
+        const wireGeo = new THREE.CylinderGeometry(RADIUS, RADIUS, RINGS*HEIGHT, 16, RINGS, true);
+        const wireMat = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: true, side: THREE.DoubleSide });
+        const wireframe = new THREE.Mesh(wireGeo, wireMat);
+        wireframe.position.y = (RINGS*HEIGHT)/2;
+        root.add(wireframe);
+
+        // 2. THE SENSOR GRID (The Logic Fix)
+        // Instead of calculating angles, we place physical invisible boxes for every slot.
+        const sensorGroup = new THREE.Group();
+        root.add(sensorGroup);
+        const sensors = []; // Flat array for raycasting
+
+        function buildSensors() {
+            const boxGeo = new THREE.BoxGeometry(0.6, HEIGHT-0.05, 0.1); // Wide, flat boxes
+            const boxMat = new THREE.MeshBasicMaterial({ 
+                color: 0x330000, // Dark Red
+                wireframe: true,
+                visible: true,   // VISIBLE FOR DEBUGGING - Turn off later if fixed
+                side: THREE.DoubleSide
+            });
+
+            for(let r=0; r<RINGS; r++) {
+                const ringY = r * HEIGHT + (HEIGHT/2);
+                const stepRad = (Math.PI * 2) / SLOTS;
+                const offset = (r % 2 === 1) ? stepRad/2 : 0;
+
+                for(let s=0; s<SLOTS; s++) {
+                    const angle = (s * stepRad) + offset;
+                    
+                    const sensor = new THREE.Mesh(boxGeo, boxMat.clone());
+                    
+                    // Position on cylinder wall
+                    sensor.position.x = Math.sin(angle) * RADIUS;
+                    sensor.position.z = Math.cos(angle) * RADIUS;
+                    sensor.position.y = ringY;
+                    
+                    // Face center
+                    sensor.lookAt(0, ringY, 0);
+                    
+                    // Store Data directly on Mesh
+                    sensor.userData = { isSensor: true, ring: r, slot: s, active: false };
+                    
+                    sensorGroup.add(sensor);
+                    sensors.push(sensor);
+                }
+            }
+        }
+        buildSensors();
+
+        // 3. Scanner Beam
+        const scanner = new THREE.Mesh(
+            new THREE.BoxGeometry(0.05, RINGS*HEIGHT, RADIUS*2),
+            new THREE.MeshBasicMaterial({ color: 0xff4d00, transparent: true, opacity: 0.2 })
+        );
+        scanner.position.y = (RINGS*HEIGHT)/2;
+        root.add(scanner);
+
+        // --- BRICK LOGIC ---
+        function updateBrickVisuals() {
+            // Simply hide/show based on userData.active
+            sensors.forEach(s => {
+                if(s.userData.active) {
+                    s.material.color.set(PALETTE[s.userData.ring]);
+                    s.material.wireframe = false; // Solid when active
+                    s.material.opacity = 1.0;
+                } else {
+                    s.material.color.set(0x330000); // Reset to debug red
+                    s.material.wireframe = true;
+                    s.material.opacity = 0.5;
+                }
+            });
+        }
+
+        function toggleBrick() {
+            if(!state.hoverTarget) return;
+            
+            // Toggle the state of the sensor itself
+            state.hoverTarget.userData.active = !state.hoverTarget.userData.active;
+            
+            // Audio Feedback
+            const osc = audio.ctx.createOscillator();
+            const gain = audio.ctx.createGain();
+            osc.connect(gain); gain.connect(audio.ctx.destination);
+            osc.frequency.setValueAtTime(state.hoverTarget.userData.active ? 880 : 440, audio.ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, audio.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audio.ctx.currentTime+0.1);
+            osc.start(); osc.stop(audio.ctx.currentTime+0.1);
+
+            if(navigator.vibrate) navigator.vibrate(20);
+            updateBrickVisuals();
+            log(`Toggled: R${state.hoverTarget.userData.ring}/S${state.hoverTarget.userData.slot}`);
+        }
+
+        // --- INTERACTION ---
+        const raycaster = new THREE.Raycaster();
+        const controller = renderer.xr.getController(0);
+        controller.addEventListener('select', toggleBrick);
+        scene.add(controller);
+        
+        // Laser Pointer
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-5)]);
+        const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xffffff }));
+        controller.add(line);
+
+        // Mouse Fallback
+        const mouse = new THREE.Vector2();
+        window.addEventListener('mousedown', (e) => {
+            if(e.target.tagName !== 'BUTTON') toggleBrick();
+        });
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // --- LOGGING ---
+        const debugLog = document.getElementById('debug-log');
+        function log(msg) {
+            debugLog.innerText = msg + '\n' + debugLog.innerText.split('\n').slice(0, 4).join('\n');
+        }
+
+        // --- AUDIO ENGINE ---
+        const audio = { ctx: new (window.AudioContext||window.webkitAudioContext)(), tracks:[] };
+        // Simple synth init...
+        document.getElementById('btn-engine').onclick = () => { audio.ctx.resume(); log("Audio Resumed"); };
+
+        // --- ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+        const tempMat = new THREE.Matrix4();
+
+        renderer.setAnimationLoop(() => {
+            const dt = clock.getDelta();
+
+            // 1. Raycast
+            if(renderer.xr.isPresenting) {
+                tempMat.identity().extractRotation(controller.matrixWorld);
+                raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+                raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMat);
+            } else {
+                raycaster.setFromCamera(new THREE.Vector2(0,0), camera); // Center gaze
+            }
+
+            // Raycast against the SENSOR GRID directly
+            const hits = raycaster.intersectObjects(sensors);
+            
+            // Clear previous hover effect (if not active)
+            if(state.hoverTarget && !state.hoverTarget.userData.active) {
+                state.hoverTarget.material.color.set(0x330000);
+            }
+
+            if(hits.length > 0) {
+                state.hoverTarget = hits[0].object;
+                // Hover effect
+                if(!state.hoverTarget.userData.active) {
+                    state.hoverTarget.material.color.set(0x666666);
+                }
+                document.getElementById('status-bpm').innerText = `TARGET: R${state.hoverTarget.userData.ring} S${state.hoverTarget.userData.slot}`;
+            } else {
+                state.hoverTarget = null;
+                document.getElementById('status-bpm').innerText = "NO TARGET";
+            }
+
+            // 2. Scanner Animation
+            if(audio.ctx.state === 'running') {
+                const rps = (state.bpm/60)/4;
+                scanner.rotation.y -= rps * Math.PI * 2 * dt;
+                
+                // Play logic
+                let scanAngle = scanner.rotation.y % (Math.PI*2);
+                if(scanAngle < 0) scanAngle += Math.PI*2;
+                
+                // Check sensors
+                sensors.forEach(s => {
+                    if(s.userData.active) {
+                        // Get sensor angle
+                        let sAngle = Math.atan2(s.position.x, s.position.z);
+                        if(sAngle < 0) sAngle += Math.PI*2;
+                        
+                        // Compare (simple proximity)
+                        if(Math.abs(sAngle - scanAngle) < 0.1) {
+                            s.scale.setScalar(1.2); // Pulse
+                        } else {
+                            s.scale.setScalar(1.0);
+                        }
+                    }
+                });
+            }
+
+            renderer.render(scene, camera);
+        });
+
+        renderer.xr.addEventListener('sessionstart', () => {
+            root.position.set(0, -1, 0); // Lower tower
+            log("XR Session Started");
+        });
+
+        // UI Builder
+        const rack = document.getElementById('track-rack');
+        PALETTE.forEach((c, i) => {
+            const d = document.createElement('div');
+            d.className = 'track-mod';
+            d.style.setProperty('--t-color', c);
+            d.innerHTML = '<div class="led"></div>';
+            rack.appendChild(d);
+        });
+
+    </script>
+</body>
+</html>
+
+
