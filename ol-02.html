@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>ORBITAL LOOM: STABLE</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --bg-color: #050505;
+            --font-main: 'Courier New', monospace;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; overflow: hidden; background-color: var(--bg-color); font-family: var(--font-main); color: #fff; }
+
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+
+        /* HUD */
+        #top-hud {
+            position: absolute; top: 20px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            pointer-events: auto;
+        }
+
+        .panel {
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid #333;
+            border-left: 4px solid var(--neon-blue);
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 { margin: 0; font-size: 16px; letter-spacing: 2px; color: #fff; text-transform: uppercase; }
+        .sub { font-size: 10px; color: #888; margin-top: 4px; }
+
+        /* BUTTONS */
+        button {
+            background: #222; border: 1px solid #444; color: #ccc;
+            padding: 10px 16px; font-family: inherit; font-size: 11px; font-weight: bold;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        button:hover { border-color: #fff; color: #fff; }
+        button.active { background: var(--neon-blue); color: #000; border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(0, 243, 255, 0.4); }
+        
+        #btn-power { background: #ff3300; color: #fff; border: none; }
+        #btn-power.on { background: #00ff66; color: #000; }
+
+        /* CONTROLS (Bottom) */
+        #controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px; pointer-events: auto; flex-wrap: wrap; justify-content: center;
+            width: 100%; padding: 0 20px;
+        }
+
+        .ctrl-group {
+            display: flex; gap: 2px; background: rgba(0,0,0,0.8); padding: 4px; border-radius: 4px; border: 1px solid #333;
+        }
+
+        /* RETICLE */
+        #reticle {
+            position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
+            background: rgba(255,255,255,0.8); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.5); transition: 0.2s;
+        }
+        #reticle.hover { width: 16px; height: 16px; background: transparent; border: 2px solid var(--neon-blue); }
+
+        #XRButton { position: absolute !important; bottom: 100px !important; left: 50% !important; transform: translateX(-50%) !important; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="top-hud">
+            <div class="panel">
+                <h1>Orbital Loom</h1>
+                <div class="sub" id="status-text">SYSTEM STANDBY</div>
+            </div>
+            <button id="btn-power">INITIALIZE</button>
+        </div>
+
+        <div id="reticle"></div>
+
+        <div id="controls">
+            <div class="ctrl-group">
+                <button class="active" onclick="setBank(0, this)">TECH</button>
+                <button onclick="setBank(1, this)">DREAM</button>
+                <button onclick="setBank(2, this)">GRIME</button>
+            </div>
+            <div class="ctrl-group" id="cam-controls">
+                <button class="active" onclick="setCam('INSIDE', this)">INSIDE</button>
+                <button onclick="setCam('OUTSIDE', this)">OUTSIDE</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { XRButton } from 'three/addons/webxr/XRButton.js';
+
+        // --- CONFIG ---
+        const RINGS = 8;
+        const SLOTS = 16;
+        const RADIUS = 2.5;
+        const HEIGHT = 0.6;
+        const COLORS = [0xff0000, 0xff7700, 0xffff00, 0x00ff00, 0x00ffff, 0x0000ff, 0xff00ff, 0xffffff];
+
+        // --- STATE ---
+        const state = {
+            isPlaying: false,
+            bpm: 120,
+            bank: 0,
+            hover: null
+        };
+
+        // --- AUDIO ENGINE (Simple & Robust) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const master = audioCtx.createGain();
+        master.gain.value = 0.4;
+        master.connect(audioCtx.destination);
+
+        // Simple Reverb
+        const reverb = audioCtx.createConvolver();
+        const rate = audioCtx.sampleRate;
+        const len = rate * 2.0;
+        const buff = audioCtx.createBuffer(2, len, rate);
+        for(let c=0; c<2; c++) {
+            const d = buff.getChannelData(c);
+            for(let i=0; i<len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/len, 2);
+        }
+        reverb.buffer = buff;
+        reverb.connect(master);
+
+        function playSound(ringIdx) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            // Bank Logic
+            if(state.bank === 0) { // TECH
+                osc.type = ringIdx < 2 ? 'sine' : (ringIdx < 5 ? 'triangle' : 'sawtooth');
+                const freq = ringIdx === 0 ? 50 : (100 + ringIdx * 100);
+                osc.frequency.setValueAtTime(freq, t);
+                if(ringIdx === 0) osc.frequency.exponentialRampToValueAtTime(10, t+0.2); // Kick drop
+                gain.gain.setValueAtTime(0.5, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+            } 
+            else if(state.bank === 1) { // DREAM
+                osc.type = 'sine';
+                const freq = 220 * Math.pow(1.059, ringIdx * 2); // Pentatonic-ish
+                osc.frequency.setValueAtTime(freq, t);
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.3, t + 0.1); // Attack
+                gain.gain.linearRampToValueAtTime(0, t + 1.0); // Long Release
+                
+                // More reverb send
+                const revSend = audioCtx.createGain();
+                revSend.gain.value = 0.5;
+                gain.connect(revSend);
+                revSend.connect(reverb);
+            }
+            else { // GRIME
+                osc.type = 'square';
+                const freq = 55 * (ringIdx + 1);
+                osc.frequency.setValueAtTime(freq, t);
+                // FM Mod
+                const lfo = audioCtx.createOscillator();
+                lfo.frequency.value = 50 * (ringIdx+1);
+                const lfoGain = audioCtx.createGain();
+                lfoGain.gain.value = 500;
+                lfo.connect(lfoGain);
+                lfoGain.connect(osc.frequency);
+                lfo.start(t); lfo.stop(t+0.1);
+
+                gain.gain.setValueAtTime(0.4, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            }
+
+            osc.connect(gain);
+            gain.connect(master);
+            osc.start(t);
+            osc.stop(t + 1.5);
+        }
+
+        // --- 3D SCENE ---
+        const scene = new THREE.Scene();
+        // Start inside
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.set(0, 1.6, 0.1); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        
+        // Add XR Button
+        document.body.appendChild(XRButton.createButton(renderer, {
+            optionalFeatures: ['dom-overlay'], 
+            domOverlay: { root: document.getElementById('ui-layer') } 
+        }));
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 1.6, -1);
+
+        // Light
+        const light = new THREE.PointLight(0xffffff, 2, 20);
+        light.position.set(0, 5, 0);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.2));
+
+        // --- TOWER BUILDER ---
+        const tower = new THREE.Group();
+        // Start at floor level (0)
+        tower.position.y = 0; 
+        scene.add(tower);
+
+        // Geometries
+        // We use a Box for the "Hit Area" (Sensor)
+        // And a LineSegments for the "Wireframe" (Visual)
+        const slotW = (Math.PI * 2 * RADIUS) / SLOTS * 0.9;
+        const boxGeo = new THREE.BoxGeometry(slotW, HEIGHT * 0.9, 0.2);
+        const edgesGeo = new THREE.EdgesGeometry(boxGeo);
+
+        // Shared Materials
+        const invisibleMat = new THREE.MeshBasicMaterial({ visible: false }); 
+        const wireMat = new THREE.LineBasicMaterial({ color: 0x444444, opacity: 0.3, transparent: true });
+        const activeMat = new THREE.MeshStandardMaterial({ 
+            color: 0xffffff, emissive: 0xaaaaaa, emissiveIntensity: 0.5,
+            roughness: 0.2, metalness: 0.8
+        });
+        const hoverMat = new THREE.MeshBasicMaterial({ color: 0x222222, wireframe: true });
+
+        const sensors = []; // Raycast targets
+
+        for(let r=0; r<RINGS; r++) {
+            const y = r * HEIGHT + (HEIGHT/2);
+            for(let s=0; s<SLOTS; s++) {
+                const angle = (s / SLOTS) * Math.PI * 2;
+                
+                // Container Group for this slot
+                const slotGroup = new THREE.Group();
+                slotGroup.position.set(
+                    Math.sin(angle) * RADIUS,
+                    y,
+                    Math.cos(angle) * RADIUS
+                );
+                slotGroup.lookAt(0, y, 0);
+                tower.add(slotGroup);
+
+                // 1. The Sensor (Invisible Click Target)
+                // We use a physical mesh for raycasting, but hide it if needed
+                // Actually, let's keep it visible but transparent so debug is easier if things break
+                const sensor = new THREE.Mesh(boxGeo, new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.01, side: THREE.DoubleSide }));
+                sensor.userData = { r: r, s: s, active: false, group: slotGroup };
+                slotGroup.add(sensor);
+                sensors.push(sensor);
+
+                // 2. The Visual Wireframe (Always Visible)
+                const frame = new THREE.LineSegments(edgesGeo, wireMat);
+                slotGroup.add(frame);
+
+                // 3. The Active Brick (Hidden by default)
+                const brick = new THREE.Mesh(boxGeo, activeMat.clone());
+                brick.material.color.setHex(COLORS[r]);
+                brick.material.emissive.setHex(COLORS[r]);
+                brick.visible = false;
+                brick.scale.set(0.9, 0.9, 0.9);
+                slotGroup.add(brick);
+                
+                // Link visuals to sensor for easy access
+                sensor.userData.brick = brick;
+                sensor.userData.frame = frame;
+            }
+        }
+
+        // --- SCANNER ---
+        const scanGeo = new THREE.BoxGeometry(0.1, RINGS*HEIGHT, RADIUS*2.2);
+        const scanMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
+        const scanner = new THREE.Mesh(scanGeo, scanMat);
+        scanner.position.y = (RINGS*HEIGHT)/2;
+        tower.add(scanner);
+
+        // --- INTERACTION ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const reticle = document.getElementById('reticle');
+        
+        // XR Controller
+        const controller = renderer.xr.getController(0);
+        controller.addEventListener('select', onTrigger);
+        scene.add(controller);
+        
+        // Laser
+        const laser = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-5)]),
+            new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 0.5, transparent: true })
+        );
+        controller.add(laser);
+
+        // Events
+        window.addEventListener('pointermove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        window.addEventListener('pointerdown', (e) => {
+            if(e.target.tagName !== 'BUTTON') onTrigger();
+        });
+
+        function onTrigger() {
+            if(!audioCtx) return;
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+
+            if(state.hover) {
+                const s = state.hover;
+                s.userData.active = !s.userData.active;
+                updateSlotVisuals(s);
+                if(s.userData.active) playSound(s.userData.r);
+            }
+        }
+
+        function updateSlotVisuals(sensor) {
+            const active = sensor.userData.active;
+            const brick = sensor.userData.brick;
+            
+            if(active) {
+                brick.visible = true;
+                if(navigator.vibrate) navigator.vibrate(10);
+            } else {
+                brick.visible = false;
+            }
+        }
+
+        // --- UI HANDLERS ---
+        window.setBank = (idx, el) => {
+            state.bank = idx;
+            document.querySelectorAll('.ctrl-group button').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('status-text').innerText = "BANK SWITCHED";
+        };
+
+        window.setCam = (mode, el) => {
+            document.querySelectorAll('#cam-controls button').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            if(mode === 'INSIDE') {
+                camera.position.set(0, 1.6, 0.1);
+                controls.target.set(0, 1.6, -1);
+            } else {
+                camera.position.set(0, 4, 6);
+                controls.target.set(0, 2, 0);
+            }
+        };
+
+        document.getElementById('btn-power').onclick = (e) => {
+            state.isPlaying = !state.isPlaying;
+            e.target.innerText = state.isPlaying ? "STOP" : "INITIALIZE";
+            e.target.classList.toggle('on');
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('status-text').innerText = state.isPlaying ? "SEQUENCER RUNNING" : "STANDBY";
+        };
+
+        // --- LOOP ---
+        const clock = new THREE.Clock();
+        const tempMat = new THREE.Matrix4();
+
+        renderer.setAnimationLoop(() => {
+            const dt = clock.getDelta();
+            controls.update();
+
+            // 1. Raycast
+            if(renderer.xr.isPresenting) {
+                tempMat.identity().extractRotation(controller.matrixWorld);
+                raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+                raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMat);
+            } else {
+                raycaster.setFromCamera(mouse, camera);
+            }
+
+            const hits = raycaster.intersectObjects(sensors);
+            
+            // Clear previous hover
+            if(state.hover && (!hits.length || hits[0].object !== state.hover)) {
+                state.hover.userData.frame.material.color.setHex(0x444444);
+                state.hover.userData.frame.material.opacity = 0.3;
+                state.hover = null;
+                reticle.classList.remove('hover');
+            }
+
+            // New hover
+            if(hits.length) {
+                const hit = hits[0].object;
+                state.hover = hit;
+                // Highlight Frame
+                hit.userData.frame.material.color.setHex(0xffffff);
+                hit.userData.frame.material.opacity = 1.0;
+                reticle.classList.add('hover');
+            }
+
+            // 2. Sequencer Animation
+            if(state.isPlaying) {
+                // Rotate Scanner
+                const speed = (state.bpm / 60) * Math.PI / 2; // 90 deg per beat approx
+                scanner.rotation.y -= speed * dt * 0.5;
+                
+                const scanAng = scanner.rotation.y % (Math.PI*2);
+                
+                // Check triggers
+                sensors.forEach(s => {
+                    if(s.userData.active) {
+                        // Calc angle of slot
+                        let slotAng = (s.userData.s / SLOTS) * Math.PI * 2;
+                        // Adjust for coordinate system match
+                        // (Scanner rotates negative Y, slots are positive X/Z)
+                        // Simple dist check:
+                        let diff = Math.abs(slotAng - Math.abs(scanAng));
+                        if(diff > Math.PI) diff = (Math.PI*2) - diff;
+
+                        if(diff < 0.1) {
+                            s.userData.brick.scale.setScalar(1.2);
+                            if(!s.userData.triggered) {
+                                playSound(s.userData.r);
+                                s.userData.triggered = true;
+                            }
+                        } else {
+                            s.userData.brick.scale.setScalar(0.9);
+                            s.userData.triggered = false;
+                        }
+                    }
+                });
+            }
+
+            renderer.render(scene, camera);
+        });
+
+        // Hide desktop cam controls in AR
+        renderer.xr.addEventListener('sessionstart', () => {
+            document.getElementById('cam-controls').style.display = 'none';
+            tower.position.y = 0; // Ensure floor
+        });
+        renderer.xr.addEventListener('sessionend', () => {
+            document.getElementById('cam-controls').style.display = 'flex';
+        });
+
+    </script>
+</body>
+</html>
+
