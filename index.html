@@ -12,50 +12,262 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
         rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --bg: #050505;
-            --card-bg: #111;
-            --border: #222;
-            --accent: #f5a623;
-            --text-main: #e0e0e0;
-            --text-dim: #666;
+            --bg: #030303;
+            --panel: rgba(8, 8, 8, 0.9);
+            --border: rgba(255, 255, 255, 0.15);
+            --text-main: #f2f2f2;
+            --text-dim: #a1a1a6;
+            --scan: rgba(255, 255, 255, 0.04);
+            --highlight: #f5a623;
+            --highlight-2: #39ffde;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            background-color: var(--bg);
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at 10% -10%, rgba(57, 255, 222, 0.14), transparent 45%),
+                radial-gradient(circle at 90% 10%, rgba(245, 165, 35, 0.08), transparent 40%),
+                var(--bg);
             color: var(--text-main);
             font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
         }
 
         .mono {
             font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.2em;
         }
 
         .hero-text {
-            background: linear-gradient(180deg, #fff 0%, #666 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #c0c0c0 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: 0.35em;
         }
 
-        .tool-card {
-            background: var(--card-bg);
+        header {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 2rem 4vw 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hero-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .hero-sub {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.85);
+        }
+
+        .hero-pill {
+            padding: 4px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            font-size: 0.7rem;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: var(--text-dim);
+        }
+
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(transparent, transparent 6px, var(--scan) 6px, var(--scan) 8px);
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0.45;
+        }
+
+        .control-shell {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 4vw;
+        }
+
+        .control-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            font-size: 0.75rem;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .control-card {
+            border-radius: 14px;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--control-color, rgba(255, 255, 255, 0.3));
+            transition: transform 0.25s ease, border 0.25s ease;
+            box-shadow: 0 0 22px rgba(0, 0, 0, 0.35);
+        }
+
+        .control-card h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            letter-spacing: 0.25em;
+            color: var(--control-color, #f5a623);
+        }
+
+        .control-card p {
+            margin: 0.4rem 0 0;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            letter-spacing: 0.15em;
+        }
+
+        .control-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .search-shell {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 4vw 1rem;
+        }
+
+        .search-shell input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(12, 12, 12, 0.7);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3em;
+        }
+
+        .search-shell input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.4em;
+        }
+
+        .manifest-wrap {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 4vw 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .family-section {
             border: 1px solid var(--border);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border-radius: 20px;
+            padding: 28px;
+            background: rgba(7, 7, 7, 0.85);
             position: relative;
             overflow: hidden;
         }
 
-        .tool-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-4px);
-            box-shadow: 0 10px 30px -10px rgba(245, 166, 35, 0.15);
+        .family-section::before {
+            content: '';
+            position: absolute;
+            inset: 10% 5% auto;
+            height: 180px;
+            background: radial-gradient(circle, var(--family-accent, var(--highlight)) 0%, transparent 60%);
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .family-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .family-name {
+            margin: 0;
+            font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+            letter-spacing: 0.25em;
+            font-weight: 700;
+        }
+
+        .family-meta {
+            margin: 0.4rem 0 0;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            letter-spacing: 0.2em;
+            max-width: 60ch;
+        }
+
+        .family-pill {
+            letter-spacing: 0.5em;
+            font-size: 0.7rem;
+            padding: 4px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.04);
+            text-transform: uppercase;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .tool-card {
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 24px;
+            background: rgba(14, 14, 14, 0.95);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
         }
 
         .tool-card::before {
@@ -64,64 +276,84 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 2px;
-            background: var(--accent);
-            transform: scaleX(0);
+            height: 4px;
             transform-origin: left;
+            transform: scaleX(0);
+            background: linear-gradient(90deg, var(--highlight-2), var(--family-accent, var(--highlight)));
             transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--family-accent, var(--highlight));
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.55);
         }
 
         .tool-card:hover::before {
             transform: scaleX(1);
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 8px #22c55e;
+        .card-title {
+            margin: 0;
+            font-size: 1.1rem;
+            letter-spacing: 0.1em;
+            font-weight: 600;
         }
 
-        .scanline {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.1));
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 50;
-            opacity: 0.3;
+        .card-body {
+            margin: 0;
+            color: var(--text-dim);
+            line-height: 1.5;
+            font-size: 0.9rem;
         }
 
-        /* Mobile Responsive Styles */
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.35em;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-dim);
+        }
+
+        .card-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #7d7d7d;
+            letter-spacing: 0.25em;
+        }
+
+        .loading {
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 36px;
+            text-align: center;
+            color: var(--text-dim);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+        }
+
         @media (max-width: 768px) {
-            .tool-card {
-                padding: 16px;
+            header, .control-shell, .search-shell, .manifest-wrap {
+                padding: 1.5rem 4vw;
             }
 
-            .tool-card p {
-                font-size: 12px;
-                margin-bottom: 12px;
+            .family-section {
+                padding: 20px;
             }
 
-            header {
-                margin-bottom: 24px;
-                padding-bottom: 16px;
-            }
-
-            h1 {
-                font-size: 28px !important;
-            }
-
-            footer {
-                margin-top: 24px;
-                flex-direction: column;
-                gap: 8px;
-                text-align: center;
+            .control-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             }
         }
     </style>
@@ -130,289 +362,173 @@
 <body class="p-6 md:p-12">
     <div class="scanline"></div>
 
-    <header class="flex justify-between items-end mb-16 border-b border-white/10 pb-6">
-        <div>
-            <div class="flex items-center gap-3 mb-2">
+    <header>
+        <div class="hero-stack">
+            <div class="hero-sub">
                 <span class="status-dot"></span>
                 <span class="mono text-xs text-green-500 tracking-widest">SYSTEM ONLINE</span>
+                <span class="hero-pill">Latent Command</span>
             </div>
             <h1 class="text-4xl md:text-6xl font-bold tracking-tighter hero-text">LATENT AUDIO SUITE</h1>
-        </div>
-        <div class="text-right hidden md:block">
-            <div class="mono text-xs text-zinc-500 mb-1">VERSION 2.4.0</div>
-            <div class="mono text-xs text-zinc-500">LOCAL MP3 CORE ACTIVE</div>
+            <p class="header-tagline">Primitive futurism meets teenage engineering control surfaces.</p>
+            <div class="hero-meta">
+                <span>VERSION 2.4.0</span>
+                <span>LOCAL MP3 CORE ACTIVE</span>
+            </div>
         </div>
     </header>
 
-    <main class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto w-full flex-1">
+    <div class="search-shell">
+        <input id="search-input" type="search" placeholder="Search instruments, families, tags..." autocomplete="off">
+    </div>
 
-        <!-- OP-1 -->
-        <a href="op1.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">01
-                        // OP-10 SPECTRAL</span>
-                    <span
-                        class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">RECORDER</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    Dual-deck spectral analyzer and variable-speed tape recorder. Features real-time visualization and
-                    pitch control.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 20 MP3 Tracks
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Observable State
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
+    <div class="control-shell">
+        <div class="control-title">
+            <span>Control Surfaces</span>
+            <span class="mono text-[10px]">Color-coded families</span>
+        </div>
+        <div class="control-grid" id="control-surfaces"></div>
+    </div>
 
-        <!-- MANDALA / ORBITAL LOOM -->
-        <a href="mandala.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">02
-                        // ORBITAL LOOM</span>
-                    <span
-                        class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">SEQUENCER</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    Keplerian orbital sequencer with 3-ring polyphony. Mix radio, drone synthesis, and local MP3s with
-                    beat matching.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Auto Beat-Match
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> MP3 Crate Browser
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
-
-        <!-- EL DESIERTO / KOPE-04 -->
-        <a href="kope-04.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">03
-                        // EL DESIERTO</span>
-                    <span class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">SAMPLER</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    A cinematic 4-track sampler for audio collage. Load full MP3 crates, trim samples, and perform live
-                    mixes with haptic feedback.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 4-Track Mixing
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Type-Aware Loading
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
-
-        <!-- XENO-1 / SYNTH -->
-        <a href="x1.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">04
-                        // XENO-1</span>
-                    <span class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">SYNTH</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    Keplerian orbital synthesizer based on 4:2:1 resonance. Features microtonal pads and solar wind
-                    modulation.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Orbital Mechanics
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Microtonal Scale
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
-
-        <!-- LATENT RADIO / BROADCAST -->
-        <a href="x2.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">05
-                        // RADIO</span>
-                    <span
-                        class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">BROADCAST</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    Infinite broadcast stream from the latent noise floor. Features 120+ tracks and visual signal
-                    analysis.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 120 Track Database
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Waveform Visuals
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
-
-        <!-- SCALA LIVE / MICROTONAL -->
-        <a href="scala-live.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">06
-                        // SCALA</span>
-                    <span
-                        class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">MICROTONAL</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    Microtonal synthesizer with 8 world tunings. Play Arabic maqam, Javanese gamelan, or 22-shruti
-                    Indian scales live with haptic feedback.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 8 Tuning Systems
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 16-Step Sequencer
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
-
-        <!-- LATENT ENGINE / PROCEDURAL -->
-        <a href="latent-engine.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">07
-                        // ENGINE</span>
-                    <span
-                        class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">PROCEDURAL</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    Auto-generating music machine. Press START and let the Thinking Operators compose
-                    endlessly evolving microtonal patterns.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 6 Operators (Mass→Biology)
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Auto-Evolving Patterns
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
-
-        <!-- ARCHIVE RADIO -->
-        <a href="archive-radio.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">08
-                        // ARCHIVE</span>
-                    <span class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">RADIO</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    Infinite YouTube radio. Speeches by MLK, Malcolm X, Angela Davis mixed with
-                    funk, hip-hop, and electronic classics. Curated sonic characteristics.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 80+ Curated YouTube Sources
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> Category Filtering
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
-
-        <!-- SAMPLE CRATE 120 -->
-        <a href="crate-120.html" class="tool-card p-6 flex flex-col justify-between group h-full">
-            <div>
-                <div class="flex justify-between items-start mb-8">
-                    <span class="mono text-lg font-bold text-white/90 group-hover:text-amber-400 transition-colors">09
-                        // CRATE</span>
-                    <span class="px-2 py-1 text-[10px] border border-white/20 text-white/60 rounded mono">120</span>
-                </div>
-                <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                    The definitive sample crate. 120 verified tracks from funk, disco, hip-hop,
-                    rock, electronic, world, jazz, and speeches. Mobile Walkman interface.
-                </p>
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 120 YouTube Sources
-                    </div>
-                    <div class="flex items-center gap-2 text-xs text-zinc-500 mono">
-                        <span class="w-1 h-1 bg-zinc-600 rounded-full"></span> 10 Genre Categories
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex justify-end">
-                <span
-                    class="mono text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                    LAUNCH INTERFACE ->
-                </span>
-            </div>
-        </a>
-
+    <main class="manifest-wrap">
+        <div id="manifest-sections" class="flex flex-col gap-6"></div>
+        <div id="manifest-error" class="loading">Loading manifest...</div>
     </main>
+
+    <script>
+        const manifestSections = document.getElementById('manifest-sections');
+        const manifestError = document.getElementById('manifest-error');
+        const searchInput = document.getElementById('search-input');
+        const controlSurfaceGrid = document.getElementById('control-surfaces');
+
+        const controlFamilies = ['core', 'transmission', 'chronos', 'xr'];
+        let sectionRegistry = [];
+
+        const createControlCard = (family) => {
+            const card = document.createElement('div');
+            card.className = 'control-card';
+            card.style.setProperty('--control-color', family.accent || '#f5a623');
+            card.innerHTML = `
+                <h3>${family.name}</h3>
+                <p>${family.description}</p>
+            `;
+            return card;
+        };
+
+        const createEntryCard = (entry, family, index) => {
+            const card = document.createElement('a');
+            card.href = entry.file;
+            card.className = 'tool-card';
+            card.style.setProperty('--family-accent', family.accent || '#f5a623');
+            const tagsHtml = entry.tags.slice(0, 3)
+                .map(tag => `<span class="tag">${tag}</span>`)
+                .join('');
+            card.innerHTML = `
+                <div class="card-head">
+                    <p class="card-title">${entry.title}</p>
+                    <span class="family-pill">${family.name}</span>
+                </div>
+                <p class="card-body">${entry.description}</p>
+                <div class="tag-row">${tagsHtml}</div>
+                <div class="card-foot">
+                    <span class="mono text-[10px]">${(entry.status || 'Live').toUpperCase()}</span>
+                    <span class="mono text-[10px]">LAUNCH →</span>
+                </div>
+            `;
+            const searchTokens = [
+                entry.title,
+                entry.description,
+                family.name,
+                family.description,
+                entry.tags.join(' ')
+            ].join(' ').toLowerCase();
+            card.dataset.search = searchTokens;
+            return card;
+        };
+
+        const renderManifest = (data) => {
+            manifestSections.innerHTML = '';
+            sectionRegistry = [];
+            controlSurfaceGrid.innerHTML = '';
+            const entries = [];
+
+            data.families.forEach((family, familyIndex) => {
+                const section = document.createElement('section');
+                section.className = 'family-section';
+                section.style.setProperty('--family-accent', family.accent || '#f5a623');
+                const head = document.createElement('div');
+                head.className = 'family-head';
+                const title = document.createElement('h2');
+                title.className = 'family-name';
+                title.textContent = family.name;
+                const meta = document.createElement('p');
+                meta.className = 'family-meta';
+                meta.textContent = family.description;
+                const pill = document.createElement('span');
+                pill.className = 'family-pill';
+                pill.textContent = family.id.toUpperCase();
+                head.append(title, meta, pill);
+                const grid = document.createElement('div');
+                grid.className = 'card-grid';
+                const cards = family.entries.map((entry, entryIndex) => {
+                    const card = createEntryCard(entry, family, entryIndex);
+                    grid.appendChild(card);
+                    return card;
+                });
+                section.append(head, grid);
+                manifestSections.appendChild(section);
+                sectionRegistry.push({ section, grid, cards });
+                if (controlFamilies.includes(family.id)) {
+                    controlSurfaceGrid.appendChild(createControlCard(family));
+                }
+            });
+
+            manifestError.style.display = 'none';
+            filterCards(searchInput.value);
+        };
+
+        const filterCards = (term) => {
+            if (!sectionRegistry.length) return;
+            const normalTerm = term.trim().toLowerCase();
+            let matchFound = false;
+            sectionRegistry.forEach(({ section, cards }) => {
+                let sectionMatch = false;
+                cards.forEach((card) => {
+                    const visible = !normalTerm || card.dataset.search.includes(normalTerm);
+                    card.style.display = visible ? '' : 'none';
+                    sectionMatch = sectionMatch || visible;
+                });
+                section.style.display = sectionMatch ? '' : 'none';
+                matchFound = matchFound || sectionMatch;
+            });
+            if (!matchFound) {
+                manifestError.style.display = 'block';
+                manifestError.textContent = normalTerm
+                    ? `No instruments match “${term}”`
+                    : 'No instruments available';
+            } else {
+                manifestError.style.display = 'none';
+            }
+        };
+
+        fetch('manifest.json')
+            .then((response) => {
+                if (!response.ok) throw new Error('Failed to load manifest');
+                return response.json();
+            })
+            .then(renderManifest)
+            .catch((error) => {
+                manifestError.style.display = 'block';
+                manifestError.textContent = `Unable to load manifest: ${error.message}`;
+            });
+
+        searchInput.addEventListener('input', (event) => {
+            filterCards(event.target.value);
+        });
+    </script>
+
+
+
 
     <footer class="mt-12 pt-6 border-t border-white/10 flex justify-between items-center text-zinc-600 text-xs mono">
         <div>AUDIO ENGINE: WEBAUDIO + HTML5</div>

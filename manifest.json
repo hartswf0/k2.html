@@ -1,0 +1,532 @@
+{
+    "families": [
+        {
+            "id": "core",
+            "name": "Core Instruments",
+            "description": "Signature sequencers and synths that form LATENT AUDIO SUITE's command deck.",
+            "accent": "#f5a623",
+            "entries": [
+                {
+                    "file": "op1.html",
+                    "title": "LATENT RADIO: OP-10 SPECTRAL",
+                    "description": "Dual-deck spectral DJ console with BPM sync, oscilloscope, and the local MP3 crate.",
+                    "tags": [
+                        "DJ",
+                        "spectral",
+                        "BPM"
+                    ],
+                    "status": "Live",
+                    "accent": "#f5a623"
+                },
+                {
+                    "file": "mandala.html",
+                    "title": "ORBITAL LOOM",
+                    "description": "Orbital Loom that blends radio, drone, sampler, and MP3 stacks on three concentric rings.",
+                    "tags": [
+                        "orbital",
+                        "drone",
+                        "sampler"
+                    ],
+                    "status": "Live",
+                    "accent": "#f5a623"
+                },
+                {
+                    "file": "kope-04.html",
+                    "title": "EL DESIERTO // PRO",
+                    "description": "El Desierto 8-track sequencer with pattern morphing, sample editor, and haptic controls.",
+                    "tags": [
+                        "sequencer",
+                        "beats",
+                        "editor"
+                    ],
+                    "status": "Live",
+                    "accent": "#f5a623"
+                },
+                {
+                    "file": "x1.html",
+                    "title": "XENO-1 | Forager Synth",
+                    "description": "Xeno-1 microtonal synthesizer built around Keplerian motion and solar-wind modulation.",
+                    "tags": [
+                        "microtonal",
+                        "synth",
+                        "pads"
+                    ],
+                    "status": "Live",
+                    "accent": "#f5a623"
+                },
+                {
+                    "file": "x2.html",
+                    "title": "LATENT RADIO | Forager Broadcasts",
+                    "description": "Latent Radio broadcast player streaming 120 curated tracks with waveform visuals.",
+                    "tags": [
+                        "broadcast",
+                        "radio",
+                        "120 tracks"
+                    ],
+                    "status": "Live",
+                    "accent": "#f5a623"
+                },
+                {
+                    "file": "latent-engine.html",
+                    "title": "LATENT ENGINE // Procedural Music",
+                    "description": "Procedural engine that composes endlessly evolving microtonal textures.",
+                    "tags": [
+                        "procedural",
+                        "generative",
+                        "microtonal"
+                    ],
+                    "status": "Live",
+                    "accent": "#f5a623"
+                },
+                {
+                    "file": "scala-live.html",
+                    "title": "SCALA // LIVE",
+                    "description": "Scala-based microtonal performance tool covering exotic tunings and 16-step sequencing.",
+                    "tags": [
+                        "scala",
+                        "microtonal",
+                        "live"
+                    ],
+                    "status": "Live",
+                    "accent": "#f5a623"
+                }
+            ]
+        },
+        {
+            "id": "crate",
+            "name": "Sample Crates & Radio",
+            "description": "Curated audio libraries, crate explorers, and archival broadcast players.",
+            "accent": "#66d9ef",
+            "entries": [
+                {
+                    "file": "crate-120.html",
+                    "title": "SAMPLE CRATE 120",
+                    "description": "Primary 120-track crate across funk, electronic, jazz, and speech.",
+                    "tags": [
+                        "crate",
+                        "120",
+                        "samples"
+                    ],
+                    "status": "Sampler",
+                    "accent": "#66d9ef"
+                },
+                {
+                    "file": "crate-2.html",
+                    "title": "SAMPLE CRATE 120",
+                    "description": "Alternate 120 crate variation reorganized into new categories.",
+                    "tags": [
+                        "crate",
+                        "alternate",
+                        "samples"
+                    ],
+                    "status": "Sampler",
+                    "accent": "#66d9ef"
+                },
+                {
+                    "file": "crate-3.html",
+                    "title": "SAMPLE CRATE 120: THE DEEP DIG",
+                    "description": "Deep Dig crate tuned for heavy analog, drone, and tape textures.",
+                    "tags": [
+                        "deep dig",
+                        "analog",
+                        "crate"
+                    ],
+                    "status": "Sampler",
+                    "accent": "#66d9ef"
+                },
+                {
+                    "file": "crate-4.html",
+                    "title": "SAMPLE CRATE: EXPERIMENTAL",
+                    "description": "Experimental crate leaning into glitch, distortion, and collage.",
+                    "tags": [
+                        "experimental",
+                        "glitch",
+                        "crate"
+                    ],
+                    "status": "Sampler",
+                    "accent": "#66d9ef"
+                },
+                {
+                    "file": "archive-radio.html",
+                    "title": "ARCHIVE WALKMAN",
+                    "description": "Archive Walkman mixing speeches, funk, hip-hop, and electronic classics.",
+                    "tags": [
+                        "archive",
+                        "radio",
+                        "speech"
+                    ],
+                    "status": "Sampler",
+                    "accent": "#66d9ef"
+                }
+            ]
+        },
+        {
+            "id": "chronos",
+            "name": "Chronos & Flux",
+            "description": "Temporal control surfaces, resonant fabrics, and flux-driven matrices.",
+            "accent": "#9c88ff",
+            "entries": [
+                {
+                    "file": "chronos.html",
+                    "title": "TX-160 // RESONANT CHRONOS",
+                    "description": "Resonant Chronos timeline manipulator tuned for the TX-160 fingerprint.",
+                    "tags": [
+                        "timeline",
+                        "chronos",
+                        "tx-160"
+                    ],
+                    "status": "Flux",
+                    "accent": "#9c88ff"
+                },
+                {
+                    "file": "tonnetz.html",
+                    "title": "TX-105 // RESONANT FABRIC",
+                    "description": "Tonnetz matrix that weaves harmonic fabric across the TX-105 resonant grid.",
+                    "tags": [
+                        "tonnetz",
+                        "harmonic",
+                        "matrix"
+                    ],
+                    "status": "Flux",
+                    "accent": "#9c88ff"
+                },
+                {
+                    "file": "tz-270.html",
+                    "title": "TX-270 // RESONANT FLUX v2.2",
+                    "description": "TX-270 Resonant Flux v2.2 for spectral motion and slow-motion drift.",
+                    "tags": [
+                        "flux",
+                        "spectral",
+                        "drift"
+                    ],
+                    "status": "Flux",
+                    "accent": "#9c88ff"
+                }
+            ]
+        },
+        {
+            "id": "transmission",
+            "name": "TX-160 & Transmission",
+            "description": "Orbital shields, transmission looms, and voice puppet consoles.",
+            "accent": "#ff6b6b",
+            "entries": [
+                {
+                    "file": "88.html",
+                    "title": "TX-160 MK.IV // PERPETUAL RESONANCE",
+                    "description": "TX-160 MK.IV perpetual resonance console with luminous controls.",
+                    "tags": [
+                        "tx-160",
+                        "console",
+                        "resonance"
+                    ],
+                    "status": "Signal",
+                    "accent": "#ff6b6b"
+                },
+                {
+                    "file": "a-shield.html",
+                    "title": "Shield of Achilles: Orbital Interface",
+                    "description": "Shield of Achilles orbiting interface that stitches defensive data surfaces.",
+                    "tags": [
+                        "shield",
+                        "orbital",
+                        "interface"
+                    ],
+                    "status": "Signal",
+                    "accent": "#ff6b6b"
+                },
+                {
+                    "file": "a1.html",
+                    "title": "Liquid Metal // Epistemic Engine",
+                    "description": "Liquid Metal Epistemic Engine weaving reflective generative textures.",
+                    "tags": [
+                        "epistemic",
+                        "engine",
+                        "liquid"
+                    ],
+                    "status": "Signal",
+                    "accent": "#ff6b6b"
+                },
+                {
+                    "file": "bfs.html",
+                    "title": "ADHB 1950 | Definitive Command Loom",
+                    "description": "ADHB 1950 Definitive Command Loom built for dispatching layered signals.",
+                    "tags": [
+                        "command",
+                        "loom",
+                        "signals"
+                    ],
+                    "status": "Signal",
+                    "accent": "#ff6b6b"
+                },
+                {
+                    "file": "lati.html",
+                    "title": "TX-160 // RESONANT CHRONOS // VOICE PUPPET",
+                    "description": "TX-160 voice puppet tuned for expressive speech instrumentation.",
+                    "tags": [
+                        "voice",
+                        "puppet",
+                        "tx-160"
+                    ],
+                    "status": "Signal",
+                    "accent": "#ff6b6b"
+                },
+                {
+                    "file": "taz.html",
+                    "title": "TX-160 // RESONANT CHRONOS // VOICE PUPPET",
+                    "description": "Alternate TX-160 voice puppet leaning into resonant warbles.",
+                    "tags": [
+                        "voice",
+                        "warble",
+                        "tx-160"
+                    ],
+                    "status": "Signal",
+                    "accent": "#ff6b6b"
+                },
+                {
+                    "file": "vfl-mo.html",
+                    "title": "Shield of Achilles: Orbital Interface",
+                    "description": "VFL morphing edition of the Shield of Achilles interface.",
+                    "tags": [
+                        "morph",
+                        "shield",
+                        "VFL"
+                    ],
+                    "status": "Signal",
+                    "accent": "#ff6b6b"
+                }
+            ]
+        },
+        {
+            "id": "experimental",
+            "name": "Experimental & Games",
+            "description": "Playful experiments and sonic games that spin off the suite.",
+            "accent": "#66ccff",
+            "entries": [
+                {
+                    "file": "hec-01.html",
+                    "title": "Harmonic Ephemeris Game",
+                    "description": "Harmonic Ephemeris Game turning spectral orbits into tactile puzzles.",
+                    "tags": [
+                        "game",
+                        "harmonic",
+                        "orbit"
+                    ],
+                    "status": "Experimental",
+                    "accent": "#66ccff"
+                }
+            ]
+        },
+        {
+            "id": "xr",
+            "name": "XR / AR Masonry",
+            "description": "Orbital Loom projected into XR, from desktop spatial sequencers to AR masonry.",
+            "accent": "#00ffaa",
+            "entries": [
+                {
+                    "file": "xr.html",
+                    "title": "XR Spatial Sequencer v2",
+                    "description": "XR Spatial Sequencer v2 for rail-based pattern painting with three.js.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr2.html",
+                    "title": "ORBITAL LOOM 3D",
+                    "description": "Orbital Loom 3D recreates the loom inside a descriptive 3D grid.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os.html",
+                    "title": "ORBITAL LOOM AR [PRO]",
+                    "description": "Bring ORBITAL LOOM AR [PRO] into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-01.html",
+                    "title": "ORBITAL LOOM AR [PRO]",
+                    "description": "Bring ORBITAL LOOM AR [PRO] into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-02.html",
+                    "title": "ORBITAL LOOM: MASON EDITION",
+                    "description": "Bring ORBITAL LOOM: MASON EDITION into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-03.html",
+                    "title": "ORBITAL LOOM: MASON EDITION",
+                    "description": "Bring ORBITAL LOOM: MASON EDITION into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-04.html",
+                    "title": "ORBITAL LOOM: MASON EDITION",
+                    "description": "Bring ORBITAL LOOM: MASON EDITION into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-05.html",
+                    "title": "ORBITAL LOOM: MASONRY STACK",
+                    "description": "Bring ORBITAL LOOM: MASONRY STACK into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-06.html",
+                    "title": "ORBITAL LOOM: MASONRY",
+                    "description": "Bring ORBITAL LOOM: MASONRY into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-07.html",
+                    "title": "ORBITAL LOOM: MASON-TE EDITION",
+                    "description": "Bring ORBITAL LOOM: MASON-TE EDITION into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-09.html",
+                    "title": "ORBITAL LOOM: MASON-TE PRO",
+                    "description": "Bring ORBITAL LOOM: MASON-TE PRO into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-10.html",
+                    "title": "ORBITAL LOOM: M_TE PRO",
+                    "description": "Bring ORBITAL LOOM: M_TE PRO into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-11.html",
+                    "title": "ORBITAL LOOM: M_TE PRO",
+                    "description": "Bring ORBITAL LOOM: M_TE PRO into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-12.html",
+                    "title": "ORBITAL LOOM: M_PRO FINAL",
+                    "description": "Bring ORBITAL LOOM: M_PRO FINAL into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-14.html",
+                    "title": "ORBITAL LOOM: M_PRO GLASS",
+                    "description": "Bring ORBITAL LOOM: M_PRO GLASS into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-15.html",
+                    "title": "ORBITAL LOOM: M_PRO GLASS",
+                    "description": "Bring ORBITAL LOOM: M_PRO GLASS into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                },
+                {
+                    "file": "xr-os-16.html",
+                    "title": "ORBITAL LOOM: M_PRO GLASS",
+                    "description": "Bring ORBITAL LOOM: M_PRO GLASS into AR by placing masonry segments inside the Orbital Loom.",
+                    "tags": [
+                        "AR",
+                        "Three.js",
+                        "webxr"
+                    ],
+                    "status": "AR Ready",
+                    "accent": "#00ffaa"
+                }
+            ]
+        }
+    ]
+}
