@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>PROJECT ATEK: Autopoietic Transition via Evolutionary Kernels</title>
+<style>
+    /* --- CORE LAYOUT & RESET --- */
+    :root {
+        --bg-color: #0a0a0a;
+        --ui-bg: #1a1a1a;
+        --paper-bg: #f0f0e0;
+        --paper-text: #202020;
+        --accent: #ff3333;
+        --terminal: #33ff33;
+        --scanline: rgba(0, 0, 0, 0.5);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    body, html {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        overflow: hidden; background-color: var(--bg-color);
+        font-family: 'Courier New', Courier, monospace;
+        color: #eee; touch-action: none;
+    }
+
+    /* --- LAYOUT STRUCTURE --- */
+    #app {
+        display: flex; flex-direction: column; height: 100vh; width: 100vw;
+    }
+    #canvas-container {
+        flex: 1; position: relative; overflow: hidden;
+        background: #000; border-bottom: 2px solid #333;
+        cursor: crosshair;
+    }
+    #sim-canvas {
+        display: block; width: 100%; height: 100%;
+        image-rendering: pixelated; /* Retro feel */
+    }
+
+    /* --- UI LAYER --- */
+    #ui-layer {
+        height: auto; min-height: 280px; max-height: 45vh;
+        background: var(--ui-bg);
+        display: flex; flex-direction: column;
+        border-top: 4px solid #000;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+        z-index: 10;
+    }
+
+    /* --- PAPER STRIP LOG --- */
+    #paper-strip-container {
+        height: 60px; background: #111;
+        border-bottom: 1px solid #333;
+        position: relative; overflow: hidden;
+        display: flex; align-items: center; justify-content: flex-start;
+        padding: 0 10px;
+    }
+    #paper-strip {
+        background: var(--paper-bg);
+        color: var(--paper-text);
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        font-size: 14px;
+        padding: 8px 20px;
+        white-space: nowrap;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        transform: translateX(0);
+        transition: transform 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+        border-left: 4px solid #ccc; /* Perforation look */
+    }
+    .log-entry { display: inline-block; margin-right: 20px; border-right: 1px dashed #999; padding-right: 10px; }
+    .log-warn { color: #d00; }
+    .log-info { color: #009; }
+
+    /* --- HUD OVERLAY --- */
+    #hud {
+        position: absolute; top: 10px; left: 10px;
+        pointer-events: none;
+        color: var(--terminal);
+        text-shadow: 0 0 2px var(--terminal);
+        font-size: 12px;
+        line-height: 1.4;
+        background: rgba(0,0,0,0.6);
+        padding: 5px; border-radius: 4px;
+    }
+    #status-light {
+        position: absolute; top: 10px; right: 10px;
+        width: 12px; height: 12px; border-radius: 50%;
+        background: #333; box-shadow: 0 0 5px #333;
+        transition: background 0.2s;
+        z-index: 20;
+    }
+    .status-ok { background: #0f0 !important; box-shadow: 0 0 8px #0f0 !important; }
+    .status-warn { background: #fa0 !important; box-shadow: 0 0 8px #fa0 !important; }
+    .status-crit { background: #f00 !important; box-shadow: 0 0 8px #f00 !important; animation: blink 0.5s infinite; }
+    @keyframes blink { 50% { opacity: 0.3; } }
+
+    /* --- KEYBOARD --- */
+    #keyboard {
+        flex: 1; padding: 5px;
+        display: flex; flex-direction: column; gap: 4px;
+        justify-content: center; align-items: center;
+        background: #222;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .row { display: flex; gap: 4px; width: 100%; justify-content: center; }
+    .key {
+        background: #444; color: #fff;
+        border-radius: 4px;
+        border-bottom: 3px solid #222;
+        font-size: 14px; font-weight: bold;
+        display: flex; align-items: center; justify-content: center;
+        height: 40px; flex: 1;
+        cursor: pointer; position: relative;
+        transition: transform 0.05s, border-bottom 0.05s;
+        max-width: 10%; /* Ensure they fit */
+    }
+    .key:active, .key.active {
+        transform: translateY(2px); border-bottom: 1px solid #222; background: #666;
+    }
+    .key.special { background: #556; max-width: 15%; font-size: 12px; }
+    .key.action { background: #633; max-width: 15%; }
+    .key.mode-active { background: #ddd; color: #000; border-bottom: 3px solid #999; }
+    
+    .key-label { pointer-events: none; }
+    .key-sub { 
+        position: absolute; bottom: 2px; right: 2px; 
+        font-size: 8px; color: #aaa; pointer-events: none;
+    }
+
+    /* --- SCANLINES & CRT EFFECT --- */
+    #crt-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+        background-size: 100% 2px, 3px 100%;
+        pointer-events: none; z-index: 5;
+    }
+    
+    /* Touch controls hint */
+    #touch-hint {
+        position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+        color: rgba(255,255,255,0.5); font-size: 10px; pointer-events: none;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+<div id="app">
+    <div id="canvas-container">
+        <canvas id="sim-canvas"></canvas>
+        <div id="crt-overlay"></div>
+        <div id="hud">
+            ATEK OS v0.9.4<br>
+            ----------------<br>
+            TICK: <span id="hud-tick">0</span><br>
+            POP : <span id="hud-pop">0</span><br>
+            MAX-H: <span id="hud-hier">0</span><br>
+            ENTROPY: <span id="hud-ent">0%</span>
+        </div>
+        <div id="status-light"></div>
+        <div id="touch-hint">PINCH: ZOOM | DRAG: PAN | TAP: SELECT</div>
+    </div>
+
+    <div id="ui-layer">
+        <div id="paper-strip-container">
+            <div id="paper-strip">SYSTEM INITIALIZED. AWAITING SEED...</div>
+        </div>
+        <div id="keyboard">
+            <!-- Row 1: Numbers (Modes) -->
+            <div class="row">
+                <div class="key" data-key="1"><span class="key-label">1</span><span class="key-sub">SUB</span></div>
+                <div class="key" data-key="2"><span class="key-label">2</span><span class="key-sub">ENT</span></div>
+                <div class="key" data-key="3"><span class="key-label">3</span><span class="key-sub">TMP</span></div>
+                <div class="key" data-key="4"><span class="key-label">4</span><span class="key-sub">WST</span></div>
+                <div class="key" data-key="5"><span class="key-label">5</span><span class="key-sub">AGT</span></div>
+                <div class="key" data-key="6"><span class="key-label">6</span><span class="key-sub">GEN</span></div>
+                <div class="key" data-key="7"><span class="key-label">7</span><span class="key-sub">POL</span></div>
+                <div class="key" data-key="8"><span class="key-label">8</span><span class="key-sub">DAT</span></div>
+                <div class="key" data-key="9"><span class="key-label">9</span><span class="key-sub">LOG</span></div>
+                <div class="key" data-key="0"><span class="key-label">0</span><span class="key-sub">SYS</span></div>
+            </div>
+            <!-- Row 2: QWERTY (Tools/Params) -->
+            <div class="row">
+                <div class="key" data-key="Q"><span class="key-label">Q</span><span class="key-sub">HEAT+</span></div>
+                <div class="key" data-key="W"><span class="key-label">W</span><span class="key-sub">FEED</span></div>
+                <div class="key" data-key="E"><span class="key-label">E</span><span class="key-sub">KILL</span></div>
+                <div class="key" data-key="R"><span class="key-label">R</span><span class="key-sub">RST</span></div>
+                <div class="key" data-key="T"><span class="key-label">T</span><span class="key-sub">TEST</span></div>
+                <div class="key" data-key="Y"><span class="key-label">Y</span></div>
+                <div class="key" data-key="U"><span class="key-label">U</span></div>
+                <div class="key" data-key="I"><span class="key-label">I</span></div>
+                <div class="key" data-key="O"><span class="key-label">O</span></div>
+                <div class="key" data-key="P"><span class="key-label">P</span><span class="key-sub">PAUSE</span></div>
+            </div>
+            <!-- Row 3: ASDF (More Tools) -->
+            <div class="row">
+                <div class="key" data-key="A"><span class="key-label">A</span><span class="key-sub">AUTO</span></div>
+                <div class="key" data-key="S"><span class="key-label">S</span><span class="key-sub">SEED</span></div>
+                <div class="key" data-key="D"><span class="key-label">D</span><span class="key-sub">DUMP</span></div>
+                <div class="key" data-key="F"><span class="key-label">F</span><span class="key-sub">FLSH</span></div>
+                <div class="key" data-key="G"><span class="key-label">G</span></div>
+                <div class="key" data-key="H"><span class="key-label">H</span></div>
+                <div class="key" data-key="J"><span class="key-label">J</span></div>
+                <div class="key" data-key="K"><span class="key-label">K</span></div>
+                <div class="key" data-key="L"><span class="key-label">L</span></div>
+            </div>
+            <!-- Row 4: Space/Action -->
+            <div class="row">
+                <div class="key special" data-key="SHIFT">SHIFT</div>
+                <div class="key" data-key="Z"><span class="key-label">Z</span><span class="key-sub">UNDO</span></div>
+                <div class="key" data-key="X"><span class="key-label">X</span></div>
+                <div class="key" data-key="C"><span class="key-label">C</span><span class="key-sub">CLR</span></div>
+                <div class="key" style="flex: 3;" data-key="SPACE"><span class="key-label">_</span><span class="key-sub">ACTION</span></div>
+                <div class="key action" data-key="ENTER">EXE</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * ATEK SIMULATION ENGINE
+ * Single-file, vanilla JS, Offline-capable.
+ */
+
+// --- CONFIG & CONSTANTS ---
+const CFG = {
+    GRID_W: 128,
+    GRID_H: 128,
+    FPS: 60,
+    SIM_STEPS_PER_FRAME: 2, // Speed up simulation relative to render
+    CELL_SIZE: 1, // Logic size
+    SEED: 12345,
+    
+    // Physics
+    DIFFUSION_RATE: 0.1,
+    DECAY_RATE: 0.01,
+    TEMP_AMBIENT: 0.1,
+    
+    // Biology
+    METABOLISM_COST: 0.05,
+    REPLICATION_COST: 0.6,
+    MUTATION_RATE: 0.02,
+    ERROR_THRESHOLD: 0.8, // If mutation * genome > this, death
+    
+    // Colors
+    COLOR_SUB: [50, 50, 50],
+    COLOR_ENG: [255, 200, 50],
+    COLOR_WST: [100, 20, 20],
+    COLOR_AGT: [0, 255, 100]
+};
+
+// --- AUDIO SYSTEM (Minimal WebAudio) ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const Sound = {
+    playTone: (freq, type, dur, vol = 0.1) => {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + dur);
+    },
+    click: () => Sound.playTone(800, 'square', 0.05, 0.05),
+    error: () => Sound.playTone(150, 'sawtooth', 0.3, 0.2),
+    spawn: () => Sound.playTone(1200, 'sine', 0.1, 0.1),
+    merge: () => Sound.playTone(400, 'sine', 0.5, 0.2)
+};
+
+// --- RNG (Seeded LCG) ---
+let _seed = CFG.SEED;
+function srand(s) { _seed = s; }
+function rand() {
+    _seed = (_seed * 9301 + 49297) % 233280;
+    return _seed / 233280;
+}
+function randRange(min, max) { return min + rand() * (max - min); }
+
+// --- DATA STRUCTURES ---
+
+// The Grid: Stores field values
+class Grid {
+    constructor(w, h) {
+        this.w = w; this.h = h;
+        this.size = w * h;
+        // Fields: S=Substrate, E=Energy, T=Temp, W=Waste
+        this.s = new Float32Array(this.size);
+        this.e = new Float32Array(this.size);
+        this.t = new Float32Array(this.size);
+        this.w_field = new Float32Array(this.size); // 'w' is taken
+    }
+
+    idx(x, y) { return ((y + this.h) % this.h) * this.w + ((x + this.w) % this.w); }
+
+    // Diffuse a specific field using a simple convolution
+    diffuse(field, rate) {
+        // Optimized diffusion: simple swap buffer or in-place neighbor avg
+        // For speed in JS, we'll do a stochastic diffusion or simple pass
+        // This is a simplified 5-point stencil
+        let temp = new Float32Array(field); // Copy
+        for (let y = 0; y < this.h; y++) {
+            for (let x = 0; x < this.w; x++) {
+                let i = y * this.w + x;
+                let n = temp[this.idx(x, y-1)];
+                let s = temp[this.idx(x, y+1)];
+                let e = temp[this.idx(x+1, y)];
+                let w = temp[this.idx(x-1, y)];
+                let avg = (n + s + e + w) * 0.25;
+                field[i] = temp[i] * (1 - rate) + avg * rate;
+            }
+        }
+    }
+
+    update() {
+        this.diffuse(this.e, 0.05); // Energy spreads fast
+        this.diffuse(this.w_field, 0.02); // Waste spreads slow
+        this.diffuse(this.t, 0.1); // Heat spreads fast
+        
+        // Ambient cooling / decay
+        for(let i=0; i<this.size; i++) {
+            this.t[i] = Math.max(CFG.TEMP_AMBIENT, this.t[i] * 0.99); // Cool down
+            this.w_field[i] *= 0.995; // Waste decays slowly
+            this.s[i] = Math.min(1.0, this.s[i] + 0.001); // Substrate regen
+        }
+    }
+}
+
+class Agent {
+    constructor(x, y) {
+        this.id = Math.floor(rand()*100000);
+        this.x = x; this.y = y;
+        this.vx = 0; this.vy = 0;
+        this.r = 0.5; // Radius
+        
+        // Internal State
+        this.energy = 0.5;
+        this.integrity = 1.0;
+        this.waste = 0;
+        this.age = 0;
+        this.genome = [];
+        this.hierarchy = 1; // 1 = single cell
+        
+        // Active Inference Beliefs (Simple Goal Vector)
+        this.belief_x = 0;
+        this.belief_y = 0;
+        
+        // Genotype (Weights for: MoveToFood, MoveToAgent, DivideRate, Metabolism)
+        for(let i=0; i<8; i++) this.genome.push(rand());
+        
+        this.color = `hsl(${Math.floor(this.genome[0]*360)}, 70%, 50%)`;
+    }
+    
+    update(grid, agents) {
+        this.age++;
+        const cx = Math.floor(this.x);
+        const cy = Math.floor(this.y);
+        const idx = grid.idx(cx, cy);
+        
+        // 1. Sense Environment
+        const s_here = grid.s[idx];
+        const e_here = grid.e[idx];
+        const t_here = grid.t[idx];
+        
+        // 2. Metabolism (Convert S -> E + W + T)
+        // Rate depends on genome[3] and local temp
+        const rate = this.genome[3] * 0.1;
+        if (s_here > rate && this.energy < 1.0) {
+            grid.s[idx] -= rate;
+            this.energy += rate * 0.8; // Efficiency loss
+            this.waste += rate * 0.1;
+            grid.t[idx] += rate * 0.2; // Heat
+            grid.w_field[idx] += rate * 0.1; // External waste
+        }
+        
+        // 3. Maintenance Cost (Entropy)
+        // Increases with hierarchy depth and temp
+        const cost = CFG.METABOLISM_COST * this.hierarchy * (1 + t_here);
+        this.energy -= cost / 100;
+        
+        // 4. Movement (Active Inference: minimize surprise/hunger)
+        // Look at neighbors to find gradient
+        const lookR = 1 + Math.floor(this.genome[1]*3);
+        let bestVal = -999;
+        let bestDx = 0, bestDy = 0;
+        
+        // Simple gradient ascent towards Food(S) or Energy(E) depending on internal state
+        const seekFood = this.energy < 0.6;
+        
+        for(let dy=-1; dy<=1; dy++) {
+            for(let dx=-1; dx<=1; dx++) {
+                if(dx===0 && dy===0) continue;
+                const tidx = grid.idx(cx+dx, cy+dy);
+                let val = seekFood ? grid.s[tidx] : grid.e[tidx];
+                // Avoid waste/heat
+                val -= grid.w_field[tidx] * 2;
+                val -= grid.t[tidx];
+                
+                if(val > bestVal) { bestVal = val; bestDx = dx; bestDy = dy; }
+            }
+        }
+        
+        // Apply force
+        this.vx += bestDx * 0.05 * this.genome[2];
+        this.vy += bestDy * 0.05 * this.genome[2];
+        
+        // Friction
+        this.vx *= 0.9; this.vy *= 0.9;
+        
+        // Move
+        this.x += this.vx; this.y += this.vy;
+        
+        // Toroidal Wrap
+        if(this.x < 0) this.x += CFG.GRID_W;
+        if(this.x >= CFG.GRID_W) this.x -= CFG.GRID_W;
+        if(this.y < 0) this.y += CFG.GRID_H;
+        if(this.y >= CFG.GRID_H) this.y -= CFG.GRID_H;
+        
+        // 5. Replication / Symbiogenesis
+        if(this.energy > CFG.REPLICATION_COST && this.waste < 0.5) {
+            // Chance to replicate based on gene
+            if(rand() < 0.01 * this.genome[4]) {
+                return this.replicate();
+            }
+        }
+        
+        // 6. Death Conditions
+        if(this.energy <= 0) this.integrity -= 0.01;
+        if(grid.t[idx] > 0.8) this.integrity -= 0.05; // Heat death
+        if(this.integrity <= 0) return 'DEAD';
+        
+        return 'ALIVE';
+    }
+    
+    replicate() {
+        this.energy *= 0.5;
+        let child = new Agent(this.x + (rand()-0.5), this.y + (rand()-0.5));
+        // Copy Genome with mutation
+        child.genome = this.genome.map(g => {
+            if(rand() < CFG.MUTATION_RATE) return Math.max(0, Math.min(1, g + (rand()-0.5)*0.2));
+            return g;
+        });
+        child.color = `hsl(${Math.floor(child.genome[0]*360)}, 70%, 50%)`;
+        child.hierarchy = this.hierarchy; // Inherit complexity
+        Sound.spawn();
+        return child;
+    }
+}
+
+// --- MAIN SYSTEM ---
+
+const World = {
+    grid: new Grid(CFG.GRID_W, CFG.GRID_H),
+    agents: [],
+    tick: 0,
+    paused: false,
+    viewMode: 5, // 1=S, 2=E, 3=T, 4=W, 5=Agents
+    
+    init() {
+        // Seed world
+        for(let i=0; i<CFG.GRID_W * CFG.GRID_H; i++) {
+            this.grid.s[i] = rand(); // Random substrate
+        }
+        
+        // Seed agents
+        for(let i=0; i<50; i++) {
+            this.agents.push(new Agent(randRange(0, CFG.GRID_W), randRange(0, CFG.GRID_H)));
+        }
+        
+        UI.log("SIMULATION INITIALIZED. T=0");
+    },
+    
+    step() {
+        if(this.paused) return;
+        
+        this.tick++;
+        this.grid.update();
+        
+        let newAgents = [];
+        let deadCount = 0;
+        
+        // Agent Loop
+        // Spatial hash for collision would go here, simplified to O(N^2) for < 200 agents for now
+        // or just local density check via grid
+        
+        for(let i=0; i<this.agents.length; i++) {
+            const a = this.agents[i];
+            const res = a.update(this.grid, this.agents);
+            
+            if(res === 'DEAD') {
+                // Corpse releases resources
+                const idx = this.grid.idx(Math.floor(a.x), Math.floor(a.y));
+                this.grid.s[idx] += 0.5;
+                this.grid.w_field[idx] += 0.2;
+                deadCount++;
+            } else {
+                newAgents.push(a);
+                if(res instanceof Agent) newAgents.push(res);
+            }
+        }
+        
+        // Symbiogenesis Check (Merge)
+        // If density is high, check overlapping agents
+        // Simplified: Loop a few random pairs to save CPU
+        for(let k=0; k<10; k++) {
+            if(newAgents.length < 2) break;
+            let i1 = Math.floor(rand() * newAgents.length);
+            let i2 = Math.floor(rand() * newAgents.length);
+            if(i1 !== i2) {
+                let a = newAgents[i1];
+                let b = newAgents[i2];
+                let dx = a.x - b.x;
+                let dy = a.y - b.y;
+                if (Math.abs(dx) > CFG.GRID_W/2) dx = CFG.GRID_W - Math.abs(dx); // Wrap check
+                if (Math.abs(dy) > CFG.GRID_H/2) dy = CFG.GRID_H - Math.abs(dy);
+                
+                let distSq = dx*dx + dy*dy;
+                if(distSq < 1.0) {
+                    // Overlap! Check compatibility (Genome[0] color similarity)
+                    if(Math.abs(a.genome[0] - b.genome[0]) < 0.1) {
+                        // Merge!
+                        a.energy += b.energy;
+                        a.hierarchy += b.hierarchy;
+                        a.integrity = 1.0;
+                        a.r += 0.2;
+                        newAgents.splice(i2, 1); // Remove B
+                        Sound.merge();
+                        if(rand() < 0.1) UI.log(`MERGE EVENT: HIERARCHY LVL ${a.hierarchy}`);
+                    }
+                }
+            }
+        }
+        
+        this.agents = newAgents;
+        
+        // Cap population for performance
+        if(this.agents.length > 500) {
+            // Cull weakest
+            this.agents.sort((a,b) => b.energy - a.energy);
+            this.agents.splice(300);
+            UI.log("POPULATION CAP CULL");
+        }
+    },
+    
+    // User Actions
+    injectVolatility() {
+        const cx = Math.floor(CFG.GRID_W/2);
+        const cy = Math.floor(CFG.GRID_H/2);
+        const rad = 10;
+        for(let y=cy-rad; y<cy+rad; y++) {
+            for(let x=cx-rad; x<cx+rad; x++) {
+                let idx = this.grid.idx(x,y);
+                this.grid.e[idx] += 0.5;
+                this.grid.t[idx] += 0.2;
+            }
+        }
+        UI.log("VOLATILITY INJECTED");
+    },
+    
+    clearWaste() {
+        this.grid.w_field.fill(0);
+        UI.log("WASTE FLUSHED");
+    },
+    
+    seedLife() {
+        for(let i=0; i<10; i++) {
+            this.agents.push(new Agent(randRange(0, CFG.GRID_W), randRange(0, CFG.GRID_H)));
+        }
+        UI.log("SPORES DEPLOYED");
+    }
+};
+
+// --- RENDERER ---
+const View = {
+    canvas: document.getElementById('sim-canvas'),
+    ctx: document.getElementById('sim-canvas').getContext('2d'),
+    width: 0, height: 0,
+    zoom: 4,
+    offsetX: 0, offsetY: 0,
+    
+    init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+    },
+    
+    resize() {
+        const rect = document.getElementById('canvas-container').getBoundingClientRect();
+        this.width = rect.width;
+        this.height = rect.height;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        this.ctx.imageSmoothingEnabled = false;
+    },
+    
+    draw() {
+        const ctx = this.ctx;
+        const w = CFG.GRID_W;
+        const h = CFG.GRID_H;
+        
+        // Clear
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, this.width, this.height);
+        
+        ctx.save();
+        // Center view
+        ctx.translate(this.width/2, this.height/2);
+        ctx.scale(this.zoom, this.zoom);
+        ctx.translate(-w/2 + this.offsetX, -h/2 + this.offsetY);
+        
+        // Draw Field
+        const imgData = ctx.createImageData(w, h);
+        const data = imgData.data;
+        const grid = World.grid;
+        
+        for(let i=0; i<grid.size; i++) {
+            let r=0, g=0, b=0;
+            const mode = World.viewMode;
+            
+            // Render logic based on mode
+            if(mode === 1) { // Substrate
+                const val = Math.min(255, grid.s[i] * 255);
+                r=val; g=val; b=val;
+            } else if (mode === 2) { // Energy
+                const val = Math.min(255, grid.e[i] * 255);
+                r=val; g=val*0.8; b=0;
+            } else if (mode === 3) { // Temp
+                const val = Math.min(255, grid.t[i] * 500);
+                r=val; g=0; b=val*0.5;
+            } else if (mode === 4) { // Waste
+                const val = Math.min(255, grid.w_field[i] * 500);
+                r=val*0.5; g=val; b=0;
+            } else { // Agents/Composite
+                // Background is faint combined field
+                r = grid.t[i]*100;
+                b = grid.s[i]*50;
+            }
+            
+            data[i*4] = r;
+            data[i*4+1] = g;
+            data[i*4+2] = b;
+            data[i*4+3] = 255;
+        }
+        
+        // Blit field
+        // Creating a temp canvas to draw the imageData scaled up is slow, 
+        // but for pixel art look in canvas 2d, we putImageData then drawImage usually.
+        // For simplicity/perf in this constraints, we'll use a secondary offscreen canvas or just direct draw.
+        // Let's use a pattern: putImageData to a small canvas, draw that scaled.
+        if(!this.offCanvas) {
+            this.offCanvas = document.createElement('canvas');
+            this.offCanvas.width = w; this.offCanvas.height = h;
+            this.offCtx = this.offCanvas.getContext('2d');
+        }
+        this.offCtx.putImageData(imgData, 0, 0);
+        ctx.drawImage(this.offCanvas, 0, 0);
+        
+        // Draw Agents
+        if(World.viewMode === 5 || World.viewMode === 6) {
+            for(let a of World.agents) {
+                ctx.fillStyle = a.color;
+                ctx.beginPath();
+                // Draw toroidal positions? Complex for render. 
+                // Just draw normal.
+                ctx.arc(a.x, a.y, a.r * (0.5 + a.energy), 0, Math.PI*2);
+                ctx.fill();
+                
+                // Draw hierarchy ring
+                if(a.hierarchy > 1) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 0.2;
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        // Draw Bounds
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, w, h);
+        
+        ctx.restore();
+    }
+};
+
+// --- UI CONTROLLER ---
+const UI = {
+    paper: document.getElementById('paper-strip'),
+    status: document.getElementById('status-light'),
+    
+    update() {
+        // HUD Stats
+        document.getElementById('hud-tick').innerText = World.tick;
+        document.getElementById('hud-pop').innerText = World.agents.length;
+        
+        let maxH = 0;
+        let avgE = 0;
+        World.agents.forEach(a => {
+            if(a.hierarchy > maxH) maxH = a.hierarchy;
+            avgE += a.energy;
+        });
+        document.getElementById('hud-hier').innerText = maxH;
+        
+        // Entropy calc (simple proxy)
+        let totalT = 0;
+        for(let i=0; i<World.grid.size; i+=10) totalT += World.grid.t[i];
+        const entropy = Math.floor(totalT / (World.grid.size/10) * 100);
+        document.getElementById('hud-ent').innerText = entropy + "%";
+        
+        // Status Light
+        this.status.className = '';
+        if(World.agents.length === 0) this.status.classList.add('status-crit');
+        else if(entropy > 50) this.status.classList.add('status-warn');
+        else this.status.classList.add('status-ok');
+        
+        // Keyboard Highlights
+        document.querySelectorAll('.key').forEach(k => k.classList.remove('mode-active'));
+        let activeKey = null;
+        if(World.viewMode <= 5) activeKey = document.querySelector(`.key[data-key="${World.viewMode}"]`);
+        if(activeKey) activeKey.classList.add('mode-active');
+    },
+    
+    log(msg) {
+        const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+        const entry = document.createElement('span');
+        entry.className = 'log-entry';
+        entry.innerText = `[${time}] ${msg}`;
+        this.paper.insertBefore(entry, this.paper.firstChild);
+        // Trim
+        if(this.paper.children.length > 10) this.paper.lastChild.remove();
+        Sound.click();
+    }
+};
+
+// --- INPUT HANDLING ---
+const Input = {
+    isDragging: false,
+    lastX: 0, lastY: 0,
+    
+    init() {
+        const c = document.getElementById('canvas-container');
+        
+        // Touch/Mouse Events for Canvas
+        c.addEventListener('mousedown', e => this.start(e.clientX, e.clientY));
+        c.addEventListener('touchstart', e => {
+            if(e.touches.length === 1) this.start(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        
+        window.addEventListener('mousemove', e => this.move(e.clientX, e.clientY));
+        window.addEventListener('touchmove', e => {
+            if(e.touches.length === 1) this.move(e.touches[0].clientX, e.touches[0].clientY);
+        }, {passive: false});
+        
+        window.addEventListener('mouseup', () => this.end());
+        window.addEventListener('touchend', () => this.end());
+        
+        // Wheel Zoom
+        c.addEventListener('wheel', e => {
+            e.preventDefault();
+            View.zoom *= (e.deltaY > 0 ? 0.9 : 1.1);
+            View.zoom = Math.max(0.5, Math.min(20, View.zoom));
+        }, {passive:false});
+        
+        // Keyboard Click Events
+        document.querySelectorAll('.key').forEach(key => {
+            key.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleKey(key.dataset.key);
+                // Visual feedback
+                key.classList.add('active');
+                setTimeout(() => key.classList.remove('active'), 100);
+            });
+        });
+    },
+    
+    start(x, y) {
+        this.isDragging = true;
+        this.lastX = x; this.lastY = y;
+    },
+    
+    move(x, y) {
+        if(!this.isDragging) return;
+        const dx = x - this.lastX;
+        const dy = y - this.lastY;
+        View.offsetX += dx / View.zoom;
+        View.offsetY += dy / View.zoom;
+        this.lastX = x; this.lastY = y;
+    },
+    
+    end() {
+        this.isDragging = false;
+    },
+    
+    handleKey(k) {
+        Sound.click();
+        
+        // Modes
+        if(['1','2','3','4','5','6'].includes(k)) {
+            World.viewMode = parseInt(k);
+            const modes = ["", "SUBSTRATE", "ENERGY", "TEMP", "WASTE", "AGENTS", "GENOME"];
+            UI.log(`VIEW MODE: ${modes[World.viewMode]}`);
+        }
+        
+        // Tools
+        switch(k) {
+            case 'P': 
+                World.paused = !World.paused; 
+                UI.log(World.paused ? "** PAUSED **" : "** RESUMED **");
+                break;
+            case 'R':
+                World.init(); // Reset not fully implemented, just re-seeds logic
+                UI.log("SIM RESET PENDING...");
+                location.reload(); 
+                break;
+            case 'Q': World.injectVolatility(); break;
+            case 'C': World.clearWaste(); break;
+            case 'W': World.grid.s.fill(1.0); UI.log("GLOBAL FEED"); break;
+            case 'S': World.seedLife(); break;
+            case 'E': 
+                World.agents = []; 
+                UI.log("EXTINCTION EVENT"); 
+                Sound.error();
+                break;
+            case 'D':
+                console.log(World.agents[0]);
+                UI.log("AGENT 0 DATA DUMPED TO CONSOLE");
+                break;
+            case 'ENTER':
+                // Step single frame if paused
+                if(World.paused) {
+                    World.paused = false;
+                    World.step();
+                    World.paused = true;
+                    UI.log("STEP 1");
+                }
+                break;
+        }
+    }
+};
+
+// --- INITIALIZATION ---
+
+window.onload = () => {
+    Sound.playTone(440, 'sine', 0.1, 0.0); // Pre-warm audio
+    srand(Date.now());
+    View.init();
+    World.init();
+    Input.init();
+    
+    let lastTime = 0;
+    const loop = (timestamp) => {
+        const dt = timestamp - lastTime;
+        
+        // Cap updates
+        if(dt > 1000/CFG.FPS) {
+            for(let i=0; i<CFG.SIM_STEPS_PER_FRAME; i++) {
+                World.step();
+            }
+            View.draw();
+            UI.update();
+            lastTime = timestamp;
+        }
+        
+        requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+};
+
+</script>
+</body>
+</html>
+
