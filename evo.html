@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Recursive Life: World Jockey</title>
+    <style>
+        :root { 
+            --bg-color: #050508;
+            --panel-bg: rgba(20, 20, 25, 0.95);
+            --text-main: #b0b0cc;
+            --accent: #0ff;
+            --accent-dim: rgba(0, 255, 255, 0.2);
+            --warn: #f55; 
+            --success: #5f5; 
+            --fader-track: #333;
+            --fader-thumb: #ddd;
+        }
+        
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg-color); font-family: 'Courier New', monospace; touch-action: none; user-select: none; -webkit-user-select: none; }
+        canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+        
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 10px; box-sizing: border-box; transition: opacity 0.3s; }
+        #ui-layer.hidden { opacity: 0; pointer-events: none; }
+        
+        /* Common Panel Style */
+        .panel { 
+            background: var(--panel-bg); 
+            color: var(--text-main); 
+            border: 1px solid #444; 
+            pointer-events: auto; 
+            border-radius: 6px; 
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        /* TOP BAR */
+        #top-bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; transition: transform 0.3s; }
+        
+        #stats { 
+            display: grid; 
+            grid-template-columns: auto auto; 
+            gap: 2px 12px; 
+            padding: 8px 12px;
+            font-size: 11px;
+            min-width: 120px;
+        }
+        .stat-label { color: #777; font-weight: bold; }
+        .val { color: var(--accent); font-weight: bold; text-align: right; }
+        #st-status { text-transform: uppercase; letter-spacing: 1px; }
+
+        #controls { display: flex; flex-direction: column; gap: 4px; width: 140px; }
+        #controls button { 
+            background: #222; 
+            border: 1px solid #555; 
+            color: #ddd; 
+            padding: 8px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-family: inherit; 
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.1s;
+        }
+        #controls button.active { background: var(--accent); color: #000; border-color: var(--accent); box-shadow: 0 0 8px var(--accent-dim); }
+        #controls button:active { transform: translateY(1px); }
+        
+        /* BOTTOM CONTROLS (Jockey Style) */
+        #bottom-bar { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            pointer-events: none; 
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            transition: transform 0.3s;
+        }
+        
+        .fader-group {
+            pointer-events: auto;
+            background: var(--panel-bg);
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-row { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 4px;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 1px;
+        }
+
+        /* Custom Range Slider Styling */
+        input[type=range] { 
+            -webkit-appearance: none; 
+            width: 100%; 
+            background: transparent; 
+            cursor: pointer; 
+            height: 24px; /* Touch target size */
+            margin: 0;
+        }
+        
+        input[type=range]:focus { outline: none; }
+        
+        /* Webkit Slider Track */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: var(--fader-track);
+            border-radius: 3px;
+            border: 1px solid #222;
+        }
+        
+        /* Webkit Slider Thumb */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 2px;
+            background: var(--accent);
+            margin-top: -7px; /* Center on track */
+            box-shadow: 0 0 5px var(--accent-dim);
+            border: 1px solid #fff;
+        }
+
+        /* Firefox Slider Track */
+        input[type=range]::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            background: var(--fader-track);
+            border-radius: 3px;
+        }
+
+        /* Firefox Slider Thumb */
+        input[type=range]::-moz-range-thumb {
+            height: 18px;
+            width: 18px;
+            border: 1px solid #fff;
+            border-radius: 2px;
+            background: var(--accent);
+        }
+
+        #inspector { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; text-align: left; z-index: 20; width: 200px; padding: 12px; }
+        #inspector.visible { display: block; }
+        .bar-container { width: 100%; background: #333; height: 6px; margin-top: 4px; border-radius: 2px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s; }
+        
+        #messages { position: absolute; bottom: 180px; left: 10px; pointer-events: none; text-shadow: 1px 1px 0 #000; font-size: 12px; }
+        .msg { opacity: 1; transition: opacity 1s; margin-bottom: 4px; color: #fff; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; display: inline-block; clear: both; float: left; }
+
+        .win-cond { color: var(--success); text-shadow: 0 0 5px var(--success); }
+        .loss-cond { color: var(--warn); text-shadow: 0 0 5px var(--warn); }
+        
+        #start-audio-hint {
+            position: absolute; top: 45%; width: 100%; text-align: center; 
+            color: var(--accent); pointer-events: none;
+            text-transform: uppercase; letter-spacing: 2px; font-size: 14px;
+            animation: pulseFade 3s infinite;
+        }
+        @keyframes pulseFade { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        .fade-out { opacity: 0 !important; transition: opacity 1s; }
+
+        /* Help Modal */
+        #help-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 50;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        #help-modal.visible { display: flex; }
+        .help-content {
+            background: #15151a; border: 1px solid var(--accent);
+            padding: 20px; border-radius: 8px; max-width: 90%; width: 400px;
+            color: #eee; font-size: 13px; line-height: 1.5;
+            box-shadow: 0 0 20px rgba(0,255,255,0.1);
+        }
+        .help-content h2 { color: var(--accent); margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .help-content h3 { color: #fff; margin-bottom: 4px; margin-top: 15px; font-size: 14px; }
+        .help-key { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+        .btn-close { 
+            margin-top: 20px; width: 100%; padding: 10px; background: var(--accent); 
+            color: #000; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; 
+        }
+
+        /* Show UI Button (Zen Mode Toggle) */
+        #btn-show-ui {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(20,20,25,0.5); color: #888; border: 1px solid #444;
+            padding: 8px 12px; border-radius: 4px; pointer-events: auto;
+            font-family: inherit; font-size: 12px; font-weight: bold; cursor: pointer;
+            display: none; z-index: 40;
+        }
+        #btn-show-ui:hover { color: #fff; border-color: #888; }
+        body.zen-mode #btn-show-ui { display: block; }
+        body.zen-mode #ui-layer { opacity: 0; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- Zen Mode Restore Button -->
+<button id="btn-show-ui">SHOW UI</button>
+
+<div id="ui-layer">
+    <div id="top-bar">
+        <div class="panel" id="stats">
+            <span class="stat-label">POPULATION</span><span id="st-pop" class="val">0</span>
+            <span class="stat-label">HIERARCHY</span><span id="st-hier" class="val">0</span>
+            <span class="stat-label">CMPLX MIN</span><span id="st-min-k" class="val">0</span>
+            <span class="stat-label">CMPLX MAX</span><span id="st-max-k" class="val">0</span>
+            <span class="stat-label">FPS</span><span id="st-fps" class="val">60</span>
+            <span class="stat-label" style="grid-column: span 2; border-top: 1px solid #444; margin-top: 4px; padding-top: 4px; text-align: center; color: #fff;">
+                <span id="st-status">INIT</span>
+            </span>
+        </div>
+        <div class="panel" id="controls">
+            <div style="display:flex; gap:4px;">
+                <button id="btn-help" style="flex:1; background:#446;">?</button>
+                <button id="btn-hide-ui" style="flex:1;">Hide UI</button>
+            </div>
+            <button id="btn-inspect" class="active">Inspect</button>
+            <button id="btn-resource">Feed (Brush)</button>
+            <button id="btn-wall">Wall (Brush)</button>
+            <button id="btn-audio">Sound: Eno</button>
+            <div style="display:flex; gap:4px; margin-top:2px;">
+                <button id="btn-pause" style="flex:1">Pause</button>
+                <button id="btn-reset" style="flex:1; color:var(--warn); border-color:#633;">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="start-audio-hint">Initialize System</div>
+    <div id="messages"></div>
+    
+    <div class="panel" id="inspector">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #444; padding-bottom:4px;">
+            <strong>AGENT DATA</strong>
+            <span id="insp-id" style="color:#777">#000</span>
+        </div>
+        <div id="insp-content" style="line-height: 1.4;">Tap agent...</div>
+        <button id="insp-close" style="margin-top:10px; width:100%; background:#333; color:#fff; border:none; padding:6px; border-radius:3px; cursor:pointer;">CLOSE</button>
+    </div>
+
+    <div id="bottom-bar">
+        <div class="fader-group">
+            <div class="slider-row">
+                <div class="slider-header">
+                    <span>Volatility</span>
+                    <span id="val-volatility">20%</span>
+                </div>
+                <input type="range" id="sl-volatility" min="0" max="100" value="20">
+            </div>
+            
+            <div class="slider-row">
+                <div class="slider-header">
+                    <span>Mutation Rate</span>
+                    <span id="val-mutation">3%</span>
+                </div>
+                <input type="range" id="sl-mutation" min="0" max="100" value="30">
+            </div>
+            
+            <div class="slider-row">
+                <div class="slider-header">
+                    <span>Sim Speed</span>
+                    <span id="val-speed">1x</span>
+                </div>
+                <input type="range" id="sl-speed" min="1" max="4" value="1" step="1">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="help-modal">
+    <div class="help-content">
+        <h2>RECURSIVE LIFE v2.0</h2>
+        <p>You are an environmental sculptor. Your goal is to foster the evolution of a Level 4 hierarchical intelligence ("Transcendence").</p>
+        
+        <h3>VISUALS</h3>
+        <div><span class="help-key" style="background:#6f9"></span> <strong>Simple:</strong> Basic foragers.</div>
+        <div><span class="help-key" style="background:#6cf"></span> <strong>Level 2:</strong> Merged pairs.</div>
+        <div><span class="help-key" style="background:#f6f"></span> <strong>Level 3:</strong> Colonies.</div>
+        <div><span class="help-key" style="background:#fc6"></span> <strong>Level 4:</strong> High Intelligence (Win Condition).</div>
+
+        <h3>CONTROLS</h3>
+        <ul>
+            <li><strong>Feed Brush:</strong> Paint resources to guide agents.</li>
+            <li><strong>Wall Brush:</strong> Build barriers to isolate populations.</li>
+            <li><strong>Inspect:</strong> Tap an agent to see its stats.</li>
+            <li><strong>Zen Mode:</strong> Hide UI for immersive viewing.</li>
+        </ul>
+        
+        <h3>WIN CONDITIONS</h3>
+        <p>Sustain <strong>3+ Level 4 Agents</strong> to achieve Transcendence. If >85% of population remains simple for too long, the ecosystem collapses.</p>
+
+        <button class="btn-close" id="btn-close-help">INITIALIZE</button>
+    </div>
+</div>
+
+<script>
+/* RECURSIVE LIFE v2.0
+   World Jockey Edition
+*/
+
+// --- Audio Engine (Multi-Mood) ---
+const SoundPacks = {
+    eno: {
+        name: "Eno",
+        scale: [196.00, 220.00, 261.63, 293.66, 329.63, 392.00, 440.00, 523.25], // G Major Pentatonic
+        types: { birth: 'sine', merge: 'triangle', death: 'sawtooth', drone: 'triangle' },
+        droneFreq: 48.99, // G1
+        reverb: 3.0,
+        detune: 0
+    },
+    dystopia: {
+        name: "Dystopia",
+        scale: [110.00, 130.81, 146.83, 155.56, 174.61, 196.00, 220.00, 261.63], // A Minor / Diminished feel
+        types: { birth: 'sawtooth', merge: 'square', death: 'sawtooth', drone: 'sawtooth' },
+        droneFreq: 55.00, // A1
+        reverb: 1.5,
+        detune: 15
+    },
+    chip: {
+        name: "8-Bit",
+        scale: [261.63, 329.63, 392.00, 523.25, 659.25, 783.99], // C Major Arp
+        types: { birth: 'square', merge: 'square', death: 'square', drone: 'square' },
+        droneFreq: 65.41, // C2
+        reverb: 0.1, // Dry
+        detune: 0
+    }
+};
+
+const AudioEngine = {
+    ctx: null,
+    master: null,
+    convolver: null,
+    droneOsc: null,
+    droneGain: null,
+    droneFilter: null,
+    currentPack: SoundPacks.eno,
+    
+    init: function() {
+        if (this.ctx) return;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+        
+        // Master Bus
+        const compressor = this.ctx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-24, this.ctx.currentTime);
+        compressor.ratio.setValueAtTime(12, this.ctx.currentTime);
+        compressor.connect(this.ctx.destination);
+        this.master = compressor;
+
+        this.setupReverb();
+        this.startDrone();
+    },
+
+    setupReverb: function() {
+        if(this.convolver) this.convolver.disconnect();
+        this.convolver = this.ctx.createConvolver();
+        const seconds = this.currentPack.reverb;
+        const rate = this.ctx.sampleRate;
+        const length = rate * seconds;
+        const impulse = this.ctx.createBuffer(2, length, rate);
+        for (let i = 0; i < 2; i++) {
+            const channel = impulse.getChannelData(i);
+            for (let j = 0; j < length; j++) {
+                // simple noise decay
+                channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 3);
+            }
+        }
+        this.convolver.buffer = impulse;
+        this.convolver.connect(this.master);
+    },
+
+    setPack: function(key) {
+        this.currentPack = SoundPacks[key];
+        if(!this.ctx) return;
+        
+        // Update Reverb
+        this.setupReverb();
+        
+        // Update Drone
+        if(this.droneOsc) {
+            const now = this.ctx.currentTime;
+            this.droneOsc.frequency.linearRampToValueAtTime(this.currentPack.droneFreq, now + 1.0);
+            this.droneOsc.type = this.currentPack.types.drone;
+            // Reconnect drone to new reverb
+            this.droneGain.disconnect();
+            this.droneGain.connect(this.convolver);
+            this.droneGain.connect(this.master);
+        }
+    },
+
+    startDrone: function() {
+        this.droneOsc = this.ctx.createOscillator();
+        this.droneOsc.type = this.currentPack.types.drone;
+        this.droneOsc.frequency.value = this.currentPack.droneFreq;
+        
+        this.droneGain = this.ctx.createGain();
+        this.droneGain.gain.value = 0.05;
+        
+        this.droneFilter = this.ctx.createBiquadFilter();
+        this.droneFilter.type = 'lowpass';
+        this.droneFilter.frequency.value = 200;
+        
+        this.droneOsc.connect(this.droneFilter);
+        this.droneFilter.connect(this.droneGain);
+        this.droneGain.connect(this.convolver); 
+        this.droneGain.connect(this.master);
+        
+        this.droneOsc.start();
+        
+        // LFO
+        const lfo = this.ctx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.1;
+        const lfoGain = this.ctx.createGain();
+        lfoGain.gain.value = 100;
+        lfo.connect(lfoGain);
+        lfoGain.connect(this.droneFilter.frequency);
+        lfo.start();
+    },
+
+    playTone: function(type) {
+        if (!this.ctx) return;
+        
+        const pack = this.currentPack;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const panner = this.ctx.createStereoPanner();
+        
+        // Pitch Logic
+        let freq = pack.scale[Math.floor(Math.random() * pack.scale.length)];
+        let attack = 0.05, release = 1.0;
+        let wave = pack.types[type] || 'sine';
+
+        if (type === 'birth') {
+            freq *= 2; 
+            attack = 0.01; release = 0.3;
+            gain.gain.value = 0.04;
+        } else if (type === 'merge') {
+            freq /= 2;
+            attack = 0.2; release = 2.5;
+            gain.gain.value = 0.15;
+            this.playSubTone(freq * 1.5, 2.0); // Harmony
+        } else if (type === 'death') {
+            freq = 50 + Math.random()*50;
+            attack = 0.05; release = 0.5;
+            gain.gain.value = 0.02;
+        } else if (type === 'click') {
+            freq = 1200; 
+            wave = 'square';
+            attack = 0.001; release = 0.05;
+            gain.gain.value = 0.02;
+        }
+
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        if(pack.detune) osc.detune.value = (Math.random()-0.5) * pack.detune;
+        
+        panner.pan.value = (Math.random() * 2) - 1;
+
+        const now = this.ctx.currentTime;
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(gain.gain.value, now + attack);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + attack + release);
+        
+        osc.connect(panner);
+        panner.connect(gain);
+        gain.connect(this.convolver);
+        gain.connect(this.master);
+        
+        osc.start(now);
+        osc.stop(now + attack + release + 0.1);
+    },
+
+    playSubTone: function(freq, dur) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.value = freq;
+        osc.type = this.currentPack.types.merge;
+        gain.gain.setValueAtTime(0, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(this.convolver);
+        osc.start();
+        osc.stop(this.ctx.currentTime + dur);
+    },
+
+    updateDrone: function(popCount) {
+        if (!this.droneGain) return;
+        const target = 0.02 + Math.min(popCount / 500, 0.15);
+        this.droneGain.gain.setTargetAtTime(target, this.ctx.currentTime, 1.0);
+    }
+};
+
+// --- Haptics ---
+const Haptic = {
+    trigger: function(pattern) {
+        if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+};
+
+// --- Utils ---
+class RNG {
+    constructor(seed) { this.state = seed || Date.now(); }
+    next() {
+        let t = this.state += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    range(min, max) { return min + this.next() * (max - min); }
+    rangeInt(min, max) { return Math.floor(this.range(min, max)); }
+}
+
+const vec2 = {
+    add: (a, b) => ({x: a.x + b.x, y: a.y + b.y}),
+    sub: (a, b) => ({x: a.x - b.x, y: a.y - b.y}),
+    mult: (a, s) => ({x: a.x * s, y: a.y * s}),
+    dist: (a, b) => Math.hypot(a.x - b.x, a.y - b.y),
+    norm: (a) => { const l = Math.hypot(a.x, a.y); return l ? {x:a.x/l, y:a.y/l} : {x:0,y:0}; },
+    dot: (a, b) => a.x * b.x + a.y * b.y
+};
+
+// --- Config ---
+const CONF = {
+    GRID_W: 128, GRID_H: 128,
+    MAX_AGENTS: 600,
+    TICK_RATE: 20, 
+    SEED: 12345,
+    HIERARCHY_WIN: 4, // Harder win condition
+    COLLAPSE_THRESH: 0.85, 
+    AGENT_RADIUS: 0.4
+};
+
+// --- Game State ---
+let rng = new RNG(CONF.SEED);
+let canvas = document.getElementById('gameCanvas');
+let ctx = canvas.getContext('2d', { alpha: false });
+let state = {
+    agents: [],
+    resources: new Float32Array(CONF.GRID_W * CONF.GRID_H),
+    walls: new Uint8Array(CONF.GRID_W * CONF.GRID_H),
+    spatial: [],
+    ticks: 0,
+    lastTime: 0,
+    accumulator: 0,
+    paused: false,
+    wasPausedBeforeHelp: false,
+    speed: 1,
+    mode: 'inspect', 
+    settings: {
+        volatility: 0.2,
+        mutation: 0.03,
+        mergeBias: 0.05
+    },
+    ui: {
+        selectedAgent: null,
+        soundIdx: 0,
+        helpSeen: false
+    },
+    status: 'Running'
+};
+
+// --- Logic ---
+
+class Agent {
+    constructor(x, y, depth=1) {
+        this.id = Math.floor(rng.next() * 1000000);
+        this.pos = {x, y};
+        this.vel = {x: rng.range(-0.1, 0.1), y: rng.range(-0.1, 0.1)};
+        this.energy = 0.5;
+        this.age = 0;
+        this.depth = depth;
+        this.stability = 1.0;
+        
+        this.genome = [];
+        const gLen = 4 + (depth * 2);
+        for(let i=0; i<gLen; i++) this.genome.push(rng.rangeInt(0, 255));
+        
+        this.niche = [rng.next(), rng.next(), rng.next()];
+        const nLen = Math.hypot(...this.niche);
+        this.niche = this.niche.map(v => v/nLen);
+
+        this.complexity = this.calculateComplexity();
+        this.metaRate = 0.005 * (1 + (this.genome[0]%10)/20); 
+        this.repThresh = 0.6 + (this.genome[1]%10)/50;
+        this.sensorRad = 2 + (this.genome[2]%5);
+    }
+
+    calculateComplexity() {
+        let entropy = 0;
+        let counts = {};
+        this.genome.forEach(g => counts[g] = (counts[g]||0)+1);
+        for(let k in counts) {
+            let p = counts[k]/this.genome.length;
+            entropy -= p * Math.log2(p);
+        }
+        return (entropy * 10) + (this.depth * 20);
+    }
+
+    sense(grid, w, h) {
+        let bestVal = -1;
+        let bestDir = {x:0, y:0};
+        const cx = Math.floor(this.pos.x);
+        const cy = Math.floor(this.pos.y);
+        
+        for(let dy=-1; dy<=1; dy++) {
+            for(let dx=-1; dx<=1; dx++) {
+                if(dx===0 && dy===0) continue;
+                let nx = (cx + dx + w) % w;
+                let ny = (cy + dy + h) % h;
+                let val = grid[ny*w + nx];
+                if (state.walls[ny*w + nx]) val = -100;
+                if(val > bestVal) {
+                    bestVal = val;
+                    bestDir = {x:dx, y:dy};
+                }
+            }
+        }
+        return bestDir;
+    }
+
+    mutate() {
+        if (rng.next() < state.settings.mutation) {
+            let idx = rng.rangeInt(0, this.genome.length);
+            this.genome[idx] = (this.genome[idx] + rng.rangeInt(-5, 5) + 256) % 256;
+            let nIdx = rng.rangeInt(0,3);
+            this.niche[nIdx] += rng.range(-0.1, 0.1);
+            let len = Math.hypot(...this.niche);
+            this.niche = this.niche.map(v => v/len);
+        }
+        this.complexity = this.calculateComplexity();
+    }
+}
+
+// --- Systems ---
+
+function initWorld() {
+    state.agents = [];
+    state.spatial = new Array(CONF.GRID_W * CONF.GRID_H).fill(null).map(() => []);
+    state.ticks = 0;
+    state.status = 'Running';
+    state.accumulator = 0;
+    state.lastTime = performance.now();
+    logMsg("System Reboot. Cycle 0.");
+
+    for(let i=0; i<state.resources.length; i++) state.resources[i] = rng.next() * 0.5;
+    state.walls.fill(0);
+
+    for(let i=0; i<120; i++) {
+        state.agents.push(new Agent(rng.range(5, CONF.GRID_W-5), rng.range(5, CONF.GRID_H-5)));
+    }
+    
+    if(AudioEngine.ctx) AudioEngine.updateDrone(120);
+
+    // First time Help
+    if (!state.ui.helpSeen) {
+        setTimeout(toggleHelp, 500);
+        state.ui.helpSeen = true;
+    }
+}
+
+function updateSpatialHash() {
+    for(let i=0; i<state.spatial.length; i++) state.spatial[i].length = 0;
+    state.agents.forEach(a => {
+        let x = Math.floor(a.pos.x);
+        let y = Math.floor(a.pos.y);
+        x = (x + CONF.GRID_W) % CONF.GRID_W;
+        y = (y + CONF.GRID_H) % CONF.GRID_H;
+        state.spatial[y * CONF.GRID_W + x].push(a);
+    });
+}
+
+function getNeighbors(agent) {
+    let list = [];
+    let cx = Math.floor(agent.pos.x);
+    let cy = Math.floor(agent.pos.y);
+    for(let dy=-1; dy<=1; dy++) {
+        for(let dx=-1; dx<=1; dx++) {
+            let nx = (cx + dx + CONF.GRID_W) % CONF.GRID_W;
+            let ny = (cy + dy + CONF.GRID_H) % CONF.GRID_H;
+            let cell = state.spatial[ny*CONF.GRID_W + nx];
+            for(let other of cell) {
+                if(other !== agent) list.push(other);
+            }
+        }
+    }
+    return list;
+}
+
+function tick() {
+    if (state.paused) return;
+
+    state.ticks++;
+    const gw = CONF.GRID_W;
+    const gh = CONF.GRID_H;
+
+    // Volatility
+    if (state.ticks % 20 === 0 && rng.next() < state.settings.volatility/100) {
+        let cx = rng.rangeInt(0, gw);
+        let cy = rng.rangeInt(0, gh);
+        let r = rng.rangeInt(5, 15);
+        for(let y=-r; y<=r; y++) {
+            for(let x=-r; x<=r; x++) {
+                if(x*x + y*y <= r*r) {
+                    let idx = ((cy+y+gh)%gh)*gw + ((cx+x+gw)%gw);
+                    state.resources[idx] += 0.2;
+                }
+            }
+        }
+    }
+
+    // Decay
+    for(let i=0; i<state.resources.length; i++) {
+        state.resources[i] *= 0.995;
+        if(state.walls[i]) state.resources[i] = 0;
+    }
+
+    updateSpatialHash();
+
+    let nextAgents = [];
+    let birthQueue = [];
+    let deadCount = 0;
+    
+    for (let agent of state.agents) {
+        // Movement
+        let grad = agent.sense(state.resources, gw, gh);
+        let crowding = {x:0, y:0};
+        let neighbors = getNeighbors(agent);
+        let closeNeighbors = 0;
+
+        for(let n of neighbors) {
+            let d = vec2.dist(agent.pos, n.pos);
+            if(d < 1.0) {
+                let push = vec2.norm(vec2.sub(agent.pos, n.pos));
+                crowding = vec2.add(crowding, vec2.mult(push, 1.0 - d));
+                closeNeighbors++;
+            }
+        }
+
+        agent.vel.x += grad.x * 0.05 + crowding.x * 0.1 + (rng.next()-0.5)*0.05;
+        agent.vel.y += grad.y * 0.05 + crowding.y * 0.1 + (rng.next()-0.5)*0.05;
+        agent.vel.x *= 0.9; agent.vel.y *= 0.9;
+
+        let nx = agent.pos.x + agent.vel.x;
+        let ny = agent.pos.y + agent.vel.y;
+
+        let cidx = (Math.floor(ny+gh)%gh)*gw + (Math.floor(nx+gw)%gw);
+        if (state.walls[cidx]) {
+            agent.vel.x *= -0.5; agent.vel.y *= -0.5;
+        } else {
+            agent.pos.x = (nx + gw) % gw; agent.pos.y = (ny + gh) % gh;
+        }
+
+        // Metabolism
+        let cellIdx = Math.floor(agent.pos.y)*gw + Math.floor(agent.pos.x);
+        let available = state.resources[cellIdx];
+        let consume = Math.min(available, 0.05 * agent.depth);
+        state.resources[cellIdx] -= consume;
+        agent.energy += consume * 5.0; 
+        agent.energy -= agent.metaRate * agent.depth;
+        agent.age++;
+
+        if (closeNeighbors > 3) agent.energy -= 0.002 * closeNeighbors;
+
+        // Interaction
+        let merged = false;
+        if (agent.energy > 0.4 && neighbors.length > 0 && rng.next() < 0.05) {
+            for(let n of neighbors) {
+                if (n.depth + agent.depth <= 4 && n.energy > 0.4) {
+                    let d = vec2.dist(agent.pos, n.pos);
+                    if (d < 1.2) {
+                        let dot = vec2.dot(agent.niche, n.niche);
+                        if (dot > 0.8 || (rng.next() < state.settings.mergeBias)) {
+                            n.energy = -1; agent.energy = -1;
+                            let child = new Agent(agent.pos.x, agent.pos.y, Math.max(agent.depth, n.depth) + 1);
+                            child.energy = 0.8;
+                            child.genome = agent.genome.map((g, i) => (g + (n.genome[i]||0)) % 256);
+                            child.niche = child.niche.map((v, i) => (agent.niche[i] + n.niche[i])/2);
+                            child.complexity = child.calculateComplexity();
+                            birthQueue.push(child);
+                            merged = true;
+                            logMsg("Symbiogenesis! Depth " + child.depth);
+                            AudioEngine.playTone('merge');
+                            Haptic.trigger([50, 50, 100]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Replication
+        if (!merged && agent.energy > agent.repThresh && agent.age > 20) {
+            if (state.agents.length + birthQueue.length < CONF.MAX_AGENTS) {
+                agent.energy *= 0.5;
+                let child = new Agent(agent.pos.x, agent.pos.y, agent.depth);
+                child.genome = [...agent.genome];
+                child.niche = [...agent.niche];
+                child.mutate();
+                child.energy = 0.4;
+                birthQueue.push(child);
+                if (rng.next() < 0.1) AudioEngine.playTone('birth');
+            }
+        }
+
+        // Death / Decomp
+        if (!merged && agent.depth > 1 && agent.energy < 0.1 && rng.next() < 0.1) {
+             agent.energy = -1;
+             let c1 = new Agent(agent.pos.x, agent.pos.y, agent.depth - 1);
+             let c2 = new Agent(agent.pos.x, agent.pos.y, agent.depth - 1);
+             c1.energy = 0.2; c2.energy = 0.2;
+             birthQueue.push(c1, c2);
+             logMsg("Decomposition.");
+        }
+
+        if (agent.energy > 0 && agent.age < 2000) {
+            if(!merged) nextAgents.push(agent);
+        } else {
+            deadCount++;
+            if(cellIdx >= 0 && cellIdx < state.resources.length) {
+                state.resources[cellIdx] += 0.1 * agent.depth;
+            }
+            if(deadCount % 5 === 0) AudioEngine.playTone('death');
+        }
+    }
+
+    state.agents = nextAgents.concat(birthQueue);
+    
+    // Update drone dynamics
+    if (state.ticks % 10 === 0) AudioEngine.updateDrone(state.agents.length);
+    
+    checkGameConditions();
+}
+
+function checkGameConditions() {
+    if (state.agents.length === 0 && state.ticks > 10) {
+        state.status = "EXTINCTION (Loss)";
+        return;
+    }
+    
+    let simple = 0;
+    let complex = 0;
+    let minK = 9999, maxK = 0, sumK = 0;
+    let maxDepth = 0;
+    let maxDepthCount = 0;
+    
+    state.agents.forEach(a => {
+        if (a.depth === 1) simple++;
+        else complex++;
+        
+        if (a.complexity < minK) minK = a.complexity;
+        if (a.complexity > maxK) maxK = a.complexity;
+        
+        if (a.depth > maxDepth) {
+            maxDepth = a.depth;
+            maxDepthCount = 1;
+        } else if (a.depth === maxDepth) {
+            maxDepthCount++;
+        }
+    });
+
+    uiStats.pop = state.agents.length;
+    uiStats.hier = complex;
+    uiStats.minK = minK === 9999 ? 0 : Math.floor(minK);
+    uiStats.maxK = Math.floor(maxK);
+
+    // Harder win: Need depth >= 4 AND at least 3 of them to be stable
+    if (maxDepth >= CONF.HIERARCHY_WIN && maxDepthCount >= 3) {
+        state.status = "TRANSCENDENCE";
+    } else if (state.agents.length > 50 && simple / state.agents.length > CONF.COLLAPSE_THRESH && state.ticks > 500) {
+        state.status = "COLLAPSE";
+    } else {
+        state.status = "RUNNING";
+    }
+}
+
+// --- Rendering ---
+function draw() {
+    let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const w = canvas.width;
+    const h = canvas.height;
+    const scalex = w / CONF.GRID_W;
+    
+    if (!state.tempCanvas) {
+        state.tempCanvas = document.createElement('canvas');
+        state.tempCanvas.width = CONF.GRID_W;
+        state.tempCanvas.height = CONF.GRID_H;
+        state.tempCtx = state.tempCanvas.getContext('2d');
+        state.tempImg = state.tempCtx.createImageData(CONF.GRID_W, CONF.GRID_H);
+    }
+
+    const tData = state.tempImg.data;
+    for(let i=0; i<CONF.GRID_W * CONF.GRID_H; i++) {
+        let r = state.resources[i];
+        let wall = state.walls[i];
+        let idx = i*4;
+        
+        if (wall) {
+            tData[idx] = 60; tData[idx+1] = 60; tData[idx+2] = 60; tData[idx+3] = 255;
+        } else {
+            // Resource visualization
+            let val = Math.floor(Math.min(r, 1.0) * 120);
+            tData[idx] = 0; tData[idx+1] = val; tData[idx+2] = val*1.5; tData[idx+3] = 255;
+        }
+    }
+    state.tempCtx.putImageData(state.tempImg, 0, 0);
+    
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(state.tempCanvas, 0, 0, w, h);
+
+    // Agents
+    ctx.lineWidth = 2;
+    for (let agent of state.agents) {
+        let sx = (agent.pos.x / CONF.GRID_W) * w;
+        let sy = (agent.pos.y / CONF.GRID_H) * h;
+        let r = (CONF.AGENT_RADIUS * scalex) * (0.8 + agent.depth * 0.4);
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI*2);
+        
+        if (agent.depth === 1) ctx.fillStyle = `rgba(100, 255, 150, ${agent.energy + 0.2})`;
+        else if (agent.depth === 2) ctx.fillStyle = `rgba(100, 200, 255, ${agent.energy + 0.2})`;
+        else if (agent.depth === 3) ctx.fillStyle = `rgba(255, 100, 255, ${agent.energy + 0.2})`;
+        else ctx.fillStyle = `rgba(255, 200, 100, ${agent.energy + 0.5})`; // Gold for high depth
+        
+        ctx.fill();
+        
+        if (state.ui.selectedAgent === agent) {
+            ctx.strokeStyle = '#fff'; ctx.stroke();
+            ctx.beginPath(); ctx.arc(sx, sy, r+4, 0, Math.PI*2); ctx.strokeStyle = '#0ff'; ctx.stroke();
+        } else if (agent.stability < 0.5) {
+            ctx.strokeStyle = '#f55'; ctx.stroke();
+        }
+    }
+
+    // Brush Indicator
+    if (state.lastTouch) {
+        let tx = state.lastTouch.x;
+        let ty = state.lastTouch.y;
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (state.mode === 'resource' || state.mode === 'wall') {
+            ctx.arc(tx, ty, 20, 0, Math.PI*2);
+            ctx.stroke();
+        }
+    }
+}
+
+// --- UI & Input ---
+
+let uiStats = { pop:0, hier:0, minK:0, maxK:0 };
+const domStats = {
+    pop: document.getElementById('st-pop'),
+    hier: document.getElementById('st-hier'),
+    minK: document.getElementById('st-min-k'),
+    maxK: document.getElementById('st-max-k'),
+    fps: document.getElementById('st-fps'),
+    status: document.getElementById('st-status'),
+    vVol: document.getElementById('val-volatility'),
+    vMut: document.getElementById('val-mutation'),
+    vSpd: document.getElementById('val-speed')
+};
+
+function updateUI() {
+    domStats.pop.textContent = uiStats.pop;
+    domStats.hier.textContent = uiStats.hier;
+    domStats.minK.textContent = uiStats.minK;
+    domStats.maxK.textContent = uiStats.maxK;
+    domStats.fps.textContent = Math.round(1000/state.frameTime || 60);
+
+    const s = state.status;
+    domStats.status.textContent = s;
+    domStats.status.className = s.includes('TRANSCEND') ? 'win-cond' : (s.includes('EXTINCT') || s.includes('COLLAPSE') ? 'loss-cond' : '');
+
+    // Update slider readouts
+    domStats.vVol.textContent = state.settings.volatility + "%";
+    domStats.vMut.textContent = Math.round(state.settings.mutation*100) + "%";
+    domStats.vSpd.textContent = state.speed + "x";
+
+    if (state.ui.selectedAgent) {
+        const a = state.ui.selectedAgent;
+        if (!state.agents.includes(a)) {
+            document.getElementById('insp-content').innerHTML = "SIGNAL LOST (DECEASED)";
+        } else {
+            document.getElementById('insp-id').textContent = "#" + a.id;
+            let html = `
+                DEPTH: <span style="color:#fff">${a.depth}</span><br>
+                ENERGY: <span style="color:#fff">${(a.energy*100).toFixed(0)}%</span><br>
+                COMPLEXITY: <span style="color:#fff">${Math.floor(a.complexity)}</span><br>
+                AGE: <span style="color:#fff">${a.age} ticks</span><br>
+                <div class="bar-container"><div class="bar-fill" style="width:${Math.min(100, a.energy*100)}%"></div></div>
+            `;
+            document.getElementById('insp-content').innerHTML = html;
+        }
+    }
+}
+
+function logMsg(txt) {
+    const el = document.getElementById('messages');
+    const msg = document.createElement('div');
+    msg.className = 'msg';
+    msg.textContent = `> ${txt}`;
+    el.prepend(msg);
+    if (el.children.length > 5) el.lastChild.remove();
+    setTimeout(() => msg.style.opacity = 0, 3000);
+}
+
+function handleInput(x, y, type) {
+    state.lastTouch = {x, y};
+    // Initialize audio on first interaction if needed
+    if(type === 'start') {
+        const hint = document.getElementById('start-audio-hint');
+        if(hint) hint.classList.add('fade-out');
+        AudioEngine.init();
+    }
+
+    const gx = Math.floor((x / canvas.width) * CONF.GRID_W);
+    const gy = Math.floor((y / canvas.height) * CONF.GRID_H);
+    
+    if (state.mode === 'inspect' && type === 'start') {
+        let minD = 9999;
+        let best = null;
+        for(let a of state.agents) {
+            let sx = (a.pos.x / CONF.GRID_W) * canvas.width;
+            let sy = (a.pos.y / CONF.GRID_H) * canvas.height;
+            let d = Math.hypot(sx-x, sy-y);
+            if(d < 40 && d < minD) {
+                minD = d;
+                best = a;
+            }
+        }
+        if (best) {
+            state.ui.selectedAgent = best;
+            document.getElementById('inspector').classList.add('visible');
+            AudioEngine.playTone('click');
+            Haptic.trigger(10);
+        } else {
+            state.ui.selectedAgent = null;
+            document.getElementById('inspector').classList.remove('visible');
+        }
+    } else if (state.mode === 'resource') {
+        let r = 5;
+        for(let dy=-r; dy<=r; dy++) {
+            for(let dx=-r; dx<=r; dx++) {
+                if(dx*dx + dy*dy <= r*r) {
+                    let nx = (gx + dx + CONF.GRID_W) % CONF.GRID_W;
+                    let ny = (gy + dy + CONF.GRID_H) % CONF.GRID_H;
+                    state.resources[ny*CONF.GRID_W + nx] = 1.0;
+                }
+            }
+        }
+        if(type === 'start') Haptic.trigger(5);
+    } else if (state.mode === 'wall') {
+        let r = 2;
+        for(let dy=-r; dy<=r; dy++) {
+            for(let dx=-r; dx<=r; dx++) {
+                let nx = (gx + dx + CONF.GRID_W) % CONF.GRID_W;
+                let ny = (gy + dy + CONF.GRID_H) % CONF.GRID_H;
+                state.walls[ny*CONF.GRID_W + nx] = 1;
+            }
+        }
+        if(type === 'start') Haptic.trigger(15);
+    }
+}
+
+['mousedown', 'touchstart'].forEach(evt => canvas.addEventListener(evt, e => {
+    e.preventDefault();
+    let r = canvas.getBoundingClientRect();
+    let x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    let y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+    state.mouseDown = true;
+    handleInput(x, y, 'start');
+}, {passive: false}));
+
+['mousemove', 'touchmove'].forEach(evt => canvas.addEventListener(evt, e => {
+    e.preventDefault();
+    if(!state.mouseDown) return;
+    let r = canvas.getBoundingClientRect();
+    let x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    let y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+    handleInput(x, y, 'move');
+}, {passive: false}));
+
+['mouseup', 'touchend'].forEach(evt => window.addEventListener(evt, () => state.mouseDown = false));
+
+// Button Handlers
+document.getElementById('btn-inspect').onclick = (e) => setMode(e, 'inspect');
+document.getElementById('btn-resource').onclick = (e) => setMode(e, 'resource');
+document.getElementById('btn-wall').onclick = (e) => setMode(e, 'wall');
+
+document.getElementById('btn-audio').onclick = (e) => {
+    const packs = ['eno', 'dystopia', 'chip'];
+    state.ui.soundIdx = (state.ui.soundIdx + 1) % packs.length;
+    const key = packs[state.ui.soundIdx];
+    AudioEngine.setPack(key);
+    e.target.innerText = "Sound: " + SoundPacks[key].name;
+    Haptic.trigger(15);
+};
+
+document.getElementById('btn-pause').onclick = (e) => {
+    state.paused = !state.paused;
+    e.target.innerText = state.paused ? "Resume" : "Pause";
+    Haptic.trigger(20);
+    AudioEngine.playTone('click');
+};
+document.getElementById('btn-reset').onclick = () => {
+    initWorld();
+    Haptic.trigger(50);
+    AudioEngine.playTone('death');
+};
+document.getElementById('insp-close').onclick = () => {
+    document.getElementById('inspector').classList.remove('visible');
+    AudioEngine.playTone('click');
+};
+
+// Help & UI Toggle Handlers
+function toggleHelp() {
+    const modal = document.getElementById('help-modal');
+    const isVisible = modal.classList.contains('visible');
+    const btn = document.getElementById('btn-pause');
+    
+    if (!isVisible) {
+        modal.classList.add('visible');
+        state.wasPausedBeforeHelp = state.paused;
+        state.paused = true;
+        btn.innerText = "Resume";
+    } else {
+        modal.classList.remove('visible');
+        // Only unpause if it wasn't paused before
+        if (!state.wasPausedBeforeHelp) {
+            state.paused = false;
+            btn.innerText = "Pause";
+        }
+    }
+}
+
+function toggleUI() {
+    document.body.classList.toggle('zen-mode');
+}
+
+document.getElementById('btn-help').onclick = toggleHelp;
+document.getElementById('btn-close-help').onclick = () => {
+    toggleHelp();
+    // Special case for initial open: always unpause
+    state.paused = false; 
+    document.getElementById('btn-pause').innerText = "Pause";
+};
+document.getElementById('btn-hide-ui').onclick = toggleUI;
+document.getElementById('btn-show-ui').onclick = toggleUI;
+
+
+// Slider Handlers
+const sVol = document.getElementById('sl-volatility');
+sVol.oninput = (e) => {
+    state.settings.volatility = parseInt(e.target.value);
+    Haptic.trigger(5);
+    updateUI();
+};
+
+const sMut = document.getElementById('sl-mutation');
+sMut.oninput = (e) => {
+    state.settings.mutation = parseInt(e.target.value)/100;
+    Haptic.trigger(5);
+    updateUI();
+};
+
+const sSpd = document.getElementById('sl-speed');
+sSpd.oninput = (e) => {
+    state.speed = parseInt(e.target.value);
+    Haptic.trigger(5);
+    updateUI();
+};
+
+function setMode(e, m) {
+    state.mode = m;
+    document.querySelectorAll('#controls button').forEach(b => {
+        if(b.id !== 'btn-pause' && b.id !== 'btn-reset' && b.id !== 'btn-audio' && b.id !== 'btn-help' && b.id !== 'btn-hide-ui') b.classList.remove('active');
+    });
+    e.target.classList.add('active');
+    Haptic.trigger(10);
+    AudioEngine.playTone('click');
+}
+
+function loop(t) {
+    let dt = t - state.lastTime;
+    state.lastTime = t;
+    state.frameTime = dt;
+    
+    if (!state.paused) {
+        state.accumulator += dt;
+        let step = (1000 / CONF.TICK_RATE);
+        while (state.accumulator >= step) {
+            tick();
+            state.accumulator -= step;
+        }
+        if (state.accumulator > 500) state.accumulator = 0;
+
+        // Visual smoothing: run extra updates if fast speed, but keep tick logic rigorous
+        if(state.speed > 1) {
+             for(let k=1; k<state.speed; k++) tick();
+        }
+    }
+    draw();
+    if(state.ticks % 5 === 0) updateUI();
+    requestAnimationFrame(loop);
+}
+
+window.onresize = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    state.tempCanvas = null; 
+};
+window.onresize();
+
+initWorld();
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>
+
+
