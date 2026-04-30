@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>COOL RADIO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;700&display=swap');
+    
+    * { 
+      font-family: 'JetBrains Mono', monospace; 
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+      color: #000000;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .interactive { 
+      cursor: crosshair !important; 
+    }
+    
+    .hatch-warning { 
+      background-image: repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 1px, transparent 4px); 
+    }
+    
+    .hatch-danger { 
+      background-image: repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 1px, transparent 2px); 
+    }
+    
+    .pulse-on-air-text { 
+      animation: pulseText 1s steps(2, end) infinite; 
+    }
+    
+    @keyframes pulseText { 
+      0%, 49.99% { color: #000; border-color: #000; } 
+      50%, 100% { color: rgba(0,0,0,0.3); border-color: rgba(0,0,0,0.3); } 
+    }
+    
+    canvas { 
+      display: block; 
+    }
+    
+    ::-webkit-scrollbar { 
+      width: 12px; 
+      background: #fff; 
+      border-left: 1px solid #000; 
+    }
+    
+    ::-webkit-scrollbar-thumb { 
+      background: #000; 
+    }
+
+    /* Range slider custom styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+  </style>
+</head>
+<body class="h-[100dvh] w-full flex flex-col overflow-hidden text-black font-mono cursor-default">
+
+  <!-- HIDDEN AUDIO ELEMENTS -->
+  <audio id="audio1" crossorigin="anonymous"></audio>
+  <audio id="audio2" crossorigin="anonymous"></audio>
+
+  <!-- AUTOPLAY FAILURE OVERLAY -->
+  <div id="autoplay-error" class="hidden absolute inset-0 z-50 items-center justify-center p-8 bg-white bg-opacity-90">
+    <div class="border-2 border-black bg-white p-8 max-w-xl text-center">
+      <h2 class="font-bold text-2xl tracking-[0.3em] mb-4">AUTOPLAY BLOCKED</h2>
+      <p class="text-lg">The browser blocked programmatic audio start.</p>
+      <p class="text-lg mt-2">Click anywhere on the document to grant permission, then press BROADCAST again.</p>
+      <button id="btn-ack-error" class="mt-8 px-6 py-2 border-2 border-black interactive hover:bg-gray-100">ACKNOWLEDGE</button>
+    </div>
+  </div>
+
+  <!-- LAYER 3: HEADER -->
+  <div class="h-[48px] shrink-0 w-full border-b-[2px] border-black flex justify-between items-center px-4 bg-white z-10">
+    <div class="font-bold tracking-[0.3em]">COOL·RADIO</div>
+    <div class="font-light" id="header-clock">00:00:00</div>
+    <div id="header-badge" class="px-2 border border-[rgba(0,0,0,0.3)] text-[rgba(0,0,0,0.3)]">
+      OFF AIR
+    </div>
+  </div>
+
+  <!-- MAIN SPLIT VIEW -->
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+    
+    <!-- ======================================================= -->
+    <!-- LEFT PANEL: DJ CONSOLE                                  -->
+    <!-- ======================================================= -->
+    <div class="flex-1 flex flex-col relative overflow-hidden bg-white" id="dj-panel">
+      
+      <!-- LAYER 1: IDLE STATE -->
+      <div id="idle-state" class="absolute inset-4 border border-black flex flex-col items-center justify-center z-10 bg-white">
+        <label class="flex flex-col items-center justify-center interactive cursor-pointer p-8 hover:bg-gray-50 transition-colors w-full h-full max-h-[300px]" id="drop-zone">
+          <input type="file" id="file-input" multiple accept="audio/*" class="hidden" />
+          <div class="font-bold tracking-[0.3em] text-xl">NO SIGNAL</div>
+          <div class="mt-4 text-sm text-center px-4">DROP AUDIO FILES OR TAP TO LOAD THE QUEUE.</div>
+        </label>
+        <div id="btn-load-api" class="absolute bottom-8 text-xs font-bold interactive underline px-4 py-2 hover:bg-black hover:text-white">
+          [ LOAD REAL MUSIC API ]
+        </div>
+      </div>
+
+      <!-- LOADED / ON AIR UI -->
+      <div id="active-state" class="hidden flex-1 flex flex-col">
+        
+        <!-- LAYER 5: SIGNAL INSTRUMENTS -->
+        <div class="p-4 border-b border-black shrink-0">
+          <div class="flex h-[24px] w-full gap-[2px]" id="vu-meter">
+            <!-- VU Cells generated in JS -->
+          </div>
+          <div class="mt-4 border border-black bg-white h-[64px] w-full relative">
+             <canvas id="dj-waveform" class="w-full h-full absolute inset-0"></canvas>
+          </div>
+        </div>
+
+        <!-- LAYER 6: CROSSFADE -->
+        <div class="p-4 border-b border-black shrink-0 flex items-center">
+          <div class="w-[120px] font-bold">CROSSFADE ·</div>
+          <div class="w-[40px] text-right mr-4" id="crossfade-display">0.0s</div>
+          <div class="flex-1 relative h-[24px] flex items-center">
+             <div class="w-full h-[3px] border border-black bg-white relative">
+                <input type="range" id="crossfade-input" min="0" max="5" step="0.1" value="0" class="absolute inset-0 w-full opacity-0 interactive z-10" />
+                <div id="crossfade-thumb" class="absolute top-1/2 -mt-[12px] w-[12px] h-[24px] bg-black" style="left: calc(0% - 6px)"></div>
+             </div>
+          </div>
+        </div>
+
+        <!-- LAYER 2: QUEUE SURFACE -->
+        <div id="queue-container" class="flex-1 overflow-y-auto w-full bg-white relative">
+           <!-- Queue rows generated in JS -->
+        </div>
+
+        <!-- LAYER 4: BROADCAST BUTTON -->
+        <div id="broadcast-btn" class="shrink-0 w-full h-[48px] border-t-[2px] border-black flex items-center justify-center font-bold tracking-[0.3em] interactive transition-none bg-white text-black">
+          BROADCAST
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 2PX WALL -->
+    <div class="w-full h-[2px] md:w-[2px] md:h-full shrink-0 bg-black z-20"></div>
+
+    <!-- ======================================================= -->
+    <!-- RIGHT PANEL: LISTENER SURFACE                           -->
+    <!-- ======================================================= -->
+    <div class="flex-1 flex flex-col relative overflow-hidden bg-white" id="listener-panel">
+      
+      <!-- ENDED STATE -->
+      <div id="listener-ended-state" class="hidden flex-1 items-center justify-center">
+        <div class="font-bold tracking-[0.3em]">SESSION ENDED BY LISTENER</div>
+      </div>
+
+      <!-- COMPLETE STATE -->
+      <div id="listener-complete-state" class="hidden flex-1 flex-col items-center justify-center p-8">
+        <div class="font-bold tracking-[0.3em] mb-8">BROADCAST COMPLETE</div>
+        <div class="text-left font-mono w-full max-w-sm mb-12">
+          <div class="flex justify-between border-b border-black py-1"><span>START</span><span id="stat-start"></span></div>
+          <div class="flex justify-between border-b border-black py-1"><span>END</span><span id="stat-end"></span></div>
+          <div class="flex justify-between border-b border-black py-1"><span>TRACKS</span><span id="stat-tracks"></span></div>
+          <div class="flex justify-between border-b border-black py-1"><span>ENCOUNTERS</span><span id="stat-encounters"></span></div>
+        </div>
+        <div id="btn-new-session" class="underline interactive hover:bg-black hover:text-white px-2 py-1">
+          NEW SESSION
+        </div>
+      </div>
+
+      <!-- ACTIVE LISTENER VIEW -->
+      <div id="listener-active-view" class="flex-1 flex flex-col bg-white">
+        
+        <!-- LAYER 7.1: WAVEFORM -->
+        <div class="p-4 shrink-0">
+          <div class="border border-black bg-white h-[64px] w-full relative">
+            <canvas id="listener-waveform" class="w-full h-full absolute inset-0"></canvas>
+          </div>
+        </div>
+
+        <!-- LAYER 7.2: VOLUME SLIDER -->
+        <div class="px-4 pb-4 border-b border-black shrink-0 flex items-center">
+          <div class="w-[80px] font-bold">VOL</div>
+          <div class="flex-1 relative h-[24px] flex items-center">
+             <div class="w-full h-[3px] border border-black bg-white relative">
+                <input type="range" id="volume-input" min="0" max="1" step="0.01" value="1" class="absolute inset-0 w-full opacity-0 interactive z-10" />
+                <div id="volume-thumb" class="absolute top-1/2 -mt-[12px] w-[12px] h-[24px] bg-black" style="left: calc(100% - 6px)"></div>
+             </div>
+          </div>
+        </div>
+
+        <!-- LAYER 7.3: SIGNAL STATE BLOCK -->
+        <div class="p-8 border-b border-black shrink-0 flex flex-col items-center justify-center h-[120px]">
+          <div id="listener-state-text" class="font-bold tracking-[0.3em] text-4xl">
+            WAITING
+          </div>
+          <div id="silence-counter" class="mt-4 text-xl"></div>
+        </div>
+
+        <!-- LAYER 8: REACTION ZONE -->
+        <div id="reaction-zone" class="hidden shrink-0 w-full flex flex-col border-b border-black bg-white">
+          <div class="w-full h-[2px] bg-white relative">
+             <div id="reaction-bar" class="absolute left-0 top-0 bottom-0 bg-black transition-none" style="width: 100%"></div>
+          </div>
+          <div class="flex w-full h-[64px]">
+            <div id="btn-react-stay" class="flex-1 border-r border-black flex items-center justify-center interactive font-bold">STAY</div>
+            <div id="btn-react-mark" class="flex-1 border-r border-black flex items-center justify-center interactive font-bold">MARK</div>
+            <div id="btn-react-leave" class="flex-1 flex items-center justify-center interactive font-bold">LEAVE</div>
+          </div>
+        </div>
+
+        <!-- LAYER 9: ENCOUNTER LOG -->
+        <div id="encounter-log" class="flex-1 overflow-y-auto p-4 bg-transparent whitespace-pre">
+          <!-- Logs go here -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // SYSTEM CONSTANTS & UTILS
+    // ============================================================================
+    const FPS = 60;
+    
+    const formatTime = (seconds) => {
+      if (isNaN(seconds)) return "00:00:00";
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    };
+    
+    const getClockTime = () => {
+      const now = new Date();
+      return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    };
+    
+    const generateId = () => Math.random().toString(36).substr(2, 9);
+
+    // ============================================================================
+    // STATE
+    // ============================================================================
+    const state = {
+      appState: 'IDLE', // IDLE | LOADED | ON_AIR | EXHAUSTED
+      queue: [],
+      currentIndex: -1,
+      crossfade: 0.0,
+      listenerVolume: 1.0,
+      listenerState: 'WAITING', // WAITING | RECEIVING | SILENCE | ENDED | BROADCAST_COMPLETE
+      reactionWindow: { open: false, trackId: null },
+      logs: [],
+      stats: { start: null, end: null, tracks: 0, encounters: 0 },
+      expandedRows: new Set()
+    };
+
+    // ============================================================================
+    // DOM ELEMENTS
+    // ============================================================================
+    const els = {
+      audio1: document.getElementById('audio1'),
+      audio2: document.getElementById('audio2'),
+      headerClock: document.getElementById('header-clock'),
+      headerBadge: document.getElementById('header-badge'),
+      idleState: document.getElementById('idle-state'),
+      activeState: document.getElementById('active-state'),
+      dropZone: document.getElementById('drop-zone'),
+      fileInput: document.getElementById('file-input'),
+      btnLoadApi: document.getElementById('btn-load-api'),
+      vuMeter: document.getElementById('vu-meter'),
+      djWaveform: document.getElementById('dj-waveform'),
+      listenerWaveform: document.getElementById('listener-waveform'),
+      crossfadeInput: document.getElementById('crossfade-input'),
+      crossfadeDisplay: document.getElementById('crossfade-display'),
+      crossfadeThumb: document.getElementById('crossfade-thumb'),
+      queueContainer: document.getElementById('queue-container'),
+      broadcastBtn: document.getElementById('broadcast-btn'),
+      listenerEnded: document.getElementById('listener-ended-state'),
+      listenerComplete: document.getElementById('listener-complete-state'),
+      listenerActive: document.getElementById('listener-active-view'),
+      volumeInput: document.getElementById('volume-input'),
+      volumeThumb: document.getElementById('volume-thumb'),
+      listenerStateText: document.getElementById('listener-state-text'),
+      silenceCounter: document.getElementById('silence-counter'),
+      reactionZone: document.getElementById('reaction-zone'),
+      reactionBar: document.getElementById('reaction-bar'),
+      btnReactStay: document.getElementById('btn-react-stay'),
+      btnReactMark: document.getElementById('btn-react-mark'),
+      btnReactLeave: document.getElementById('btn-react-leave'),
+      encounterLog: document.getElementById('encounter-log'),
+      autoplayError: document.getElementById('autoplay-error'),
+      btnAckError: document.getElementById('btn-ack-error'),
+      statStart: document.getElementById('stat-start'),
+      statEnd: document.getElementById('stat-end'),
+      statTracks: document.getElementById('stat-tracks'),
+      statEncounters: document.getElementById('stat-encounters'),
+      btnNewSession: document.getElementById('btn-new-session'),
+    };
+
+    // Setup VU Meter DOM
+    const vuCells = [];
+    for (let i = 0; i < 28; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'flex-1 border border-black transition-colors duration-75';
+      els.vuMeter.appendChild(cell);
+      vuCells.push(cell);
+    }
+
+    // Set canvas resolutions
+    const setupCanvas = (canvas) => {
+      canvas.width = canvas.parentElement.clientWidth || 800;
+      canvas.height = canvas.parentElement.clientHeight || 64;
+    };
+    setupCanvas(els.djWaveform);
+    setupCanvas(els.listenerWaveform);
+
+    window.addEventListener('resize', () => {
+      setupCanvas(els.djWaveform);
+      setupCanvas(els.listenerWaveform);
+    });
+
+    // ============================================================================
+    // AUDIO ENGINE REFS
+    // ============================================================================
+    let audioCtx = null;
+    let masterGain = null;
+    let analyser = null;
+    let gain1 = null;
+    let gain2 = null;
+    
+    let activePlayerNum = 1; 
+    let isFading = false;
+    let engineFrame = null;
+
+    // ============================================================================
+    // CORE FUNCTIONS
+    // ============================================================================
+
+    const updateAppUI = () => {
+      // Toggle Left Panel States
+      if (state.appState === 'IDLE') {
+        els.idleState.classList.remove('hidden');
+        els.activeState.classList.add('hidden');
+      } else {
+        els.idleState.classList.add('hidden');
+        els.activeState.classList.remove('hidden');
+        els.activeState.classList.add('flex');
+      }
+
+      // Update Broadcast Button
+      if (state.appState === 'ON_AIR') {
+        els.broadcastBtn.textContent = 'END BROADCAST';
+        els.broadcastBtn.className = 'shrink-0 w-full h-[48px] border-t-[2px] border-black flex items-center justify-center font-bold tracking-[0.3em] interactive transition-none bg-gradient-to-t from-[#000000] to-[#1A1A1A] text-white';
+        els.headerBadge.textContent = 'ON AIR';
+        els.headerBadge.className = 'px-2 border border-black font-bold pulse-on-air-text';
+        els.crossfadeInput.disabled = true;
+        els.crossfadeInput.classList.add('pointer-events-none');
+        els.crossfadeThumb.classList.add('opacity-30');
+      } else {
+        els.broadcastBtn.textContent = state.appState === 'IDLE' ? 'NO SIGNAL' : 'BROADCAST';
+        els.broadcastBtn.className = `shrink-0 w-full h-[48px] border-t-[2px] border-black flex items-center justify-center font-bold tracking-[0.3em] interactive transition-none bg-white text-black ${state.appState === 'IDLE' ? 'pointer-events-none opacity-50' : ''}`;
+        els.headerBadge.textContent = 'OFF AIR';
+        els.headerBadge.className = 'px-2 border border-[rgba(0,0,0,0.3)] text-[rgba(0,0,0,0.3)]';
+        els.crossfadeInput.disabled = false;
+        els.crossfadeInput.classList.remove('pointer-events-none');
+        els.crossfadeThumb.classList.remove('opacity-30');
+      }
+
+      // Update Listener Panel States
+      els.listenerEnded.classList.add('hidden');
+      els.listenerComplete.classList.add('hidden');
+      els.listenerActive.classList.add('hidden');
+
+      if (state.listenerState === 'ENDED') {
+        els.listenerEnded.classList.remove('hidden');
+        els.listenerEnded.classList.add('flex');
+      } else if (state.listenerState === 'BROADCAST_COMPLETE') {
+        els.listenerComplete.classList.remove('hidden');
+        els.listenerComplete.classList.add('flex');
+        els.statStart.textContent = state.stats.start;
+        els.statEnd.textContent = state.stats.end;
+        els.statTracks.textContent = state.stats.tracks;
+        els.statEncounters.textContent = state.stats.encounters;
+      } else {
+        els.listenerActive.classList.remove('hidden');
+        els.listenerActive.classList.add('flex');
+        
+        if (state.listenerState === 'RECEIVING') {
+          els.listenerActive.classList.remove('bg-white');
+          els.listenerActive.classList.add('bg-gradient-to-t', 'from-[#F0F0F0]', 'to-[#FFFFFF]');
+        } else {
+          els.listenerActive.classList.remove('bg-gradient-to-t', 'from-[#F0F0F0]', 'to-[#FFFFFF]');
+          els.listenerActive.classList.add('bg-white');
+        }
+
+        els.listenerStateText.textContent = state.listenerState;
+        if (state.listenerState === 'SILENCE') {
+          els.listenerStateText.className = 'font-bold tracking-[0.3em] text-2xl opacity-50 scale-50 transition-all';
+          els.silenceCounter.classList.remove('hidden');
+        } else {
+          els.listenerStateText.className = 'font-bold tracking-[0.3em] text-4xl transition-all';
+          els.silenceCounter.classList.add('hidden');
+        }
+      }
+
+      // Reaction Window Toggle
+      if (state.reactionWindow.open) {
+        els.reactionZone.classList.remove('hidden');
+      } else {
+        els.reactionZone.classList.add('hidden');
+      }
+
+      renderQueue();
+      renderLogs();
+    };
+
+    const renderLogs = () => {
+      els.encounterLog.innerHTML = state.logs.map(log => 
+        `<div class="mb-1 text-sm">${log.time}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${log.name.padEnd(40, ' ').substring(0, 40)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${log.reaction}</div>`
+      ).join('');
+    };
+
+    const renderQueue = () => {
+      els.queueContainer.innerHTML = '';
+      
+      state.queue.forEach((track, idx) => {
+        const isPlaying = state.appState === 'ON_AIR' && idx === state.currentIndex;
+        const isExpanded = state.expandedRows.has(track.id);
+        
+        let markIndicator = track.marks > 0 ? ' ▲' : '';
+        let countData = (track.stays > 0 || track.marks > 0 || track.leaves > 0) 
+          ? `  [S:${track.stays} M:${track.marks} L:${track.leaves}]` : '';
+
+        const row = document.createElement('div');
+        row.className = `w-full border-b border-black text-sm flex flex-col interactive ${isPlaying ? 'bg-black text-white' : 'bg-transparent text-black'}`;
+        row.draggable = state.appState !== 'ON_AIR';
+        
+        // Drag Events
+        row.addEventListener('dragstart', (e) => {
+          if (state.appState === 'ON_AIR') return e.preventDefault();
+          e.dataTransfer.setData('text/plain', idx);
+        });
+        row.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        });
+        row.addEventListener('drop', (e) => {
+          if (state.appState === 'ON_AIR') return;
+          const dragIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+          if (isNaN(dragIndex) || dragIndex === idx) return;
+          
+          const newQ = [...state.queue];
+          const [moved] = newQ.splice(dragIndex, 1);
+          newQ.splice(idx, 0, moved);
+          state.queue = newQ;
+          updateAppUI();
+        });
+
+        row.addEventListener('click', () => {
+          if (isExpanded) state.expandedRows.delete(track.id);
+          else state.expandedRows.add(track.id);
+          updateAppUI();
+        });
+
+        // Top Content
+        const topDiv = document.createElement('div');
+        topDiv.className = 'flex justify-between py-2 px-3';
+        topDiv.innerHTML = `
+          <div class="truncate pr-4 flex-1">${(idx + 1).toString().padStart(2, '0')} · ${track.name}${markIndicator}</div>
+          <div class="shrink-0 text-right">${formatTime(track.duration)}${countData}</div>
+        `;
+        row.appendChild(topDiv);
+
+        // Expanded Content
+        if (isExpanded) {
+          if (track.history.length > 0) {
+            const histDiv = document.createElement('div');
+            histDiv.className = `px-3 pb-2 text-xs opacity-80 ${isPlaying ? 'text-gray-300' : 'text-gray-700'}`;
+            histDiv.innerHTML = track.history.map(h => `<div>${h.time} · ${h.reaction}</div>`).join('');
+            row.appendChild(histDiv);
+          }
+          
+          if (!isPlaying && state.appState !== 'ON_AIR') {
+            const moveDiv = document.createElement('div');
+            moveDiv.className = 'px-3 pb-2 flex gap-4 text-xs font-bold pt-1';
+            
+            const upBtn = document.createElement('div');
+            upBtn.className = 'interactive underline';
+            upBtn.textContent = '[MOVE UP]';
+            upBtn.onclick = (e) => { e.stopPropagation(); moveRow(idx, -1); };
+            
+            const downBtn = document.createElement('div');
+            downBtn.className = 'interactive underline';
+            downBtn.textContent = '[MOVE DOWN]';
+            downBtn.onclick = (e) => { e.stopPropagation(); moveRow(idx, 1); };
+
+            moveDiv.appendChild(upBtn);
+            moveDiv.appendChild(downBtn);
+            row.appendChild(moveDiv);
+          }
+        }
+
+        els.queueContainer.appendChild(row);
+      });
+
+      // Bottom padding
+      const pad = document.createElement('div');
+      pad.className = 'h-full min-h-[100px] pointer-events-none';
+      els.queueContainer.appendChild(pad);
+    };
+
+    const moveRow = (index, direction) => {
+      if (state.appState === 'ON_AIR') return;
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= state.queue.length) return;
+      
+      const newQ = [...state.queue];
+      const temp = newQ[targetIndex];
+      newQ[targetIndex] = newQ[index];
+      newQ[index] = temp;
+      state.queue = newQ;
+      updateAppUI();
+    };
+
+    // ============================================================================
+    // AUDIO INITIALIZATION
+    // ============================================================================
+    const initAudioEngine = async () => {
+      if (audioCtx) return true;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        masterGain = audioCtx.createGain();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        
+        masterGain.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        masterGain.gain.value = state.listenerVolume;
+
+        const source1 = audioCtx.createMediaElementSource(els.audio1);
+        gain1 = audioCtx.createGain();
+        source1.connect(gain1);
+        gain1.connect(masterGain);
+
+        const source2 = audioCtx.createMediaElementSource(els.audio2);
+        gain2 = audioCtx.createGain();
+        source2.connect(gain2);
+        gain2.connect(masterGain);
+
+        await audioCtx.resume();
+        els.autoplayError.classList.add('hidden');
+        return true;
+      } catch (err) {
+        console.error("Audio engine failed to start", err);
+        els.autoplayError.classList.remove('hidden');
+        els.autoplayError.classList.add('flex');
+        return false;
+      }
+    };
+
+    // ============================================================================
+    // FILE PROCESSING
+    // ============================================================================
+    const processFiles = async (files) => {
+      const newTracks = await Promise.all(files.map(file => new Promise((resolve) => {
+        const url = URL.createObjectURL(file);
+        const tempAudio = new Audio(url);
+        tempAudio.addEventListener('loadedmetadata', () => {
+          resolve({
+            id: generateId(),
+            file,
+            name: file.name,
+            url,
+            duration: tempAudio.duration,
+            stays: 0, marks: 0, leaves: 0, history: []
+          });
+        });
+        tempAudio.addEventListener('error', () => resolve(null));
+      })));
+
+      const validTracks = newTracks.filter(t => t !== null);
+      if (validTracks.length > 0) {
+        state.queue = [...state.queue, ...validTracks];
+        if (state.appState === 'IDLE') state.appState = 'LOADED';
+        updateAppUI();
+      }
+    };
+
+    const loadRealMusic = async () => {
+      if (state.appState === 'ON_AIR') return;
+      els.btnLoadApi.textContent = '[ FETCHING MUSIC API... ]';
+      els.btnLoadApi.classList.add('opacity-50', 'pointer-events-none');
+      
+      try {
+        const res = await fetch('https://api.jamendo.com/v3.0/tracks/?client_id=56d30c95&format=json&limit=5&order=popularity_total&include=musicinfo');
+        const data = await res.json();
+
+        if (data && data.results && data.results.length > 0) {
+          const tracks = data.results.map(t => ({
+            id: generateId(),
+            file: null,
+            name: `${t.artist_name} - ${t.name}`.substring(0, 40),
+            url: t.audio,
+            duration: parseInt(t.duration, 10),
+            stays: 0, marks: 0, leaves: 0, history: []
+          }));
+          state.queue = [...state.queue, ...tracks];
+          if (state.appState === 'IDLE') state.appState = 'LOADED';
+          els.btnLoadApi.textContent = '[ LOAD REAL MUSIC API ]';
+          els.btnLoadApi.classList.remove('opacity-50', 'pointer-events-none');
+          updateAppUI();
+          return;
+        }
+      } catch (err) {
+        console.error("API failed, using fallback tracks", err);
+      }
+
+      // Fallback
+      const fallbacks = [
+        { name: "Beethoven - Moonlight Sonata", url: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Beethoven_Moonlight_1st_movement.ogg", duration: 322 },
+        { name: "Vivaldi - Spring (Allegro)", url: "https://upload.wikimedia.org/wikipedia/commons/b/b5/Vivaldi_-_Spring_mvt_1_Allegro_-_John_Harrison_violin.ogg", duration: 215 },
+        { name: "Mozart - Eine kleine Nachtmusik", url: "https://upload.wikimedia.org/wikipedia/commons/2/24/Eine_kleine_Nachtmusik_-_1._Allegro.ogg", duration: 355 }
+      ].map(t => ({
+        id: generateId(), file: null, name: t.name, url: t.url, duration: t.duration,
+        stays: 0, marks: 0, leaves: 0, history: []
+      }));
+
+      state.queue = [...state.queue, ...fallbacks];
+      if (state.appState === 'IDLE') state.appState = 'LOADED';
+      els.btnLoadApi.textContent = '[ LOAD REAL MUSIC API ]';
+      els.btnLoadApi.classList.remove('opacity-50', 'pointer-events-none');
+      updateAppUI();
+    };
+
+    // ============================================================================
+    // BROADCAST LOGIC
+    // ============================================================================
+    const playTrack = (index, playerNum) => {
+      const track = state.queue[index];
+      if (!track) return endBroadcast();
+
+      const audioEl = playerNum === 1 ? els.audio1 : els.audio2;
+      const gainNode = playerNum === 1 ? gain1 : gain2;
+      
+      audioEl.src = track.url;
+      audioEl.currentTime = 0;
+      gainNode.gain.value = 1.0;
+      
+      audioEl.play().catch(err => {
+        console.error("Playback failed", err);
+        els.autoplayError.classList.remove('hidden');
+        els.autoplayError.classList.add('flex');
+      });
+
+      activePlayerNum = playerNum;
+      isFading = false;
+    };
+
+    const toggleBroadcast = async () => {
+      if (state.appState === 'LOADED') {
+        const ok = await initAudioEngine();
+        if (!ok) return;
+
+        state.appState = 'ON_AIR';
+        state.listenerState = 'RECEIVING';
+        state.stats.start = getClockTime();
+        state.stats.tracks = 0;
+        
+        if (state.queue.length > 0) {
+          state.currentIndex = 0;
+          playTrack(0, 1);
+        } else {
+          state.appState = 'EXHAUSTED';
+        }
+        updateAppUI();
+      } else if (state.appState === 'ON_AIR') {
+        endBroadcast();
+      }
+    };
+
+    const endBroadcast = () => {
+      els.audio1.pause();
+      els.audio2.pause();
+      state.appState = 'LOADED';
+      state.listenerState = 'BROADCAST_COMPLETE';
+      state.stats.end = getClockTime();
+      state.currentIndex = -1;
+      state.reactionWindow = { open: false, trackId: null };
+      updateAppUI();
+    };
+
+    // ============================================================================
+    // REACTIONS
+    // ============================================================================
+    const recordReaction = (reaction) => {
+      if (state.listenerState === 'ENDED') return;
+      
+      const track = state.queue[state.currentIndex];
+      if (!track) return;
+
+      const timeStr = getClockTime();
+      state.logs.push({ time: timeStr, name: track.name, reaction });
+      
+      const updatedTrack = { ...track };
+      if (reaction === 'STAY') updatedTrack.stays++;
+      if (reaction === 'MARK') updatedTrack.marks++;
+      if (reaction === 'LEAVE') updatedTrack.leaves++;
+      updatedTrack.history.push({ time: timeStr, reaction });
+
+      state.queue[state.currentIndex] = updatedTrack;
+
+      if (reaction === 'MARK') state.stats.encounters++;
+      if (reaction === 'LEAVE') state.listenerState = 'ENDED';
+
+      state.reactionWindow = { open: false, trackId: null };
+      updateAppUI();
+    };
+
+    // ============================================================================
+    // RENDER LOOP
+    // ============================================================================
+    const loop = () => {
+      els.headerClock.textContent = getClockTime();
+
+      let rms = 0;
+      let timeData = new Uint8Array(0);
+      
+      if (analyser && state.appState === 'ON_AIR') {
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteTimeDomainData(dataArray);
+        timeData = dataArray;
+
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          const val = (dataArray[i] - 128) / 128;
+          sum += val * val;
+        }
+        rms = Math.sqrt(sum / bufferLength);
+      }
+
+      // VU Meter
+      const db = rms > 0 ? 20 * Math.log10(rms) : -100;
+      let activeCells = Math.max(0, Math.min(28, Math.floor((db + 60) / (60 / 28))));
+      if (state.appState !== 'ON_AIR' && state.appState !== 'LOADED') activeCells = 0;
+      
+      for (let i = 0; i < 28; i++) {
+        const cell = vuCells[i];
+        if (i < activeCells) {
+          if (i < 20) {
+            cell.style.backgroundColor = '#000000';
+            cell.className = 'flex-1 border border-black transition-colors duration-75';
+          }
+          else if (i < 26) cell.className = 'flex-1 border border-black hatch-warning';
+          else cell.className = 'flex-1 border border-black hatch-danger';
+        } else {
+          cell.style.backgroundColor = 'transparent';
+          cell.className = 'flex-1 border border-black transition-colors duration-75';
+        }
+      }
+
+      // Waveform Draw Function
+      const drawWaveform = (canvas) => {
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        ctx.clearRect(0, 0, width, height);
+
+        if (state.appState !== 'ON_AIR' || timeData.length === 0) {
+          ctx.beginPath();
+          ctx.moveTo(0, height/2);
+          ctx.lineTo(width, height/2);
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          return;
+        }
+
+        ctx.beginPath();
+        const sliceWidth = width * 1.0 / timeData.length;
+        let x = 0;
+        for (let i = 0; i < timeData.length; i++) {
+          const v = timeData[i] / 128.0;
+          const y = v * height / 2;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+          x += sliceWidth;
+        }
+        ctx.lineTo(width, height / 2);
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      };
+
+      drawWaveform(els.djWaveform);
+      if (state.listenerState !== 'ENDED') drawWaveform(els.listenerWaveform);
+
+      // Playback Logic
+      if (state.appState === 'ON_AIR' && state.currentIndex >= 0 && state.queue[state.currentIndex]) {
+        const activeEl = activePlayerNum === 1 ? els.audio1 : els.audio2;
+        const activeGain = activePlayerNum === 1 ? gain1 : gain2;
+        const nextEl = activePlayerNum === 1 ? els.audio2 : els.audio1;
+        const nextGain = activePlayerNum === 1 ? gain2 : gain1;
+        
+        const track = state.queue[state.currentIndex];
+        const timeRemaining = activeEl.duration - activeEl.currentTime;
+
+        // Reaction Window Logic
+        if (timeRemaining <= 8 && timeRemaining > 0) {
+          if (!state.reactionWindow.open && state.reactionWindow.trackId !== track.id) {
+            state.reactionWindow = { open: true, trackId: track.id };
+            updateAppUI();
+          }
+          if (state.reactionWindow.open) {
+            const pct = Math.max(0, (timeRemaining / 8) * 100);
+            els.reactionBar.style.width = `${pct}%`;
+          }
+        } else if (timeRemaining <= 0 || isNaN(timeRemaining)) {
+          if (state.reactionWindow.open) {
+             setTimeout(() => recordReaction('STAY'), 0);
+          }
+        }
+
+        // Crossfade / Advance
+        if (timeRemaining <= state.crossfade && !isFading && state.crossfade > 0) {
+          isFading = true;
+          const nextIndex = state.currentIndex + 1;
+          if (state.queue[nextIndex]) {
+            nextEl.src = state.queue[nextIndex].url;
+            nextEl.currentTime = 0;
+            nextGain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+            nextGain.gain.exponentialRampToValueAtTime(1.0, audioCtx.currentTime + state.crossfade);
+            nextEl.play().catch(e => console.error(e));
+            
+            activeGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+            activeGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + state.crossfade);
+            
+            setTimeout(() => {
+               state.currentIndex = nextIndex;
+               state.stats.tracks++;
+               activePlayerNum = activePlayerNum === 1 ? 2 : 1;
+               isFading = false;
+               updateAppUI();
+            }, state.crossfade * 1000);
+          }
+        } else if (timeRemaining <= 0 && state.crossfade === 0) {
+          const nextIndex = state.currentIndex + 1;
+          if (state.queue[nextIndex]) {
+            state.currentIndex = nextIndex;
+            state.stats.tracks++;
+            playTrack(nextIndex, activePlayerNum === 1 ? 2 : 1);
+            updateAppUI();
+          } else {
+            endBroadcast();
+          }
+        }
+        
+        // Silence Detection
+        if (rms < 0.001) {
+          const currentSilence = parseFloat(els.silenceCounter.dataset.val || '0') + (1/FPS);
+          els.silenceCounter.dataset.val = currentSilence;
+          els.silenceCounter.textContent = `[ ${currentSilence.toFixed(1)}s ]`;
+          
+          if (state.listenerState === 'RECEIVING' && state.appState === 'ON_AIR') {
+            state.listenerState = 'SILENCE';
+            updateAppUI();
+          }
+        } else {
+          els.silenceCounter.dataset.val = '0';
+          els.silenceCounter.textContent = '';
+          
+          if (state.listenerState === 'SILENCE' && state.appState === 'ON_AIR') {
+            state.listenerState = 'RECEIVING';
+            updateAppUI();
+          }
+        }
+      }
+
+      engineFrame = requestAnimationFrame(loop);
+    };
+
+    // ============================================================================
+    // EVENT LISTENERS BINDING
+    // ============================================================================
+    
+    // Drag and Drop Files
+    document.body.addEventListener('dragover', (e) => e.preventDefault());
+    document.body.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      if (state.appState === 'ON_AIR') return;
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('audio/'));
+      if (files.length) await processFiles(files);
+    });
+    els.fileInput.addEventListener('change', async (e) => {
+      if (state.appState === 'ON_AIR') return;
+      const files = Array.from(e.target.files).filter(f => f.type.startsWith('audio/'));
+      if (files.length) await processFiles(files);
+    });
+
+    // API Load
+    els.btnLoadApi.addEventListener('click', loadRealMusic);
+
+    // Crossfade Slider
+    els.crossfadeInput.addEventListener('input', (e) => {
+      state.crossfade = parseFloat(e.target.value);
+      els.crossfadeDisplay.textContent = state.crossfade.toFixed(1) + 's';
+      els.crossfadeThumb.style.left = `calc(${(state.crossfade / 5) * 100}% - 6px)`;
+    });
+
+    // Volume Slider
+    els.volumeInput.addEventListener('input', (e) => {
+      state.listenerVolume = parseFloat(e.target.value);
+      els.volumeThumb.style.left = `calc(${state.listenerVolume * 100}% - 6px)`;
+      if (masterGain) masterGain.gain.value = state.listenerVolume;
+    });
+
+    // Broadcast Toggle
+    els.broadcastBtn.addEventListener('click', toggleBroadcast);
+
+    // Error Ack
+    els.btnAckError.addEventListener('click', () => {
+      els.autoplayError.classList.add('hidden');
+      els.autoplayError.classList.remove('flex');
+    });
+
+    // Reaction Buttons
+    els.btnReactStay.addEventListener('click', () => recordReaction('STAY'));
+    els.btnReactMark.addEventListener('click', () => recordReaction('MARK'));
+    els.btnReactLeave.addEventListener('click', () => recordReaction('LEAVE'));
+
+    // New Session
+    els.btnNewSession.addEventListener('click', () => {
+      state.listenerState = 'WAITING';
+      updateAppUI();
+    });
+
+    // INITIALIZATION
+    updateAppUI();
+    engineFrame = requestAnimationFrame(loop);
+
+  </script>
+</body>
+</html>
