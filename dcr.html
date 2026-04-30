@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COOL RADIO — OPERATIONAL SCRIPT</title>
+    <style>
+        :root {
+            --white: #ffffff;
+            --black: #000000;
+            --grad-a1: #ffffff;
+            --grad-a2: #e0e0e0;
+            --grad-b1: #000000;
+            --grad-b2: #1a1a1a;
+            --color-signal-live: #000000;
+            --color-off-badge: rgba(0, 0, 0, 0.3);
+            --forbidden-midtones: none;
+            --font-mono: 'Courier New', Courier, monospace;
+            --font-weight-normal: 400;
+            --font-weight-bold: 700;
+            --tracking: 0.3em;
+            --border-thin: 1px;
+            --border-thick: 2px;
+            --animation-pulse: pulse 1s step(1, start) infinite;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-mono);
+            background: var(--white);
+            color: var(--black);
+            letter-spacing: var(--tracking);
+            font-weight: var(--font-weight-bold);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: default;
+        }
+
+        /* ========== GLOBAL STRUCTURE ========== */
+        #app {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #split-container {
+            display: flex;
+            height: calc(100vh - 48px);
+            /* reserve space for broadcast button */
+            width: 100%;
+            border: var(--border-thin) solid var(--black);
+            border-bottom: none;
+            margin: 0;
+        }
+
+        #dj-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid var(--black);
+            position: relative;
+            background: linear-gradient(to top, var(--grad-a2), var(--grad-a1));
+        }
+
+        #listener-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ========== HEADER STRIP (DJ) ========== */
+        #header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 2.2rem;
+            padding: 0 8px;
+            border-bottom: var(--border-thick) solid var(--black);
+            background: var(--white);
+            letter-spacing: var(--tracking);
+            font-weight: var(--font-weight-bold);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-weight: var(--font-weight-bold);
+            font-size: 1rem;
+        }
+
+        .clock {
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-left: auto;
+            margin-right: 20px;
+        }
+
+        .onair-badge {
+            border: var(--border-thick) solid var(--black);
+            padding: 2px 8px;
+            font-weight: var(--font-weight-bold);
+            cursor: crosshair;
+            background: var(--white);
+            transition: none;
+            color: var(--color-off-badge);
+            border-color: var(--color-off-badge);
+        }
+
+        .onair-badge.live {
+            color: var(--black);
+            border-color: var(--black);
+            animation: var(--animation-pulse);
+        }
+
+        @keyframes pulse {
+            0%,
+            49.9% {
+                opacity: 0.3;
+            }
+            50%,
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* ========== QUEUE SURFACE (DJ) ========== */
+        #queue-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #queue-scroll {
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--black) var(--white);
+        }
+
+        #queue-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        #queue-scroll::-webkit-scrollbar-track {
+            background: var(--white);
+        }
+        #queue-scroll::-webkit-scrollbar-thumb {
+            background: var(--black);
+        }
+
+        .queue-row {
+            border-bottom: var(--border-thin) solid var(--black);
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            cursor: crosshair;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            white-space: pre-wrap;
+            transition: none;
+            background: var(--white);
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        .queue-row.current {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .queue-row.inert {
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .queue-row .mark-flag {
+            display: inline;
+        }
+
+        .queue-row .track-meta {
+            font-weight: var(--font-weight-normal);
+            letter-spacing: 0.1em;
+            flex-shrink: 0;
+        }
+
+        .queue-row .track-index {
+            font-weight: var(--font-weight-bold);
+            margin-right: 1em;
+        }
+
+        .queue-expand {
+            display: none;
+            padding: 8px 24px;
+            border-bottom: var(--border-thin) solid var(--black);
+            background: var(--white);
+            font-weight: var(--font-weight-normal);
+            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+        }
+
+        .queue-expand.open {
+            display: block;
+        }
+
+        /* ========== SIGNAL INSTRUMENTS (DJ) ========== */
+        #dj-instruments {
+            flex-shrink: 0;
+            border-top: var(--border-thick) solid var(--black);
+            background: var(--white);
+            padding: 4px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        #vu-meter {
+            display: flex;
+            width: 100%;
+            height: 24px;
+            gap: 1px;
+            padding: 0 4px;
+        }
+
+        .vu-cell {
+            flex: 1;
+            border: 1px solid var(--black);
+            background: var(--white);
+            transition: none;
+        }
+
+        .vu-cell.filled1 {
+            background: var(--black);
+        }
+        .vu-cell.hatch1 {
+            background-image: repeating-linear-gradient(45deg,
+                    var(--black) 0px,
+                    var(--black) 1px,
+                    var(--white) 1px,
+                    var(--white) 3px);
+        }
+        .vu-cell.hatch2 {
+            background-image: repeating-linear-gradient(45deg,
+                    var(--black) 0px,
+                    var(--black) 1px,
+                    var(--white) 1px,
+                    var(--white) 3px),
+                repeating-linear-gradient(-45deg,
+                    var(--black) 0px,
+                    var(--black) 1px,
+                    var(--white) 1px,
+                    var(--white) 3px);
+        }
+
+        #waveform-canvas,
+        #listener-waveform-canvas {
+            width: 100%;
+            height: 64px;
+            border: var(--border-thin) solid var(--black);
+            background: var(--white);
+            display: block;
+        }
+
+        #crossfade-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 8px;
+        }
+
+        #crossfade-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 3px;
+            border: 1px solid var(--black);
+            background: var(--white);
+            outline: none;
+            transition: none;
+        }
+
+        #crossfade-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 24px;
+            background: var(--black);
+            border: none;
+            border-radius: 0;
+            cursor: crosshair;
+        }
+        #crossfade-slider:disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* ========== BROADCAST BUTTON ========== */
+        #broadcast-btn {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100vw;
+            height: 48px;
+            border-top: var(--border-thick) solid var(--black);
+            background: var(--white);
+            font-family: var(--font-mono);
+            font-weight: var(--font-weight-bold);
+            letter-spacing: var(--tracking);
+            font-size: 1rem;
+            cursor: crosshair;
+            color: var(--black);
+            transition: none;
+            text-align: center;
+            line-height: 48px;
+            z-index: 100;
+            border-bottom: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        #broadcast-btn.on-air {
+            background: linear-gradient(to top, var(--grad-b1), var(--grad-b2));
+            color: var(--white);
+            border-top: var(--border-thick) solid var(--black);
+        }
+
+        #broadcast-btn:disabled {
+            cursor: default;
+            opacity: 0.6;
+        }
+
+        /* ========== LISTENER PANEL ========== */
+        #listener-waveform-container {
+            flex-shrink: 0;
+        }
+
+        #listener-volume {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-bottom: var(--border-thin) solid var(--black);
+        }
+        #volume-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 3px;
+            border: 1px solid var(--black);
+            background: var(--white);
+        }
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 24px;
+            background: var(--black);
+            border-radius: 0;
+        }
+
+        #signal-state-block {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: var(--font-weight-bold);
+            padding: 20px;
+            min-height: 60px;
+            transition: none;
+            background: var(--white);
+        }
+
+        #reaction-zone {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 8px 8px;
+            border-bottom: var(--border-thick) solid var(--black);
+        }
+        #reaction-progress-bar {
+            width: 100%;
+            height: 2px;
+            background: var(--black);
+        }
+        #reaction-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .reaction-btn {
+            flex: 1;
+            border: 2px solid var(--black);
+            background: var(--white);
+            font-family: var(--font-mono);
+            font-weight: var(--font-weight-bold);
+            letter-spacing: var(--tracking);
+            padding: 8px;
+            cursor: crosshair;
+            color: var(--black);
+            transition: none;
+        }
+
+        #encounter-log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            font-weight: var(--font-weight-normal);
+            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+            border-top: var(--border-thin) solid var(--black);
+            background: var(--white);
+            scrollbar-width: thin;
+            scrollbar-color: var(--black) var(--white);
+        }
+        #encounter-log::-webkit-scrollbar {
+            width: 6px;
+        }
+        #encounter-log::-webkit-scrollbar-track {
+            background: var(--white);
+        }
+        #encounter-log::-webkit-scrollbar-thumb {
+            background: var(--black);
+        }
+
+        .log-entry {
+            white-space: pre;
+            border-bottom: none;
+            padding: 2px 0;
+            cursor: crosshair;
+        }
+
+        /* ========== FAILURE BOXES ========== */
+        .failure-box {
+            border: var(--border-thick) solid var(--black);
+            background: var(--white);
+            padding: 16px;
+            margin: 8px;
+            font-weight: var(--font-weight-bold);
+        }
+
+        /* idle state message */
+        #idle-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 1.4rem;
+            font-weight: var(--font-weight-bold);
+            letter-spacing: var(--tracking);
+            background: var(--white);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- SPLIT CONTAINER -->
+        <div id="split-container">
+            <!-- DJ PANEL LEFT -->
+            <div id="dj-panel">
+                <div id="header">
+                    <span class="logo">COOL·RADIO</span>
+                    <span class="clock" id="live-clock">00:00:00</span>
+                    <span class="onair-badge" id="onair-badge">OFF AIR</span>
+                </div>
+                <div id="queue-area">
+                    <div id="queue-scroll"></div>
+                    <div id="dj-instruments">
+                        <div id="vu-meter"></div>
+                        <canvas id="waveform-canvas" width="600" height="64"></canvas>
+                        <div id="crossfade-container">
+                            <span>CROSSFADE · <span id="crossfade-val">0.0</span>s</span>
+                            <input type="range" id="crossfade-slider" min="0" max="5.0" step="0.1" value="0.0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- LISTENER PANEL RIGHT -->
+            <div id="listener-panel">
+                <div id="listener-waveform-container">
+                    <canvas id="listener-waveform-canvas" width="600" height="64"></canvas>
+                </div>
+                <div id="listener-volume">
+                    <span style="margin-right:8px;">VOL</span>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1.0">
+                </div>
+                <div id="signal-state-block">WAITING</div>
+                <div id="reaction-zone">
+                    <div id="reaction-progress-bar"></div>
+                    <div id="reaction-buttons">
+                        <button class="reaction-btn" data-reaction="STAY">STAY</button>
+                        <button class="reaction-btn" data-reaction="MARK">MARK</button>
+                        <button class="reaction-btn" data-reaction="LEAVE">LEAVE</button>
+                    </div>
+                </div>
+                <div id="encounter-log"></div>
+            </div>
+        </div>
+        <!-- BROADCAST BUTTON (full width) -->
+        <button id="broadcast-btn">NO SIGNAL</button>
+    </div>
+
+    <script>
+        (function() {
+            // ========== GLOBAL STATE ==========
+            const APP_STATE = { IDLE: 'IDLE', LOADED: 'LOADED', ON_AIR: 'ON_AIR' };
+            let currentAppState = APP_STATE.IDLE;
+            let filesQueue = []; // array of { id, file, buffer, duration, name, markCount, reactions:[] }
+            let currentTrackIndex = -1; // index in queue, -1 if none
+            let broadcastStartTime = null;
+            let sessionEndTime = null;
+            let crossfadeValue = 0.0;
+            let broadcastActive = false;
+            let listenerVolume = 1.0;
+            let encounterLog = []; // persistent log entries { time, filename, reaction }
+            let reactionZoneActive = false;
+            let reactionTimeoutId = null;
+            let reactionTrackId = null;
+            let reactionStartTime = 0;
+            let listenerLeftSession = false;
+
+            // Audio Context
+            let audioCtx = null;
+            let masterGainNode = null;
+            let listenerGainNode = null;
+            let analyserNode = null;
+            let sourceNodes = []; // active source nodes for current/mixing tracks
+
+            // DOM Elements
+            const djPanel = document.getElementById('dj-panel');
+            const headerClock = document.getElementById('live-clock');
+            const onairBadge = document.getElementById('onair-badge');
+            const queueScroll = document.getElementById('queue-scroll');
+            const vuMeter = document.getElementById('vu-meter');
+            const waveformCanvas = document.getElementById('waveform-canvas');
+            const waveformCtx = waveformCanvas.getContext('2d');
+            const listenerWaveformCanvas = document.getElementById('listener-waveform-canvas');
+            const listenerWaveformCtx = listenerWaveformCanvas.getContext('2d');
+            const crossfadeSlider = document.getElementById('crossfade-slider');
+            const crossfadeValSpan = document.getElementById('crossfade-val');
+            const broadcastBtn = document.getElementById('broadcast-btn');
+            const signalStateBlock = document.getElementById('signal-state-block');
+            const reactionZone = document.getElementById('reaction-zone');
+            const reactionProgressBar = document.getElementById('reaction-progress-bar');
+            const reactionButtons = document.querySelectorAll('.reaction-btn');
+            const encounterLogDiv = document.getElementById('encounter-log');
+            const volumeSlider = document.getElementById('volume-slider');
+            const idleMessage = document.getElementById('idle-message');
+
+            // ========== INITIALIZATION ==========
+            function init() {
+                setupClock();
+                setupCrossfadeSlider();
+                setupVolumeSlider();
+                setupBroadcastButton();
+                setupOnAirBadge();
+                setupDragDrop();
+                setupReactionButtons();
+                renderIdleState();
+                // Create VU cells
+                createVUCells();
+                updateBroadcastButtonState();
+                startClockInterval();
+                startDrawingLoop();
+            }
+
+            function setupClock() { /* clock update in interval */ }
+
+            function startClockInterval() {
+                setInterval(() => {
+                    const now = new Date();
+                    const h = String(now.getHours()).padStart(2, '0');
+                    const m = String(now.getMinutes()).padStart(2, '0');
+                    const s = String(now.getSeconds()).padStart(2, '0');
+                    headerClock.textContent = `${h}:${m}:${s}`;
+                }, 200);
+            }
+
+            function createVUCells() {
+                vuMeter.innerHTML = '';
+                for (let i = 0; i < 28; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'vu-cell';
+                    cell.dataset.index = i;
+                    vuMeter.appendChild(cell);
+                }
+            }
+
+            function setupCrossfadeSlider() {
+                crossfadeSlider.addEventListener('input', () => {
+                    crossfadeValue = parseFloat(crossfadeSlider.value);
+                    crossfadeValSpan.textContent = crossfadeValue.toFixed(1);
+                });
+                crossfadeValue = 0.0;
+                crossfadeValSpan.textContent = '0.0';
+            }
+
+            function setupVolumeSlider() {
+                volumeSlider.addEventListener('input', () => {
+                    listenerVolume = parseFloat(volumeSlider.value);
+                    if (listenerGainNode) {
+                        listenerGainNode.gain.setValueAtTime(listenerVolume, audioCtx.currentTime);
+                    }
+                });
+            }
+
+            function setupBroadcastButton() {
+                broadcastBtn.addEventListener('click', () => {
+                    if (currentAppState === APP_STATE.IDLE) return;
+                    if (broadcastActive) {
+                        endBroadcast();
+                    } else {
+                        startBroadcast();
+                    }
+                });
+            }
+
+            function setupOnAirBadge() {
+                onairBadge.addEventListener('click', () => {
+                    if (currentAppState === APP_STATE.IDLE) return;
+                    if (broadcastActive) {
+                        endBroadcast();
+                    } else {
+                        startBroadcast();
+                    }
+                });
+            }
+
+            function setupDragDrop() {
+                // Drag and drop files onto dj-panel or the whole page
+                document.body.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                document.body.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (currentAppState === APP_STATE.ON_AIR) return; // no changes on air
+                    const dt = e.dataTransfer;
+                    if (dt.files && dt.files.length > 0) {
+                        handleFiles(Array.from(dt.files));
+                    }
+                });
+                // Allow dropping also on idle message
+                idleMessage?.addEventListener('dragover', (e) => e.preventDefault());
+                idleMessage?.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (currentAppState === APP_STATE.ON_AIR) return;
+                    const dt = e.dataTransfer;
+                    if (dt.files && dt.files.length > 0) {
+                        handleFiles(Array.from(dt.files));
+                    }
+                });
+            }
+
+            async function handleFiles(files) {
+                const audioFiles = files.filter(f => f.type.startsWith('audio/'));
+                if (audioFiles.length === 0) return;
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        alert('Web Audio API not supported');
+                        return;
+                    }
+                }
+                // decode all files
+                for (const file of audioFiles) {
+                    try {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                        const track = {
+                            id: Date.now() + Math.random(),
+                            file: file,
+                            buffer: audioBuffer,
+                            duration: audioBuffer.duration,
+                            name: file.name,
+                            markCount: 0,
+                            reactions: []
+                        };
+                        filesQueue.push(track);
+                    } catch (err) {
+                        console.error('Error decoding', file.name, err);
+                    }
+                }
+                if (filesQueue.length > 0 && currentAppState === APP_STATE.IDLE) {
+                    currentAppState = APP_STATE.LOADED;
+                    removeIdleState();
+                }
+                renderQueue();
+                updateBroadcastButtonState();
+                setupDragReorder();
+            }
+
+            function removeIdleState() {
+                if (idleMessage) idleMessage.remove();
+            }
+
+            function renderIdleState() {
+                // Create idle message if not already
+                if (!document.getElementById('idle-message')) {
+                    const div = document.createElement('div');
+                    div.id = 'idle-message';
+                    div.innerHTML =
+                        '<div>NO SIGNAL</div><div style="font-weight:400;font-size:0.9rem;margin-top:10px;">DROP AUDIO FILES TO LOAD THE QUEUE</div>';
+                    div.style.width = '100%';
+                    div.style.height = '100%';
+                    div.style.display = 'flex';
+                    div.style.flexDirection = 'column';
+                    div.style.alignItems = 'center';
+                    div.style.justifyContent = 'center';
+                    div.style.background = '#FFFFFF';
+                    div.style.position = 'absolute';
+                    div.style.top = '0';
+                    div.style.left = '0';
+                    queueScroll.parentElement.appendChild(div);
+                }
+            }
+
+            // ========== QUEUE RENDERING ==========
+            function renderQueue() {
+                queueScroll.innerHTML = '';
+                filesQueue.forEach((track, idx) => {
+                    const row = document.createElement('div');
+                    row.className = 'queue-row';
+                    if (currentAppState === APP_STATE.ON_AIR) {
+                        row.classList.add('inert');
+                    }
+                    if (idx === currentTrackIndex && broadcastActive) {
+                        row.classList.add('current');
+                    }
+                    const durationStr = formatDuration(track.duration);
+                    const markFlag = track.markCount > 0 ? ' ▲' : '';
+                    row.innerHTML =
+                        `<span><span class="track-index">${idx+1}</span> ${track.name}  ${durationStr}${markFlag}</span>`;
+                    row.addEventListener('click', (e) => {
+                        if (currentAppState === APP_STATE.ON_AIR && !broadcastActive) return;
+                        toggleRowExpand(idx, row);
+                    });
+                    // Drag reorder handles
+                    row.draggable = currentAppState === APP_STATE.LOADED;
+                    row.dataset.index = idx;
+                    row.addEventListener('dragstart', handleDragStart);
+                    row.addEventListener('dragover', handleDragOver);
+                    row.addEventListener('drop', handleDrop);
+                    row.addEventListener('dragend', handleDragEnd);
+                    queueScroll.appendChild(row);
+
+                    // Expansion panel
+                    const expandDiv = document.createElement('div');
+                    expandDiv.className = 'queue-expand';
+                    expandDiv.id = `expand-${idx}`;
+                    expandDiv.innerHTML = renderReactionHistory(track);
+                    queueScroll.appendChild(expandDiv);
+                });
+            }
+
+            function renderReactionHistory(track) {
+                if (track.reactions.length === 0) return 'No reactions yet.';
+                let html = '';
+                track.reactions.forEach(r => {
+                    html +=
+                        `<div>${r.timestamp} · ${r.type === 'MARK' ? 'MARK ▲' : r.type}</div>`;
+                });
+                return html;
+            }
+
+            function toggleRowExpand(idx, rowElement) {
+                const expandDiv = document.getElementById(`expand-${idx}`);
+                if (!expandDiv) return;
+                if (expandDiv.classList.contains('open')) {
+                    expandDiv.classList.remove('open');
+                } else {
+                    // close others
+                    document.querySelectorAll('.queue-expand.open').forEach(el => el.classList.remove(
+                        'open'));
+                    expandDiv.classList.add('open');
+                    // update reaction history
+                    expandDiv.innerHTML = renderReactionHistory(filesQueue[idx]);
+                }
+            }
+
+            // Drag and drop reorder
+            let dragSrcIndex = null;
+
+            function handleDragStart(e) {
+                if (currentAppState !== APP_STATE.LOADED) {
+                    e.preventDefault();
+                    return false;
+                }
+                dragSrcIndex = parseInt(e.target.dataset.index);
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', dragSrcIndex);
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                if (currentAppState !== APP_STATE.LOADED) return;
+                const targetIndex = parseInt(e.target.closest('.queue-row')?.dataset.index);
+                if (targetIndex === undefined || dragSrcIndex === null || targetIndex === dragSrcIndex)
+                return;
+                // reorder array
+                const movedItem = filesQueue.splice(dragSrcIndex, 1)[0];
+                filesQueue.splice(targetIndex, 0, movedItem);
+                dragSrcIndex = null;
+                renderQueue();
+                setupDragReorder();
+            }
+
+            function handleDragEnd(e) {
+                dragSrcIndex = null;
+            }
+
+            function setupDragReorder() {
+                const rows = document.querySelectorAll('.queue-row');
+                rows.forEach(row => {
+                    row.draggable = currentAppState === APP_STATE.LOADED;
+                });
+            }
+
+            // ========== BROADCAST CONTROL ==========
+            async function startBroadcast() {
+                if (filesQueue.length === 0) return;
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) { return; }
+                }
+                if (audioCtx.state === 'suspended') {
+                    showAutoplayBlocked();
+                    return;
+                }
+                // Reset listener left session flag
+                listenerLeftSession = false;
+                // Log session start time
+                broadcastStartTime = new Date();
+                const timeStr = headerClock.textContent;
+                broadcastActive = true;
+                currentAppState = APP_STATE.ON_AIR;
+                updateBroadcastButtonState();
+                onairBadge.classList.add('live');
+                onairBadge.textContent = 'ON AIR';
+                crossfadeSlider.disabled = true;
+                // Setup audio graph
+                if (!masterGainNode) {
+                    masterGainNode = audioCtx.createGain();
+                    masterGainNode.gain.value = 1.0;
+                    listenerGainNode = audioCtx.createGain();
+                    listenerGainNode.gain.value = listenerVolume;
+                    analyserNode = audioCtx.createAnalyser();
+                    analyserNode.fftSize = 256;
+                    masterGainNode.connect(listenerGainNode);
+                    listenerGainNode.connect(analyserNode);
+                    analyserNode.connect(audioCtx.destination);
+                }
+                currentTrackIndex = 0;
+                renderQueue();
+                playNextTrack(0, 0);
+                updateSignalState('RECEIVING');
+                // start drawing
+                requestAnimationFrame(drawLoop);
+            }
+
+            function endBroadcast() {
+                broadcastActive = false;
+                currentAppState = APP_STATE.LOADED;
+                if (broadcastStartTime) {
+                    sessionEndTime = new Date();
+                }
+                stopAllSources();
+                currentTrackIndex = -1;
+                broadcastBtn.classList.remove('on-air');
+                onairBadge.classList.remove('live');
+                onairBadge.textContent = 'OFF AIR';
+                crossfadeSlider.disabled = false;
+                updateBroadcastButtonState();
+                renderQueue();
+                updateSignalState('BROADCAST COMPLETE');
+                if (!listenerLeftSession) {
+                    showBroadcastComplete();
+                }
+            }
+
+            function stopAllSources() {
+                sourceNodes.forEach(s => {
+                    try { s.stop(); } catch (e) {}
+                });
+                sourceNodes = [];
+            }
+
+            function playNextTrack(index, offset = 0) {
+                if (index >= filesQueue.length) {
+                    // queue exhausted
+                    setTimeout(() => endBroadcast(), 100);
+                    return;
+                }
+                const track = filesQueue[index];
+                const buffer = track.buffer;
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.value = 0;
+                source.connect(gainNode);
+                gainNode.connect(masterGainNode);
+                const now = audioCtx.currentTime;
+                const startTime = now + 0.05;
+                source.start(startTime, offset);
+                sourceNodes.push(source);
+                // Fade in
+                const fadeInEnd = startTime + Math.min(crossfadeValue, buffer.duration - offset);
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(1, fadeInEnd);
+                // Schedule next track
+                const remaining = buffer.duration - offset;
+                const nextStartTime = startTime + remaining - crossfadeValue;
+                if (nextStartTime > startTime) {
+                    const delay = nextStartTime - audioCtx.currentTime;
+                    setTimeout(() => {
+                        if (broadcastActive && currentTrackIndex === index) {
+                            playNextTrack(index + 1, 0);
+                        }
+                    }, delay * 1000);
+                } else {
+                    // immediate
+                    if (broadcastActive && currentTrackIndex === index) {
+                        playNextTrack(index + 1, 0);
+                    }
+                }
+                // Track end handler for reaction zone
+                const trackEndTime = startTime + remaining;
+                const delayToEnd = (trackEndTime - audioCtx.currentTime) * 1000;
+                setTimeout(() => {
+                    if (broadcastActive && !listenerLeftSession) {
+                        handleTrackEndForListener(track);
+                    }
+                }, Math.max(0, delayToEnd));
+                // update current track index
+                currentTrackIndex = index;
+                renderQueue();
+            }
+
+            function handleTrackEndForListener(track) {
+                // Show reaction zone for 8 seconds
+                if (reactionZoneActive) clearReactionZone();
+                reactionTrackId = track.id;
+                reactionZoneActive = true;
+                reactionStartTime = Date.now();
+                reactionZone.style.display = 'flex';
+                reactionProgressBar.style.width = '100%';
+                // start depletion
+                const depletionDuration = 8000;
+                const startWidth = 100;
+                const updateProgress = () => {
+                    if (!reactionZoneActive) return;
+                    const elapsed = Date.now() - reactionStartTime;
+                    const percent = Math.max(0, startWidth - (elapsed / depletionDuration) * startWidth);
+                    reactionProgressBar.style.width = percent + '%';
+                    if (elapsed >= depletionDuration) {
+                        autoReactStay();
+                    } else {
+                        reactionTimeoutId = requestAnimationFrame(updateProgress);
+                    }
+                };
+                reactionTimeoutId = requestAnimationFrame(updateProgress);
+            }
+
+            function clearReactionZone() {
+                reactionZoneActive = false;
+                if (reactionTimeoutId) cancelAnimationFrame(reactionTimeoutId);
+                reactionZone.style.display = 'none';
+                reactionTrackId = null;
+            }
+
+            function autoReactStay() {
+                if (!reactionZoneActive) return;
+                const track = filesQueue.find(t => t.id === reactionTrackId);
+                if (track) {
+                    recordReaction(track, 'STAY');
+                    appendLogEntry(track.name, 'STAY');
+                }
+                clearReactionZone();
+                if (broadcastActive) updateSignalState('RECEIVING');
+            }
+
+            function setupReactionButtons() {
+                reactionButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (!reactionZoneActive) return;
+                        const reaction = btn.dataset.reaction;
+                        const track = filesQueue.find(t => t.id === reactionTrackId);
+                        if (!track) { clearReactionZone(); return; }
+                        if (reaction === 'LEAVE') {
+                            recordReaction(track, 'LEAVE');
+                            appendLogEntry(track.name, 'LEAVE');
+                            listenerLeaves();
+                        } else {
+                            recordReaction(track, reaction);
+                            appendLogEntry(track.name, reaction);
+                            clearReactionZone();
+                            if (broadcastActive) updateSignalState('RECEIVING');
+                        }
+                    });
+                });
+            }
+
+            function recordReaction(track, type) {
+                const now = new Date();
+                const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+                track.reactions.push({ type, timestamp: ts });
+                if (type === 'MARK') track.markCount++;
+                // Update DJ queue if visible
+                renderQueue();
+            }
+
+            function appendLogEntry(filename, reaction) {
+                const now = new Date();
+                const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+                encounterLog.push({ time: ts, filename, reaction });
+                renderEncounterLog();
+            }
+
+            function renderEncounterLog() {
+                encounterLogDiv.innerHTML = '';
+                encounterLog.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'log-entry';
+                    div.textContent = `${entry.time}     ${entry.filename}     ${entry.reaction}`;
+                    div.addEventListener('click', () => {
+                        // highlight track in DJ queue if present
+                        const track = filesQueue.find(t => t.name === entry.filename);
+                        if (track) {
+                            const idx = filesQueue.indexOf(track);
+                            const row = document.querySelector(`.queue-row[data-index="${idx}"]`);
+                            if (row) {
+                                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                row.style.outline = '2px solid black';
+                                setTimeout(() => row.style.outline = '', 2000);
+                            }
+                        }
+                    });
+                    encounterLogDiv.appendChild(div);
+                });
+                encounterLogDiv.scrollTop = encounterLogDiv.scrollHeight;
+            }
+
+            function listenerLeaves() {
+                listenerLeftSession = true;
+                clearReactionZone();
+                // clear listener panel except message
+                document.getElementById('listener-waveform-container').innerHTML = '';
+                volumeSlider.parentElement.style.display = 'none';
+                signalStateBlock.textContent = 'SESSION ENDED BY LISTENER';
+                signalStateBlock.style.fontSize = '1.2rem';
+                encounterLogDiv.innerHTML = '';
+                reactionZone.style.display = 'none';
+                // but broadcast continues
+            }
+
+            function showBroadcastComplete() {
+                signalStateBlock.innerHTML = 'BROADCAST COMPLETE';
+                let statsHtml = '';
+                if (broadcastStartTime && sessionEndTime) {
+                    const start = broadcastStartTime;
+                    const end = sessionEndTime;
+                    const diff = Math.floor((end - start) / 1000);
+                    const h = Math.floor(diff / 3600);
+                    const m = Math.floor((diff % 3600) / 60);
+                    const s = diff % 60;
+                    statsHtml +=
+                        `<div>SESSION START: ${formatTime(start)}</div><div>SESSION END: ${formatTime(end)}</div><div>DURATION: ${h}h ${m}m ${s}s</div>`;
+                }
+                statsHtml += '<div style="margin-top:15px;text-decoration:underline;cursor:crosshair;" id="new-session-link">NEW SESSION</div>';
+                signalStateBlock.innerHTML += statsHtml;
+                document.getElementById('new-session-link')?.addEventListener('click', resetListenerSession);
+                volumeSlider.parentElement.style.display = 'flex';
+                // re-add waveform canvas? keep it simple, listener panel cleared?
+            }
+
+            function resetListenerSession() {
+                listenerLeftSession = false;
+                signalStateBlock.textContent = 'WAITING';
+                signalStateBlock.style.fontSize = '1.2rem';
+                volumeSlider.parentElement.style.display = 'flex';
+                document.getElementById('listener-waveform-container').innerHTML =
+                    '<canvas id="listener-waveform-canvas" width="600" height="64"></canvas>';
+                // re-assign listenerWaveformCanvas variable
+                listenerWaveformCanvas = document.getElementById('listener-waveform-canvas');
+                listenerWaveformCtx = listenerWaveformCanvas.getContext('2d');
+                reactionZone.style.display = 'none';
+                encounterLogDiv.innerHTML = '';
+                renderEncounterLog();
+                updateSignalState('WAITING');
+                // DJ panel remains loaded
+            }
+
+            function updateSignalState(state) {
+                if (listenerLeftSession) return;
+                signalStateBlock.textContent = state;
+                if (state === 'RECEIVING') {
+                    signalStateBlock.style.background = 'linear-gradient(to top, #F0F0F0, #FFFFFF)';
+                } else if (state === 'SILENCE') {
+                    signalStateBlock.style.background = '#FFFFFF';
+                    signalStateBlock.style.fontSize = '1rem';
+                } else {
+                    signalStateBlock.style.background = '#FFFFFF';
+                }
+            }
+
+            function showAutoplayBlocked() {
+                const box = document.createElement('div');
+                box.className = 'failure-box';
+                box.innerHTML =
+                    '<div style="font-weight:700;">AUTOPLAY BLOCKED</div><div>Click anywhere or press the broadcast button again to enable audio.</div>';
+                box.style.position = 'fixed';
+                box.style.top = '50%';
+                box.style.left = '50%';
+                box.style.transform = 'translate(-50%, -50%)';
+                box.style.zIndex = '200';
+                document.body.appendChild(box);
+                document.body.addEventListener('click', function resumeAudio() {
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                        audioCtx.resume().then(() => {
+                            box.remove();
+                            document.body.removeEventListener('click', resumeAudio);
+                            startBroadcast();
+                        });
+                    }
+                }, { once: true });
+            }
+
+            function updateBroadcastButtonState() {
+                if (currentAppState === APP_STATE.IDLE) {
+                    broadcastBtn.textContent = 'NO SIGNAL';
+                    broadcastBtn.disabled = true;
+                } else if (broadcastActive) {
+                    broadcastBtn.textContent = 'END BROADCAST';
+                    broadcastBtn.classList.add('on-air');
+                    broadcastBtn.disabled = false;
+                } else {
+                    broadcastBtn.textContent = 'BROADCAST';
+                    broadcastBtn.classList.remove('on-air');
+                    broadcastBtn.disabled = false;
+                }
+            }
+
+            // ========== DRAWING LOOP ==========
+            function drawLoop() {
+                if (!analyserNode || !broadcastActive) {
+                    requestAnimationFrame(() => drawIdleWaveform());
+                    return;
+                }
+                const bufferLength = analyserNode.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyserNode.getByteTimeDomainData(dataArray);
+                drawWaveform(waveformCtx, waveformCanvas, dataArray);
+                if (listenerWaveformCtx) drawWaveform(listenerWaveformCtx, listenerWaveformCanvas, dataArray);
+                // VU meter
+                const rms = calculateRMS(dataArray);
+                updateVUMeter(rms);
+                requestAnimationFrame(drawLoop);
+            }
+
+            function drawIdleWaveform() {
+                // flat line
+                drawFlatLine(waveformCtx, waveformCanvas);
+                if (listenerWaveformCtx) drawFlatLine(listenerWaveformCtx, listenerWaveformCanvas);
+                updateVUMeter(0);
+                if (broadcastActive) requestAnimationFrame(drawLoop);
+                else requestAnimationFrame(() => setTimeout(() => requestAnimationFrame(drawIdleWaveform), 200));
+            }
+
+            function drawWaveform(ctx, canvas, dataArray) {
+                const width = canvas.width;
+                const height = canvas.height;
+                ctx.clearRect(0, 0, width, height);
+                ctx.beginPath();
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                const sliceWidth = width / dataArray.length;
+                let x = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * height / 2;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                    x += sliceWidth;
+                }
+                ctx.stroke();
+            }
+
+            function drawFlatLine(ctx, canvas) {
+                const width = canvas.width;
+                const height = canvas.height;
+                ctx.clearRect(0, 0, width, height);
+                ctx.beginPath();
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.moveTo(0, height / 2);
+                ctx.lineTo(width, height / 2);
+                ctx.stroke();
+            }
+
+            function calculateRMS(dataArray) {
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const val = (dataArray[i] - 128) / 128;
+                    sum += val * val;
+                }
+                return Math.sqrt(sum / dataArray.length);
+            }
+
+            function updateVUMeter(rms) {
+                const cells = vuMeter.children;
+                const normalized = Math.min(rms / 0.25, 1); // scaling
+                const filledCount = Math.floor(normalized * 28);
+                for (let i = 0; i < 28; i++) {
+                    const cell = cells[i];
+                    cell.className = 'vu-cell';
+                    if (i < filledCount) {
+                        if (i < 20) cell.classList.add('filled1');
+                        else if (i < 26) cell.classList.add('hatch1');
+                        else cell.classList.add('hatch2');
+                    }
+                }
+            }
+
+            function formatDuration(sec) {
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60);
+                return `${m}:${String(s).padStart(2,'0')}`;
+            }
+
+            function formatTime(date) {
+                return `${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
+            }
+
+            // ========== START ==========
+            init();
+            // initial idle state
+            renderIdleState();
+            document.getElementById('dj-instruments').style.display = 'none';
+            // show instruments only when loaded
+            function setupVisualsOnLoad() {
+                document.getElementById('dj-instruments').style.display = 'flex';
+                drawFlatLine(waveformCtx, waveformCanvas);
+                if (listenerWaveformCtx) drawFlatLine(listenerWaveformCtx, listenerWaveformCanvas);
+            }
+            const origHandleFiles = handleFiles;
+            handleFiles = async function(files) {
+                await origHandleFiles(files);
+                if (currentAppState === APP_STATE.LOADED) {
+                    setupVisualsOnLoad();
+                }
+            };
+            // also call on broadcast start if needed
+            const origStartBroadcast = startBroadcast;
+            startBroadcast = async function() {
+                await origStartBroadcast();
+                if (broadcastActive) setupVisualsOnLoad();
+            };
+        })();
+    </script>
+</body>
+</html>
