@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#05070a">
+<title>K2 // Reprogrammed Index</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2305070a'/%3E%3Cpath d='M13 11v42M13 32l22-21M13 32l24 21M40 19c4-6 13-5 13 3 0 9-13 13-13 26h14' fill='none' stroke='%23f5f7f9' stroke-width='6'/%3E%3C/svg%3E">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#05070a;
+  --panel:#0a0d12;
+  --panel2:#0f1319;
+  --ink:#f5f7f9;
+  --muted:#8d97a5;
+  --line:#53606f;
+  --hot:#ff654f;
+  --safe-top:max(12px,env(safe-area-inset-top));
+  --safe-right:max(12px,env(safe-area-inset-right));
+  --safe-bottom:max(12px,env(safe-area-inset-bottom));
+  --safe-left:max(12px,env(safe-area-inset-left));
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+button{appearance:none;border:0;background:none;padding:0}
+.app{
+  height:100dvh;
+  width:100%;
+  padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  display:grid;
+  grid-template-rows:auto auto minmax(0,1fr) auto;
+  gap:9px;
+  overflow:hidden;
+  isolation:isolate;
+}
+.topbar{
+  min-height:56px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  border:1px solid var(--line);
+  background:var(--panel);
+}
+.brand{min-width:0;padding:9px 12px;display:flex;align-items:center;gap:11px}
+.mark{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--ink);font-weight:900;font-size:14px;letter-spacing:-.04em;flex:0 0 auto}
+.brand-copy{min-width:0}
+.brand-copy strong{display:block;font-size:14px;letter-spacing:.14em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-copy span{display:block;margin-top:4px;color:var(--muted);font:600 10px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.utility{height:100%;display:flex;border-left:1px solid var(--line)}
+.icon-btn{width:54px;min-height:54px;display:grid;place-items:center;cursor:pointer}
+.icon-btn+ .icon-btn{border-left:1px solid var(--line)}
+.icon-btn:active,.icon-btn[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.icon-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+.statusbar{
+  min-height:36px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:0 11px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  font:700 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.signal{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.signal-dot{width:7px;height:7px;background:var(--hot);border-radius:50%}
+.meter{height:2px;background:#27303a;overflow:hidden}
+.meter>i{display:block;height:100%;width:0;background:var(--ink);transition:width .18s linear}
+.readout{white-space:nowrap;color:var(--muted)}
+.stage{min-height:0;position:relative;overflow:hidden}
+.grid{
+  height:100%;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  gap:8px;
+}
+.card{
+  min-width:0;min-height:0;
+  border:1px solid var(--line);
+  background:var(--panel);
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  text-align:left;
+  padding:10px;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  touch-action:manipulation;
+}
+.card::after{content:"";position:absolute;left:-1px;top:-1px;width:16px;height:3px;background:var(--hot)}
+.card:active,.card:focus-visible{background:var(--ink);color:var(--bg);outline:none;border-color:var(--ink)}
+.card:active .card-meta,.card:active .card-path,.card:focus-visible .card-meta,.card:focus-visible .card-path{color:#333b45}
+.card-head{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.11em}
+.card-name{align-self:center;font-size:clamp(15px,4.7vw,22px);line-height:.93;font-weight:850;letter-spacing:-.055em;overflow-wrap:anywhere;text-transform:uppercase;margin:7px 0}
+.card-path{color:var(--muted);font:600 9px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-open{font:800 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;color:inherit}
+.empty{height:100%;border:1px solid var(--line);display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);font:700 12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
+.bottombar{
+  min-height:62px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  display:grid;
+  grid-template-columns:62px minmax(0,1fr) 62px;
+}
+.navbtn{min-height:60px;display:grid;place-items:center;cursor:pointer;border-right:1px solid var(--line)}
+.navbtn:last-child{border-right:0;border-left:1px solid var(--line)}
+.navbtn:disabled{opacity:.28;cursor:default}
+.navbtn:not(:disabled):active{background:var(--ink);color:var(--bg)}
+.navbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.page-center{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:0 11px;min-width:0}
+.page-num{font:850 17px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.04em;white-space:nowrap}
+.page-track{height:2px;background:#27303a;overflow:hidden}
+.page-track i{display:block;height:100%;background:var(--hot);width:0;transition:width .18s ease}
+.page-label{font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);letter-spacing:.09em;white-space:nowrap}
+.drawer{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  background:var(--bg);
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  gap:9px;
+  transform:translateY(-105%);
+  transition:transform .18s ease;
+  pointer-events:none;
+}
+.drawer.open{transform:translateY(0);pointer-events:auto}
+.searchbox{height:58px;border:1px solid var(--ink);display:grid;grid-template-columns:44px minmax(0,1fr) 50px;align-items:center;background:var(--panel)}
+.searchbox svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;justify-self:center}
+.searchbox input{width:100%;height:100%;border:0;outline:0;background:transparent;font:800 17px/1 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;min-width:0}
+.searchbox input::placeholder{color:#667180}
+.close-search{height:100%;border-left:1px solid var(--line);cursor:pointer;font:900 15px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
+.filters{min-height:0;border:1px solid var(--line);background:var(--panel);display:grid;grid-template-rows:repeat(5,minmax(0,1fr));}
+.filter-btn{padding:0 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);cursor:pointer;text-transform:uppercase}
+.filter-btn:last-child{border-bottom:0}
+.filter-btn strong{font-size:clamp(16px,5vw,24px);letter-spacing:-.04em}
+.filter-btn span{font:700 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);letter-spacing:.08em}
+.filter-btn[aria-pressed="true"],.filter-btn:active{background:var(--ink);color:var(--bg)}
+.filter-btn[aria-pressed="true"] span,.filter-btn:active span{color:#3b444f}
+.toast{position:fixed;left:50%;bottom:calc(var(--safe-bottom) + 70px);z-index:9;transform:translate(-50%,16px);opacity:0;pointer-events:none;border:1px solid var(--ink);background:var(--ink);color:var(--bg);padding:9px 12px;font:800 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;transition:.16s ease;white-space:nowrap;max-width:calc(100vw - 24px);overflow:hidden;text-overflow:ellipsis}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.viewer{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  padding:var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  background:var(--bg);
+  display:grid;
+  grid-template-rows:auto 34px minmax(0,1fr);
+  gap:8px;
+  transform:translateY(102%);
+  visibility:hidden;
+  pointer-events:none;
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),visibility 0s linear .2s;
+}
+.viewer.open{
+  transform:translateY(0);
+  visibility:visible;
+  pointer-events:auto;
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),visibility 0s;
+}
+.viewer-bar{
+  min-height:58px;
+  border:1px solid var(--ink);
+  background:var(--panel);
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:stretch;
+}
+.viewer-id{min-width:0;display:flex;align-items:center;gap:10px;padding:8px 10px}
+.viewer-eye{width:34px;height:34px;border:1px solid var(--ink);display:grid;place-items:center;position:relative;flex:0 0 auto}
+.viewer-eye::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--hot);box-shadow:0 0 0 4px rgba(255,101,79,.12)}
+.viewer-copy{min-width:0}
+.viewer-copy strong{display:block;font-size:14px;line-height:1;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.viewer-copy span{display:block;margin-top:5px;color:var(--muted);font:650 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.07em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.viewer-actions{display:flex;border-left:1px solid var(--line)}
+.viewer-action{min-width:78px;padding:0 12px;border-left:1px solid var(--line);cursor:pointer;font:850 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
+.viewer-action:first-child{border-left:0}
+.viewer-action:active,.viewer-action:focus-visible{background:var(--ink);color:var(--bg);outline:none}
+.viewer-action.close:active,.viewer-action.close:focus-visible{background:var(--hot);color:var(--bg)}
+.viewer-truth{
+  border:1px solid var(--line);
+  background:var(--panel);
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:0 10px;
+  font:750 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  overflow:hidden;
+}
+.viewer-truth span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.viewer-clock{color:var(--muted);white-space:nowrap}
+.frame-shell{min-height:0;position:relative;border:1px solid var(--line);background:#000;overflow:hidden}
+.frame-shell::before,.frame-shell::after{content:"";position:absolute;z-index:3;pointer-events:none;background:var(--hot)}
+.frame-shell::before{left:-1px;top:-1px;width:22px;height:3px}
+.frame-shell::after{right:-1px;bottom:-1px;width:22px;height:3px}
+.viewer-frame{display:block;width:100%;height:100%;border:0;background:#000}
+.frame-boot{position:absolute;inset:0;z-index:2;display:grid;place-items:center;background:var(--bg);transition:opacity .16s ease,visibility .16s ease}
+.frame-boot.done{opacity:0;visibility:hidden;pointer-events:none}
+.boot-core{width:min(82%,430px);border:1px solid var(--line);background:var(--panel);padding:16px}
+.boot-row{display:flex;align-items:center;justify-content:space-between;gap:14px;font:800 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.09em;text-transform:uppercase}
+.boot-row span:last-child{color:var(--muted)}
+.boot-meter{height:3px;background:#242c35;margin:14px 0 12px;overflow:hidden}
+.boot-meter i{display:block;height:100%;width:16%;background:var(--hot);animation:bootscan 1.15s steps(6,end) infinite}
+.boot-copy{margin:0;color:var(--muted);font:650 10px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase}
+@keyframes bootscan{0%{transform:translateX(-110%)}100%{transform:translateX(620%)}}
+@media (max-width:520px){
+  .brand-copy strong{font-size:12px;letter-spacing:.09em}
+  .viewer{grid-template-rows:auto 34px minmax(0,1fr);gap:7px}
+  .viewer-bar{min-height:54px}
+  .viewer-id{padding:7px 8px;gap:8px}
+  .viewer-eye{width:30px;height:30px}
+  .viewer-action{min-width:66px;padding:0 8px;font-size:8px}
+  .viewer-copy strong{font-size:12px}
+  .viewer-copy span{max-width:34vw}
+}
+
+@media (min-width:700px){
+  .app{max-width:1180px;margin:0 auto;gap:10px}
+  .grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px}
+  .card-name{font-size:clamp(18px,2vw,28px)}
+  .drawer{grid-template-columns:1fr 1fr;grid-template-rows:1fr;gap:10px}
+  .searchbox{height:100%;grid-template-columns:64px minmax(0,1fr) 64px}
+}
+@media (min-width:1050px){
+  .grid{grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr))}
+}
+@media (max-height:690px) and (max-width:699px){
+  .grid{grid-template-rows:repeat(3,minmax(0,1fr))}
+  .card{padding:8px}
+  .card-name{font-size:clamp(14px,4.1vw,18px)}
+  .topbar{min-height:48px}.icon-btn{width:48px;min-height:46px}.mark{width:30px;height:30px}.brand{padding:7px 9px}
+  .bottombar{min-height:54px}.navbtn{min-height:52px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">K2</div>
+      <div class="brand-copy">
+        <strong>REPROGRAMMED INDEX</strong>
+        <span>IMPERIAL SHELL / REBEL ROUTING</span>
+      </div>
+    </div>
+    <div class="utility">
+      <button class="icon-btn" id="filterButton" type="button" aria-label="Filter instruments" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      </button>
+      <button class="icon-btn" id="searchButton" type="button" aria-label="Search instruments" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="statusbar" aria-live="polite">
+    <div class="signal"><i class="signal-dot"></i><span id="modeText">LOCAL AGENCY</span></div>
+    <div class="meter" aria-hidden="true"><i id="meterFill"></i></div>
+    <div class="readout" id="readout">52 SURFACES / 0 GUARANTEES</div>
+  </section>
+
+  <section class="stage" id="stage">
+    <div class="grid" id="grid" aria-label="K2 pages"></div>
+
+    <div class="drawer" id="drawer" aria-hidden="true">
+      <label class="searchbox" id="searchBox">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+        <input id="searchInput" type="search" inputmode="search" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="TYPE A FILE OR SIGNAL" aria-label="Search K2 pages">
+        <button class="close-search" id="closeDrawer" type="button" aria-label="Close search and filters">×</button>
+      </label>
+      <div class="filters" id="filters" aria-label="Page families"></div>
+    </div>
+  </section>
+
+  <footer class="bottombar">
+    <button class="navbtn" id="prevButton" type="button" aria-label="Previous page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+    </button>
+    <div class="page-center">
+      <strong class="page-num" id="pageNum">01 / 07</strong>
+      <div class="page-track" aria-hidden="true"><i id="pageFill"></i></div>
+      <span class="page-label" id="pageLabel">01–08</span>
+    </div>
+    <button class="navbtn" id="nextButton" type="button" aria-label="Next page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+    </button>
+  </footer>
+</main>
+
+<section class="viewer" id="viewer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Contained K2 page viewer">
+  <header class="viewer-bar">
+    <div class="viewer-id">
+      <div class="viewer-eye" aria-hidden="true"></div>
+      <div class="viewer-copy">
+        <strong id="viewerTitle">NO SURFACE SELECTED</strong>
+        <span id="viewerPath">LOCAL FRAME / INACTIVE</span>
+      </div>
+    </div>
+    <div class="viewer-actions">
+      <button class="viewer-action" id="newTabButton" type="button" aria-label="Open current page in a new tab">NEW TAB</button>
+      <button class="viewer-action close" id="closeViewerButton" type="button" aria-label="Close contained page">CLOSE</button>
+    </div>
+  </header>
+  <div class="viewer-truth" aria-live="polite">
+    <span id="viewerTruth">NO FRAME ACTIVE. THIS IS THE MOST RELIABLE STATE.</span>
+    <span class="viewer-clock" id="viewerClock">00.0s</span>
+  </div>
+  <div class="frame-shell">
+    <div class="frame-boot" id="frameBoot" aria-hidden="true">
+      <div class="boot-core">
+        <div class="boot-row"><span>K2 LOCAL CONTAINMENT</span><span id="bootProbability">73.6%</span></div>
+        <div class="boot-meter"><i></i></div>
+        <p class="boot-copy" id="bootCopy">Opening the surface inside an Imperial shell running Rebel routing.</p>
+      </div>
+    </div>
+    <iframe class="viewer-frame" id="viewerFrame" title="K2 contained page" allow="autoplay; microphone; camera; fullscreen; clipboard-read; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  </div>
+</section>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(() => {
+  'use strict';
+
+  const BASE = 'https://hartswf0.github.io/k2.html/';
+  const pages = [
+    ['88.html','lab'],
+    ['a-shield.html','lab'],
+    ['a1.html','lab'],
+    ['archive-radio.html','audio'],
+    ['atek.html','lab'],
+    ['bfs.html','lab'],
+    ['chronos.html','lab'],
+    ['crate-120.html','crate'],
+    ['crate-2.html','crate'],
+    ['crate-3.html','crate'],
+    ['crate-4.html','crate'],
+    ['dcr.html','lab'],
+    ['ecr.html','lab'],
+    ['evo.html','lab'],
+    ['evo3.html','lab'],
+    ['gcr.html','lab'],
+    ['hec-01.html','lab'],
+    ['ibm.html','lab'],
+    ['ibm2.html','lab'],
+    ['kope-04.html','crate'],
+    ['latent-engine.html','audio'],
+    ['lati.html','audio'],
+    ['mandala.html','audio'],
+    ['ol-01.html','lab'],
+    ['ol-02.html','lab'],
+    ['ol-03.html','lab'],
+    ['ol-05.html','lab'],
+    ['op1.html','audio'],
+    ['scala-live.html','audio'],
+    ['taz.html','lab'],
+    ['tonnetz.html','audio'],
+    ['tz-270.html','lab'],
+    ['vfl-mo.html','lab'],
+    ['x1.html','audio'],
+    ['x2.html','audio'],
+    ['xr-os-01.html','xr'],
+    ['xr-os-02.html','xr'],
+    ['xr-os-03.html','xr'],
+    ['xr-os-04.html','xr'],
+    ['xr-os-05.html','xr'],
+    ['xr-os-06.html','xr'],
+    ['xr-os-07.html','xr'],
+    ['xr-os-09.html','xr'],
+    ['xr-os-10.html','xr'],
+    ['xr-os-11.html','xr'],
+    ['xr-os-12.html','xr'],
+    ['xr-os-14.html','xr'],
+    ['xr-os-15.html','xr'],
+    ['xr-os-16.html','xr'],
+    ['xr-os.html','xr'],
+    ['xr.html','xr'],
+    ['xr2.html','xr']
+  ].map(([file,family], index) => ({
+    file,
+    family,
+    index:index + 1,
+    title:file.replace(/\.html$/,'').replace(/-/g,' ')
+  }));
+
+  const familyLabels = {all:'ALL SYSTEMS',audio:'AUDIO SIGNAL',crate:'CRATE MACHINES',xr:'XR OPERATING',lab:'LAB OBJECTS'};
+  const familyOrder = ['all','audio','crate','xr','lab'];
+
+  const els = {
+    grid:document.getElementById('grid'),
+    stage:document.getElementById('stage'),
+    drawer:document.getElementById('drawer'),
+    searchInput:document.getElementById('searchInput'),
+    filterButton:document.getElementById('filterButton'),
+    searchButton:document.getElementById('searchButton'),
+    closeDrawer:document.getElementById('closeDrawer'),
+    filters:document.getElementById('filters'),
+    prev:document.getElementById('prevButton'),
+    next:document.getElementById('nextButton'),
+    pageNum:document.getElementById('pageNum'),
+    pageFill:document.getElementById('pageFill'),
+    pageLabel:document.getElementById('pageLabel'),
+    modeText:document.getElementById('modeText'),
+    readout:document.getElementById('readout'),
+    meterFill:document.getElementById('meterFill'),
+    toast:document.getElementById('toast'),
+    viewer:document.getElementById('viewer'),
+    viewerFrame:document.getElementById('viewerFrame'),
+    viewerTitle:document.getElementById('viewerTitle'),
+    viewerPath:document.getElementById('viewerPath'),
+    viewerTruth:document.getElementById('viewerTruth'),
+    viewerClock:document.getElementById('viewerClock'),
+    frameBoot:document.getElementById('frameBoot'),
+    bootProbability:document.getElementById('bootProbability'),
+    bootCopy:document.getElementById('bootCopy'),
+    newTab:document.getElementById('newTabButton'),
+    closeViewer:document.getElementById('closeViewerButton')
+  };
+
+  const state = {
+    family:'all',
+    query:'',
+    page:0,
+    perPage:8,
+    drawerOpen:false,
+    touchX:0,
+    touchY:0,
+    viewerOpen:false,
+    activePage:null,
+    openedAt:0,
+    frameLoaded:false,
+    returnFocus:null
+  };
+
+  function escapeHtml(value){
+    return value.replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+  }
+
+  function calculatePerPage(){
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (w >= 1050) return 18;
+    if (w >= 700) return 12;
+    return h < 690 ? 6 : 8;
+  }
+
+  function filteredPages(){
+    const q = state.query.trim().toLowerCase();
+    return pages.filter(page => {
+      const familyMatch = state.family === 'all' || page.family === state.family;
+      const queryMatch = !q || `${page.file} ${page.title} ${page.family}`.includes(q);
+      return familyMatch && queryMatch;
+    });
+  }
+
+  function totalPages(count){
+    return Math.max(1, Math.ceil(count / state.perPage));
+  }
+
+  function pageUrl(page){
+    return BASE + page.file;
+  }
+
+  function frameStatement(stage){
+    const statements = {
+      opening:'OPENING INSIDE THE INDEX. PROBABILITY OF USEFUL BEHAVIOR: 73.6%.',
+      waiting:'THE FRAME HAS NOT RESPONDED YET. IT MAY BE SLOW OR BROKEN.',
+      loaded:'THE FRAME RESPONDED. THIS IS NOT PROOF THAT THE PAGE WORKS.',
+      closed:'FRAME CLOSED. AUDIO, MOTION, AND FALSE HOPE HAVE BEEN TERMINATED.'
+    };
+    return statements[stage] || statements.opening;
+  }
+
+  function startViewerClock(){
+    clearInterval(startViewerClock.timer);
+    state.openedAt = performance.now();
+    const tick = () => {
+      if (!state.viewerOpen) return;
+      const seconds = (performance.now() - state.openedAt) / 1000;
+      els.viewerClock.textContent = `${seconds.toFixed(1).padStart(4,'0')}s`;
+      if (!state.frameLoaded && seconds > 6) {
+        els.viewerTruth.textContent = frameStatement('waiting');
+        els.bootProbability.textContent = '41.2%';
+        els.bootCopy.textContent = 'No response yet. The frame may be broken or merely slow.';
+      }
+    };
+    tick();
+    startViewerClock.timer = setInterval(tick, 100);
+  }
+
+  function openPage(page){
+    state.viewerOpen = true;
+    state.activePage = page;
+    state.frameLoaded = false;
+    state.returnFocus = document.activeElement;
+    try { localStorage.setItem('k2:last', page.file); } catch (_) {}
+    els.viewerTitle.textContent = page.title;
+    els.viewerPath.textContent = `/${page.file} / ${page.family.toUpperCase()} SYSTEM`;
+    els.viewerTruth.textContent = frameStatement('opening');
+    els.viewerClock.textContent = '00.0s';
+    els.bootProbability.textContent = '73.6%';
+    els.bootCopy.textContent = 'Opening the surface inside an Imperial shell running Rebel routing.';
+    els.frameBoot.classList.remove('done');
+    els.viewer.classList.add('open');
+    els.viewer.setAttribute('aria-hidden','false');
+    document.getElementById('app').inert = true;
+    els.viewerFrame.title = `${page.title} — contained K2 page`;
+    els.viewerFrame.src = pageUrl(page);
+    document.documentElement.style.overscrollBehavior = 'none';
+    startViewerClock();
+    if (matchMedia('(pointer:fine)').matches) setTimeout(() => els.closeViewer.focus(), 220);
+    history.pushState({k2Viewer:page.file},'',location.href);
+  }
+
+  function closeViewer(immediate=false){
+    if (!state.viewerOpen && !immediate) return;
+    state.viewerOpen = false;
+    state.frameLoaded = false;
+    clearInterval(startViewerClock.timer);
+    els.viewer.classList.remove('open');
+    els.viewer.setAttribute('aria-hidden','true');
+    document.getElementById('app').inert = false;
+    els.viewerTruth.textContent = frameStatement('closed');
+    const stop = () => {
+      if (!state.viewerOpen) {
+        els.viewerFrame.src = 'about:blank';
+        state.activePage = null;
+        if (state.returnFocus && typeof state.returnFocus.focus === 'function') state.returnFocus.focus();
+        state.returnFocus = null;
+      }
+    };
+    if (immediate) stop(); else setTimeout(stop, 220);
+  }
+
+  function showToast(text){
+    els.toast.textContent = text;
+    els.toast.classList.add('show');
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => els.toast.classList.remove('show'), 900);
+  }
+
+  function setDrawer(open, focusSearch=false){
+    state.drawerOpen = open;
+    els.drawer.classList.toggle('open', open);
+    els.drawer.setAttribute('aria-hidden', String(!open));
+    els.searchButton.setAttribute('aria-pressed', String(open && focusSearch));
+    els.filterButton.setAttribute('aria-pressed', String(open && !focusSearch));
+    if (open && focusSearch) setTimeout(() => els.searchInput.focus(), 60);
+    if (!open) els.searchInput.blur();
+  }
+
+  function renderFilters(){
+    const counts = familyOrder.reduce((acc, family) => {
+      acc[family] = family === 'all' ? pages.length : pages.filter(page => page.family === family).length;
+      return acc;
+    }, {});
+    els.filters.innerHTML = familyOrder.map(family => `
+      <button class="filter-btn" type="button" data-family="${family}" aria-pressed="${state.family === family}">
+        <strong>${familyLabels[family]}</strong>
+        <span>${String(counts[family]).padStart(2,'0')} FILES</span>
+      </button>
+    `).join('');
+  }
+
+  function render(){
+    const list = filteredPages();
+    const pagesCount = totalPages(list.length);
+    state.page = Math.max(0, Math.min(state.page, pagesCount - 1));
+    const start = state.page * state.perPage;
+    const visible = list.slice(start, start + state.perPage);
+
+    if (!visible.length) {
+      els.grid.innerHTML = `<div class="empty" style="grid-column:1/-1;grid-row:1/-1">NO SIGNALS MATCH<br>“${escapeHtml(state.query)}”</div>`;
+    } else {
+      els.grid.innerHTML = visible.map(page => `
+        <button class="card" type="button" data-file="${page.file}" aria-label="Open ${page.file} inside the index">
+          <div class="card-head"><span>${String(page.index).padStart(2,'0')}</span><span>${page.family.toUpperCase()}</span></div>
+          <strong class="card-name">${escapeHtml(page.title)}</strong>
+          <div class="card-head"><span class="card-path">/${escapeHtml(page.file)}</span><span class="card-open">FRAME</span></div>
+        </button>
+      `).join('');
+    }
+
+    const current = state.page + 1;
+    const end = Math.min(start + visible.length, list.length);
+    els.pageNum.textContent = `${String(current).padStart(2,'0')} / ${String(pagesCount).padStart(2,'0')}`;
+    els.pageLabel.textContent = list.length ? `${String(start + 1).padStart(2,'0')}–${String(end).padStart(2,'0')}` : '00–00';
+    els.pageFill.style.width = `${(current / pagesCount) * 100}%`;
+    els.meterFill.style.width = `${list.length ? (end / list.length) * 100 : 0}%`;
+    els.prev.disabled = state.page <= 0;
+    els.next.disabled = state.page >= pagesCount - 1;
+    els.modeText.textContent = familyLabels[state.family];
+    els.readout.textContent = `${String(list.length).padStart(2,'0')} SURFACES / ${state.query ? 'FILTERED' : '0 GUARANTEES'}`;
+    renderFilters();
+    history.replaceState(null,'',`#${state.family}:${state.page + 1}${state.query ? ':' + encodeURIComponent(state.query) : ''}`);
+  }
+
+  function movePage(delta){
+    const list = filteredPages();
+    const max = totalPages(list.length) - 1;
+    const next = Math.max(0, Math.min(max, state.page + delta));
+    if (next === state.page) return;
+    state.page = next;
+    render();
+  }
+
+  function loadHash(){
+    const raw = location.hash.replace(/^#/,'');
+    if (!raw) return;
+    const [family,page,query] = raw.split(':');
+    if (familyOrder.includes(family)) state.family = family;
+    const parsed = Number(page);
+    if (Number.isFinite(parsed) && parsed > 0) state.page = parsed - 1;
+    if (query) {
+      state.query = decodeURIComponent(query);
+      els.searchInput.value = state.query;
+    }
+  }
+
+  els.grid.addEventListener('click', event => {
+    const card = event.target.closest('[data-file]');
+    if (!card) return;
+    const page = pages.find(item => item.file === card.dataset.file);
+    if (page) openPage(page);
+  });
+
+  els.filters.addEventListener('click', event => {
+    const button = event.target.closest('[data-family]');
+    if (!button) return;
+    state.family = button.dataset.family;
+    state.page = 0;
+    setDrawer(false);
+    render();
+  });
+
+  els.prev.addEventListener('click', () => movePage(-1));
+  els.next.addEventListener('click', () => movePage(1));
+  els.searchButton.addEventListener('click', () => setDrawer(!state.drawerOpen || document.activeElement !== els.searchInput, true));
+  els.filterButton.addEventListener('click', () => setDrawer(!state.drawerOpen, false));
+  els.closeDrawer.addEventListener('click', () => setDrawer(false));
+  els.searchInput.addEventListener('input', event => {
+    state.query = event.target.value;
+    state.page = 0;
+    render();
+  });
+  els.searchInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      const result = filteredPages()[0];
+      if (result) openPage(result);
+    }
+  });
+
+  els.viewerFrame.addEventListener('load', () => {
+    if (!state.viewerOpen || els.viewerFrame.src === 'about:blank') return;
+    state.frameLoaded = true;
+    els.viewerTruth.textContent = frameStatement('loaded');
+    els.bootProbability.textContent = '86.4%';
+    els.bootCopy.textContent = 'The document responded. Internal controls remain responsible for themselves.';
+    setTimeout(() => els.frameBoot.classList.add('done'), 180);
+  });
+
+  els.newTab.addEventListener('click', () => {
+    if (!state.activePage) return;
+    const link = document.createElement('a');
+    link.href = pageUrl(state.activePage);
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    showToast('NEW TAB REQUESTED');
+  });
+
+  els.closeViewer.addEventListener('click', () => {
+    if (history.state && history.state.k2Viewer) history.back();
+    else closeViewer();
+  });
+
+  window.addEventListener('popstate', () => {
+    if (state.viewerOpen) closeViewer();
+  });
+
+  els.stage.addEventListener('touchstart', event => {
+    if (state.drawerOpen || event.touches.length !== 1) return;
+    state.touchX = event.touches[0].clientX;
+    state.touchY = event.touches[0].clientY;
+  }, {passive:true});
+
+  els.stage.addEventListener('touchend', event => {
+    if (state.drawerOpen || !state.touchX) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - state.touchX;
+    const dy = touch.clientY - state.touchY;
+    state.touchX = 0;
+    state.touchY = 0;
+    if (Math.abs(dx) > 54 && Math.abs(dx) > Math.abs(dy) * 1.4) movePage(dx < 0 ? 1 : -1);
+  }, {passive:true});
+
+  window.addEventListener('keydown', event => {
+    if (event.key === '/' && document.activeElement !== els.searchInput) {
+      event.preventDefault();
+      setDrawer(true, true);
+    } else if (event.key === 'Escape') {
+      if (state.viewerOpen) {
+        if (history.state && history.state.k2Viewer) history.back();
+        else closeViewer();
+      } else if (state.query && state.drawerOpen) {
+        state.query = '';
+        els.searchInput.value = '';
+        state.page = 0;
+        render();
+      } else {
+        setDrawer(false);
+      }
+    } else if (!state.drawerOpen && !state.viewerOpen && event.key === 'ArrowLeft') movePage(-1);
+    else if (!state.drawerOpen && !state.viewerOpen && event.key === 'ArrowRight') movePage(1);
+  });
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const next = calculatePerPage();
+      if (next !== state.perPage) {
+        const absoluteIndex = state.page * state.perPage;
+        state.perPage = next;
+        state.page = Math.floor(absoluteIndex / next);
+        render();
+      }
+    }, 80);
+  });
+
+  state.perPage = calculatePerPage();
+  loadHash();
+  render();
+})();
+</script>
+</body>
+</html>
