@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#09090b">
+<title>Polliwog Studio — Generative Engine</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%2309090b'/><circle cx='50' cy='50' r='30' fill='none' stroke='%2310b981' stroke-width='10'/></svg>">
+<style>
+/* --- CORE VARIABLES --- */
+:root {
+  --bg: #050706;         
+  --panel: #090d0b;      
+  --line: #1c3028;       
+  --ink: #eefcf5;        
+  --muted: #789087;      
+  --accent: #10b981;     
+  --danger: #ff6d8d;     
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --font-mono: "Courier New", ui-monospace, 'JetBrains Mono', monospace;
+}
+
+/* --- RESET & BASE --- */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100dvh; overflow: hidden;
+  background: var(--bg); color: var(--ink); font-family: var(--font-mono);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+button, textarea, input, select { font: inherit; outline: none; border: none; }
+button {
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+  padding: 8px 12px; cursor: pointer; transition: all 0.1s ease;
+  font-weight: 700; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+}
+button:hover, button:focus-visible { border-color: currentColor; }
+button:active { transform: scale(0.98); }
+button:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+button.active, button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* --- APP LAYOUT --- */
+.app { display: flex; flex-direction: column; height: 100dvh; position: relative; padding-top: var(--safe-t); padding-bottom: var(--safe-b); }
+
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--bg); flex-shrink: 0; z-index: 100;
+}
+.brand { font-weight: 700; letter-spacing: 0.08em; font-size: 13px; white-space: nowrap;}
+.performance { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-size: 10px; overflow: hidden; }
+.performance b { color: var(--ink); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-dot { width: 7px; height: 7px; border: 1px solid var(--muted); flex: none; border-radius: 50%; }
+.live-dot.on { background: var(--ink); border-color: var(--ink); }
+.live-dot.processing { background: var(--danger); border-color: var(--danger); animation: pulse 1s infinite; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+#bottom-nav { display: flex; border-top: 1px solid var(--line); background: var(--bg); flex-shrink: 0; }
+#bottom-nav button { flex: 1; border: none; border-right: 1px solid var(--line); padding: 16px 0; color: var(--muted); background: transparent; }
+#bottom-nav button:last-child { border-right: none; }
+#bottom-nav button.nav-active { background: var(--line); color: var(--ink); box-shadow: inset 0 2px 0 var(--ink); }
+
+#slider-viewport { flex: 1; overflow: hidden; position: relative; }
+#slider-container { display: flex; width: 300%; height: 100%; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.app-panel { width: 33.333%; height: 100%; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--bg); position: relative; }
+
+/* --- PANEL 1: SAMPLER --- */
+.source-strip { display: flex; gap: 6px; overflow-x: auto; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--bg); flex-shrink: 0; }
+.source-strip::-webkit-scrollbar { display: none; }
+.source-chip { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 10px; color: var(--source-color); border: none; background: transparent; white-space: nowrap; }
+.source-chip[aria-pressed="false"] { opacity: 0.35; text-decoration: line-through; }
+.swatch { width: 8px; height: 8px; background: var(--source-color); display: inline-block; }
+
+.stage { flex: 1; overflow-y: auto; padding: clamp(12px,3vw,30px); padding-bottom: 140px; position: relative; }
+.poem { width: min(980px, 100%); margin: auto; display: grid; gap: 7px; }
+
+.section-label { display: flex; align-items: center; gap: 9px; margin: 15px 0 0 8px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0.16em; }
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+.line { position: relative; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.24em 0.42em; padding: 3px 30px 3px 8px; border-left: 3px solid transparent; font-size: clamp(17px, 3.2vw, 34px); line-height: 1.1; cursor: pointer; transition: background 0.1s; }
+.line:hover { background: #0a0f0c; }
+.line.playing { outline: 1px solid var(--ink); }
+.line.line-color { color: var(--line-color); border-left-color: var(--line-color); }
+.line.line-color .token { color: inherit; }
+
+.token { color: var(--token-color); cursor: pointer; transition: transform 60ms linear; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.token:hover { transform: translateY(-2px); }
+.token.locked { text-decoration: underline; }
+.token.selected { outline: 1px solid var(--token-color); outline-offset: 4px; background: rgba(255,255,255,0.05); }
+.token.playing { background: var(--token-color); color: var(--bg); }
+
+.reroll { position: absolute; right: 2px; top: 2px; padding: 2px 5px; border: 0; background: transparent; color: var(--muted); opacity: 0; font-size: 16px; }
+.line:hover .reroll { opacity: 1; }
+
+.empty { margin: auto; color: var(--muted); font-size: 12px; text-align: center; line-height: 1.6; padding-top: 40px;}
+
+/* Transport Bar (EXACTLY as requested in Image) */
+.transport { 
+  display: flex; align-items: center; gap: 6px; padding: 8px 10px; 
+  background: var(--bg); border-top: 1px solid var(--line); 
+  overflow-x: auto; white-space: nowrap; flex-shrink: 0; z-index: 10;
+}
+.transport::-webkit-scrollbar { display: none; }
+.transport > * { flex-shrink: 0; }
+.spacer { flex: 1; min-width: 20px; }
+
+.transport button.primary { font-weight: 700; min-width: 80px; }
+.bpm { display: flex; align-items: center; border: 1px solid var(--line); background: var(--bg); }
+.bpm button { border: none; background: transparent; padding: 8px 10px; }
+.bpm output { padding: 0 8px; font-size: 11px; min-width: 65px; text-align: center; color: var(--ink); font-family: var(--font-mono); }
+
+/* Contextual Popups */
+.candidate-tray { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 20; display: none; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; border: 1px solid var(--line); background: var(--panel); padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+.candidate-tray.open { display: grid; }
+.candidate-label { color: var(--candidate-color); font-size: 9px; letter-spacing: 0.1em; white-space: nowrap; font-weight:bold; }
+.candidate-options { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.candidate-options::-webkit-scrollbar { display: none; }
+.candidate-options button { color: var(--candidate-color); white-space: nowrap; font-size: 11px; padding: 8px 12px; }
+
+.tune-panel { position: absolute; right: 16px; top: 16px; z-index: 18; width: 260px; display: none; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+.tune-panel.open { display: flex; }
+.tune-control { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+.tune-control label { font-size: 10px; letter-spacing: 0.1em; color: var(--muted); font-weight:bold; }
+.tune-control output { font-size: 11px; color: var(--ink); }
+.tune-control input[type=range] { grid-column: 1/-1; width: 100%; accent-color: var(--ink); height: 4px; background: var(--line); outline: none; -webkit-appearance: none; border:none; padding:0; cursor:pointer;}
+.tune-control input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--ink); border-radius: 0; }
+
+.copy-panel { position: absolute; right: 16px; bottom: 60px; z-index: 19; display: none; grid-template-columns: 1fr 1fr; gap: 6px; width: min(300px, calc(100% - 32px)); padding: 12px; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+.copy-panel.open { display: grid; }
+.copy-panel .wide { grid-column: 1/-1; }
+
+/* --- SOURCE DRAWER --- */
+.drawer { position: fixed; inset: 0 0 0 auto; width: min(440px, 100%); background: var(--bg); border-left: 1px solid var(--line); transform: translateX(101%); transition: transform 0.2s ease-out; display: flex; flex-direction: column; z-index: 500; box-shadow: -10px 0 40px rgba(0,0,0,0.8); }
+.drawer.open { transform: translateX(0); }
+.drawer-head { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.drawer-head strong { font-size: 12px; letter-spacing: 0.1em; color: var(--ink); }
+.drawer-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.drawer-tabs button { font-size: 9px; padding: 6px 12px; white-space: nowrap; color: var(--source-color); border-color: transparent; background: var(--panel); }
+.drawer-tabs button.active { border-color: var(--source-color); background: var(--bg); }
+.editor { flex: 1; display: flex; flex-direction: column; padding: 16px; gap: 12px; overflow-y: auto; }
+.editor input { background: var(--panel); border: 1px solid var(--line); color: var(--ink); padding: 12px; font-weight: bold; }
+.editor textarea { flex: 1; min-height: 200px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); padding: 12px; resize: none; font-size: 12px; line-height: 1.5; }
+.editor input:focus, .editor textarea:focus { border-color: var(--ink); color: var(--ink); }
+.drawer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 16px; border-top: 1px solid var(--line); background: var(--panel); }
+
+/* --- PANEL 2: LINEAGE --- */
+.panel-header { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.lineage-editor { flex: 1; background: var(--bg); border: none; color: var(--ink); padding: 20px; font-size: 13px; line-height: 1.6; resize: none; overflow-y: auto; }
+
+/* --- PANEL 3: CANVAS DIFF ENGINE --- */
+.diff-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+.diff-pane { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--bg); }
+.diff-pane:last-child { border-right: none; }
+.diff-title { font-size: 10px; letter-spacing: 0.1em; font-weight: 600; padding: 10px 16px; border-bottom: 1px dashed var(--line); background: var(--panel); color: var(--muted); flex-shrink: 0; }
+.diff-content { flex: 1; padding: 20px; overflow-y: auto; font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; outline: none; transition: background 0.3s ease; }
+#canvas-seed { color: var(--muted); background: var(--bg); }
+#canvas-mutation { color: var(--ink); }
+#canvas-mutation:focus { background: #0c120f; }
+
+.engine-controls { padding: 16px; border-top: 1px solid var(--line); background: var(--panel); display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+.btn-mutate { flex: 1; background: transparent; color: var(--danger); border-color: var(--danger); padding: 16px; font-size: 12px; transition: all 0.3s; }
+.btn-mutate:hover:not(:disabled) { background: var(--danger); color: var(--bg); }
+.btn-api { background: transparent; border-color: var(--muted); color: var(--muted); padding: 16px; }
+.btn-api.set { color: var(--ink); border-color: var(--ink); }
+
+/* --- MODALS & OVERLAYS --- */
+.modal-overlay { position: absolute; inset: 0; background: rgba(5,7,6, 0.85); display: none; justify-content: center; align-items: center; z-index: 500; backdrop-filter: blur(4px); padding: 16px; }
+.modal-overlay.active { display: flex; }
+.modal-box { background: var(--bg); border: 1px solid var(--line); width: 440px; max-width: 100%; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.modal-header { padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+.modal-body { padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
+.modal-body label { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: -4px; font-weight: bold; }
+.modal-body input, .modal-body select { background: var(--panel); border: 1px solid var(--line); color: var(--ink); padding: 12px; font-size: 12px; outline: none; width: 100%; transition: border 0.2s; }
+.modal-body input:focus, .modal-body select:focus { border-color: var(--ink); }
+.modal-footer { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; background: var(--panel); }
+
+.loading-overlay { position: absolute; inset: 0; background: rgba(5,7,6, 0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 50; backdrop-filter: blur(4px); }
+.loading-overlay.active { display: flex; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--line); border-top-color: var(--danger); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.loading-text { margin-top: 16px; font-weight: bold; font-size: 11px; letter-spacing: 0.2em; color: var(--danger); animation: pulse 1s infinite; }
+
+.toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(5px); }
+
+@media(max-width: 768px) {
+  header { padding: 10px; }
+  .candidate-tray { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+  .candidate-options { grid-row: 2; width: 100%; }
+  .candidate-tray button { width: 100%; }
+  .diff-container { flex-direction: column; }
+  .diff-pane { border-right: none; border-bottom: 1px solid var(--line); }
+  .diff-pane:last-child { border-bottom: none; }
+  .engine-controls { flex-direction: column; }
+  .btn-mutate, .btn-api { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  
+  <!-- GLOBAL HEADER (Sources and Tune moved here to keep transport bar clean) -->
+  <header>
+    <div class="brand">POLLIWOG STUDIO</div>
+    <div class="performance" aria-live="polite">
+      <span id="liveDot" class="live-dot"></span>
+      <b id="perfText">READY</b>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="tuneButton" class="utility">TUNE</button>
+      <button id="editButton" class="utility">SOURCES</button>
+    </div>
+  </header>
+
+  <div id="slider-viewport">
+    <div id="slider-container">
+      
+      <!-- ================= PANEL 1: SAMPLER ================= -->
+      <div class="app-panel">
+        <div id="sourceStrip" class="source-strip" aria-label="Active sources"></div>
+        
+        <main class="stage" id="stage">
+          <div id="poem" class="poem"></div>
+          
+          <div id="candidateTray" class="candidate-tray">
+            <span id="candidateLabel" class="candidate-label">CHOOSE</span>
+            <div id="candidateOptions" class="candidate-options"></div>
+            <div style="display:flex; gap:6px;">
+              <button id="candidateLock">LOCK</button>
+              <button id="candidateClose">✕</button>
+            </div>
+          </div>
+
+          <div id="tunePanel" class="tune-panel">
+            <div class="tune-control">
+              <label>TEMPERATURE</label>
+              <output id="tempOutput">1.00</output>
+              <input id="tempSlider" type="range" min="0" max="100" value="45">
+            </div>
+            <div class="tune-control">
+              <label>RARITY</label>
+              <output id="rarityOutput">55%</output>
+              <input id="raritySlider" type="range" min="0" max="100" value="55">
+            </div>
+          </div>
+
+          <div id="copyPanel" class="copy-panel">
+            <button id="copyAll">COPY + LABELS</button>
+            <button id="copyClean">COPY CLEAN</button>
+            <button id="downloadText">DOWNLOAD .TXT</button>
+            <button id="exportJson">EXPORT .JSON</button>
+            <button id="closeCopy" class="wide">CLOSE</button>
+          </div>
+        </main>
+
+        <!-- EXACT TRANSPORT BAR REPLICA -->
+        <div class="transport">
+          <button id="cutButton" class="primary active">CUT</button>
+          <button id="playButton">PLAY</button>
+          <div class="bpm">
+            <button id="bpmDown">−</button>
+            <output id="bpmOutput">128 BPM</output>
+            <button id="bpmUp">+</button>
+          </div>
+          <div class="spacer"></div>
+          <button data-unit="word" aria-pressed="true">WORD</button>
+          <button data-unit="shard" aria-pressed="false">SHARD</button>
+          <button data-unit="clause" aria-pressed="false">CLAUSE</button>
+          <button id="colorMode">COLOR: WORD</button>
+          <button id="undoButton" disabled>UNDO</button>
+          <button id="copyButton">COPY</button>
+        </div>
+      </div>
+
+      <!-- ================= PANEL 2: LINEAGE ================= -->
+      <div class="app-panel">
+        <div class="panel-header">
+          <span>LINEAGE DNA [ CONFIG ]</span>
+        </div>
+        <textarea id="lineage-textarea" class="lineage-editor" spellcheck="false" placeholder="Paste structural and cultural constraints here..."></textarea>
+      </div>
+
+      <!-- ================= PANEL 3: CANVAS DIFF ENGINE ================= -->
+      <div class="app-panel">
+        
+        <div class="panel-header">
+          <span>DIFF ENGINE [ CANVAS ]</span>
+          <span id="canvas-status" style="color:var(--muted);">WAITING FOR CUT</span>
+        </div>
+
+        <div class="diff-container">
+          <div class="diff-pane">
+            <div class="diff-title">1. ORIGINAL SEED</div>
+            <div id="canvas-seed" class="diff-content" readonly>Awaiting procedural seed...</div>
+          </div>
+          <div class="diff-pane">
+            <div class="diff-title" style="color:var(--ink);">2. DESCENDANT</div>
+            <div id="canvas-mutation" class="diff-content" contenteditable="true" spellcheck="false">Awaiting mutation...</div>
+          </div>
+          
+          <div id="loading-overlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <div class="loading-text">WEAVING LINEAGE...</div>
+          </div>
+        </div>
+        
+        <div class="engine-controls">
+          <button id="btn-api-key" class="btn-api" onclick="openConfigModal()">[ API CONFIG ]</button>
+          <button class="btn-mutate" id="btn-mutate" onclick="runMutation()">MUSH SEED THROUGH LINEAGE</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="bottom-nav">
+    <button class="nav-active" onclick="switchTab(0)">1. SAMPLER</button>
+    <button onclick="switchTab(1)">2. LINEAGE</button>
+    <button onclick="switchTab(2)">3. DIFF ENGINE</button>
+  </div>
+
+  <!-- SOURCE DRAWER -->
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <strong>SOURCE CONFIG</strong>
+      <button id="closeDrawer" style="border:none; background:transparent;">✕</button>
+    </div>
+    <div id="drawerTabs" class="drawer-tabs"></div>
+    <div class="editor">
+      <input id="sourceName" aria-label="Source name">
+      <textarea id="sourceText" spellcheck="false" aria-label="Source text"></textarea>
+    </div>
+    <div class="drawer-actions">
+      <button id="addSource">+ NEW</button>
+      <button id="importSource">IMPORT .TXT</button>
+      <button id="clearSource">CLEAR</button>
+      <button id="removeSource" style="color:var(--danger); border-color:var(--danger);">DEL</button>
+      <input id="fileInput" type="file" accept=".txt,text/plain" hidden>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast">NOTIFICATION</div>
+
+  <div id="config-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>API CONFIGURATION</span>
+        <button style="border:none; padding:4px 8px; font-size:14px; margin:-4px;" onclick="closeConfigModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>GEMINI API KEY</label>
+        <input type="password" id="config-api-key" placeholder="AIzaSy...">
+        
+        <label>MODEL SELECT</label>
+        <select id="config-model">
+          <option value="gemini-2.5-pro">gemini-2.5-pro (Highest)</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+          <option value="gemini-2.0-pro-exp-0205">gemini-2.0-pro-exp-0205</option>
+          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+          <option value="custom">Custom Override</option>
+        </select>
+        
+        <label>CUSTOM MODEL OVERRIDE</label>
+        <input type="text" id="config-custom-model" placeholder="e.g. gemini-1.5-flash-8b">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" style="background:var(--ink); color:var(--bg);" onclick="saveConfigModal()">SAVE & CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ==========================================
+// GLOBAL STATE & API SETTINGS
+// ==========================================
+const sharedState = {
+  apiKey: localStorage.getItem("gemini_api_key") || "",
+  apiModel: localStorage.getItem("gemini_api_model") || "gemini-2.5-pro",
+  lineageDNA: `title: Polliwog Station — Hsaing Waing Terrapin 
+seed: Burmese traditional hsaing waing orchestra reinterprets Terrapin as nat spirit invocation.
+caretakers_listening: 
+  records: ["Kyaw Kyaw Naing — Hsaing Waing Masterworks", "field recordings from Nat Pwe ceremonies"] 
+home_environment: 
+  locale: "Mandalay, Myanmar" 
+  first_instruments: ["pat waing", "kyi waing", "hneh"] 
+epochs: 
+  - period: "Terrapin as 38th Nat" 
+    textures: ["pat waing drums playing Terrapin melody", "hneh singing as nat invocation"] 
+    rhythms: ["Terrapin's 4/4 adapted to Burmese compound meter"] 
+signature_palette: 
+  instruments: ["pat waing", "kyi waing", "hneh", "maung saing"] 
+  groove: "Burmese compound meter — trance-inducing"`
+};
+
+document.getElementById("lineage-textarea").value = sharedState.lineageDNA;
+document.getElementById("lineage-textarea").addEventListener('input', e => sharedState.lineageDNA = e.target.value);
+
+function updateApiBtn() {
+  const btn = document.getElementById("btn-api-key");
+  if(sharedState.apiKey) {
+    btn.classList.add("set");
+    btn.textContent = `[ ${sharedState.apiModel.split('-')[1]?.toUpperCase() || 'API'} READY ]`;
+  } else {
+    btn.classList.remove("set");
+    btn.textContent = "[ API CONFIG ]";
+  }
+}
+updateApiBtn();
+
+function openConfigModal() {
+  document.getElementById("config-api-key").value = sharedState.apiKey;
+  const modelSelect = document.getElementById("config-model");
+  const customModel = document.getElementById("config-custom-model");
+  
+  let found = false;
+  for (let i=0; i<modelSelect.options.length; i++) {
+    if (modelSelect.options[i].value === sharedState.apiModel) {
+      modelSelect.selectedIndex = i; found = true; break;
+    }
+  }
+  if (!found) { modelSelect.value = "custom"; customModel.value = sharedState.apiModel; } 
+  else { customModel.value = ""; }
+  document.getElementById("config-modal").classList.add("active");
+}
+function closeConfigModal() { document.getElementById("config-modal").classList.remove("active"); }
+function saveConfigModal() {
+  sharedState.apiKey = document.getElementById("config-api-key").value.trim();
+  const selectVal = document.getElementById("config-model").value;
+  const customVal = document.getElementById("config-custom-model").value.trim();
+  
+  if (selectVal === "custom" && customVal) sharedState.apiModel = customVal;
+  else if (selectVal !== "custom") sharedState.apiModel = selectVal;
+  
+  localStorage.setItem("gemini_api_key", sharedState.apiKey);
+  localStorage.setItem("gemini_api_model", sharedState.apiModel);
+  updateApiBtn(); closeConfigModal(); showToast("API SETTINGS SAVED");
+}
+
+function switchTab(index) {
+  const container = document.getElementById("slider-container");
+  container.style.transform = `translateX(-${index * 33.333}%)`;
+  const btns = document.getElementById("bottom-nav").querySelectorAll("button");
+  btns.forEach((b, i) => b.classList.toggle("nav-active", i === index));
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+}
+
+function syncSeedToCanvas(lyricsText) {
+  document.getElementById("canvas-seed").textContent = lyricsText;
+  document.getElementById("canvas-mutation").textContent = "Awaiting mutation...";
+  const status = document.getElementById("canvas-status");
+  status.textContent = "SEED LINKED"; status.style.color = "var(--accent)";
+}
+
+const seedPane = document.getElementById("canvas-seed");
+const mutPane = document.getElementById("canvas-mutation");
+let isSyncingLeft = false, isSyncingRight = false;
+seedPane.addEventListener("scroll", () => { if (!isSyncingLeft) { isSyncingRight = true; mutPane.scrollTop = seedPane.scrollTop; } isSyncingLeft = false; });
+mutPane.addEventListener("scroll", () => { if (!isSyncingRight) { isSyncingLeft = true; seedPane.scrollTop = mutPane.scrollTop; } isSyncingRight = false; });
+
+// ==========================================
+// CORE SAMPLER ENGINE
+// ==========================================
+(() => {
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+
+  const COLORS = ["#65ffd2","#ffcf5a","#ff7b9c","#75a7ff","#c28cff","#ff8e55","#8dff72","#e7f26c","#7ee7ff","#ffaed7"];
+  const SOURCES = [
+    { name:"POLLIWOG CORE", color:COLORS[8], active:true, text:`lily pads sinking rubber boots dragonflies circles brown water ankles hideouts cattails tiny tails swimming jars hope soft glass palms green luck ditch transformation station toes wild moss silver light stagnant surface mud velvet spiders cluster bubbles grow friends jump grass season pond calling\nlily pads sinking / heavy rubber boots / dragonflies dive in circles / brown water at my ankles / tangled cattails / tiny tails swimming / every jar filled with hope / soft glass shaking / green luck from the ditch / wait for transformation / down at Polliwog Station / tails into tiny toes / wild moss grows / silver light flashing / stagnant surface / mud like velvet / spiders skim the top / cluster of bubbles / grow little friends / lose the tail / gain the jump / mud to grass / season change / pond calls its own` },
+    { name:"TERRAPIN", color:COLORS[0], active:true, text:`inspiration flow token rhyme rhythm firelight strange shadows flames sailor winds Carlisle lady soldier storyteller door fire girl glowing fan lion den risk chance wise strategy disaster voice light master end gold mysteries dark vast rise fall climb stars candlelight spiral Venus crescent moon crickets cicadas tune station shadow beginning train brakes whistle compass fortune rain polliwog\nlet my inspiration flow / strange shadows grow / sailor forming / storyteller speaks / fan in the lion's den / take the chance / end never told / teller paid in gold / some rise some fall some climb / stars by candlelight / spiral light of Venus / shadow of the moon / end or beginning / brakes on / whistle screaming / compass points / fortune beats like rain` },
+    { name:"VIC LAP: FRED", color:COLORS[1], active:true, text:`need teapot left feet Reeboks freelance sea moss skip hip hoppin detox beatbox grown certi police street food eat game stage flow studio coffin tombstone price boss plug inflation impatient leg work pavement victory lap back station psycho loud black swan diamonds cloudy money mouth friends mob ties fly jokes tears humble pie slice cut size\nI need that / two left feet / sea moss / skip hip hoppin / detox beatbox / could have been / walkin down the street / stage gets made / copied flow / left alone in my studio / leg work / step on pavement / victory lap / back on the station / money where my mouth is / no new friends / humble pie / cut down to size` },
+    { name:"VIC LAP: NIP", color:COLORS[2], active:true, text:`prolific gifted get it building steps cold killing devil hole front line proof flow run shoot gold circle smaller downtown diamond district Cubans Cancun Tulum music Mayan ruins devotion ocean cultural influence urban legend South Central evidence divine presence blessings reckless desert answer questions chess checkers street code purpose air eyes opened real deals lawyer phone balance savage call candles message challenge make universe appeared victory lap\nprolific so gifted / front of your building / cold killing / front line / circle got smaller / Mayan ruins / true devotion / bluest ocean / urban legend / divine presence / chess not checkers / street code / take it there / spoke into the universe / worth it / find your purpose / eyes opened / make it real / accept your challenge / we gotta make it` },
+    { name:"SWAMP", color:COLORS[3], active:true, text:`bottom feeder Don Diva feet bracket keeper fever believers chinchilla cheetah wetter Katrina Trina Frida Queen Sheeba Retha shoes bleed squeeze rockstar Beatles red two seater Casio porch patio drip slipped scenario drugs cash leather bag blood cheap leak freak animal cannibal flammable cannonball summer Hummer runner stunt diamonds blunt belt Popeye kale dark scene bail boulders shoulders top soul bogus bold font police defense leeches banshee seaweed repeat easy\nbottom feeder to Don Diva / kick my feet up / cause a fever / wetter than Katrina / wet like Trina / rockstar Beatles / Casio / porch or patio / slipped inside / scenario / cash leather bag blood / freak like an animal / highly flammable / cannonball / boulders on shoulders / still at the top / can't see the font / wild like a banshee / no repeat / green like seaweed / make it look easy` },
+    { name:"REVOLUTION", color:COLORS[4], active:true, text:`revolution change world evolution destruction count alright solution plan contribution money people minds hate wait constitution head institution free mind anyone anyhow\nwant a revolution / change the world / evolution / talk about destruction / count me out / gonna be alright / real solution / see the plan / contribution / do what we can / minds that hate / change the constitution / change your head / institution / free your mind` },
+    { name:"PROPHET", color:COLORS[5], active:true, text:`time coming worry hurry rainbows highway ocean breezes voices California preaching burning shore knocking golden door angel shaft paradise shine asleep beach sea part fire wheel air follow ride glory thunder flame might name light way\ntime coming any day / voices tell me / highway where ocean breezes blow / burning shore / golden door / shaft of light / rise to paradise / going to shine / all been asleep / sea will part / fire wheel / ride to glory / call down thunder / sky with flame / light my way` },
+    { name:"PASSENGER", color:COLORS[6], active:true, text:`firefly shine glowing brief brightly summer day night hearts cold seasons frozen souls world burning ashes scattered turn upside inside false alarm no man's land game town passenger hear destination unclear deep raging beast hide\nfirefly can you see me / brief and brightly / summer day / hearts too cold / seasons frozen / world is burning / ashes scattered / upside out / inside down / false alarm / no man's land / passenger hear me / destination unclear / raging beast` },
+    { name:"FIRE", color:COLORS[7], active:true, text:`long distance runner standing drowned laughter dead core door give dragon matches loose town pail water cool fire mountain turning wrong way foot caught slow motion fall floor loaded dying poor thin line fake cowboy suit crowd music quiet loud heavy dirty clean\nlong distance runner / dead to the core / get up get on get out / dragon with matches / loose on the town / pail of water / fire on the mountain / wrong way runner / one foot on the door / slow motion / fall to the floor / thin line / please the crowd / music quiet / getting loud / put it down heavy / dirty then clean` }
+  ];
+
+  let sources = structuredClone(SOURCES);
+  let selectedSource = 0, unitMode = "word", colorMode = "word", bpm = 128;
+  let temperature = 1.0, rarity = 0.55;
+  let lines = [], songForm = [], history = [], recentUnits = [], generationUsage = new Map();
+  let playing = false, playTimer = null, audioCtx = null, playIndex = 0;
+  let selectedToken = null;
+
+  const STOP = new Set("a an and are as at be been but by can did do does for from had has have he her here him his i if in into is it its me my no not of on or our she so than that the their them there they this through to too up was we were what when where which who why will with would you your".split(" "));
+  const IMPACT = new Set("need fire station lap victory blood mouth beat bass moon train brakes whistle storm lion den gold street stage flow world change revolution evolution prophet passenger beast shadow sailor soldier swamp moss wet dirty clean loud heavy rise fall climb cut break burn bite strike run get out now never end start voice call scream polliwog".split(" "));
+
+  function hash(t){ let h=2166136261>>>0; for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)} return h>>>0; }
+  function rngFactory(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function words(t){ return (t.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) || []); }
+  function clauses(t){ return t.split(/\/+|[.!?;:\n]+|—+/).map(v=>v.trim()).filter(Boolean); }
+  function score(w){ const k=w.toLowerCase(); let s=STOP.has(k)?0:2; if(IMPACT.has(k))s+=6; if(/[kgtdbpfxz]/i.test(w))s+=1; if(w.length<7)s+=1; return s; }
+  function normalizeUnit(t){ return t.toLowerCase().replace(/[^a-z0-9' -]+/g," ").replace(/\s+/g," ").trim(); }
+
+  function unitCatalog(source,mode,rng){
+    let raw=[];
+    if(mode==="word") raw=words(source.text).filter(w=>!STOP.has(w.toLowerCase()));
+    else if(mode==="clause") raw=clauses(source.text).map(c=>{ const p=words(c); return p.slice(0,Math.min(p.length,2+Math.floor(rng()*3))).join(" "); }).filter(Boolean);
+    else raw=clauses(source.text).map(c=>{ const p=words(c).filter(w=>!STOP.has(w.toLowerCase())).sort((a,b)=>score(b)-score(a)||rng()-.5); return p.slice(0,Math.max(1,Math.min(p.length,1+Math.floor(rng()*3)))).join(" "); }).filter(Boolean);
+    
+    const freq=new Map(), orig=new Map();
+    raw.forEach(u=>{ const k=normalizeUnit(u); if(!k)return; freq.set(k,(freq.get(k)||0)+1); if(!orig.has(k))orig.set(k,u.trim()); });
+    return [...freq.entries()].map(([k,f])=>({ key:k, text:orig.get(k), freq:f, impact:Math.max(...words(orig.get(k)).map(score),0) }));
+  }
+
+  function weightedChoice(catalog,rng,exclude=new Set()){
+    let choices=catalog.filter(i=>!exclude.has(i.key));
+    if(!choices.length)choices=[...catalog]; if(!choices.length)return {key:"signal",text:"signal",freq:1,impact:1};
+    const maxFreq=Math.max(...choices.map(i=>i.freq),1);
+    const temp=Math.max(.22,temperature);
+    const weighted=choices.map(item=>{
+      const used=generationUsage.get(item.key)||0;
+      const rareRatio=maxFreq/Math.max(1,item.freq);
+      const rarityBoost=Math.pow(rareRatio,rarity*2.4);
+      const impactBoost=1+Math.max(0,item.impact)*.10;
+      const reusePenalty=1/Math.pow(1+used,2.4);
+      const recentPenalty=recentUnits.includes(item.key)?.035:1;
+      const raw=Math.max(.0001,rarityBoost*impactBoost*reusePenalty*recentPenalty);
+      return {item,weight:Math.pow(raw,1/temp)};
+    });
+    const total=weighted.reduce((sum,entry)=>sum+entry.weight,0);
+    let cursor=rng()*total;
+    for(const entry of weighted){ cursor-=entry.weight; if(cursor<=0)return entry.item; }
+    return weighted[weighted.length-1].item;
+  }
+
+  function registerUse(item){ generationUsage.set(item.key,(generationUsage.get(item.key)||0)+1); recentUnits.push(item.key); if(recentUnits.length>28)recentUnits.shift(); }
+  function snapshot(){ history.push(JSON.stringify({lines,songForm})); if(history.length>30)history.shift(); $("#undoButton").disabled=false; }
+  function activeSources(){ return sources.map((s,i)=>({...s,index:i})).filter(s=>s.active && s.text.trim()); }
+
+  function buildLine(lineIndex, preserveLocked=true, beatOverride=null){
+    const active=activeSources(); if(active.length<2)return [];
+    const seed=Date.now()+lineIndex*997+hash(active.map(s=>s.text).join("|"));
+    const rng=rngFactory(seed); const old=lines[lineIndex]||[];
+    const beats=beatOverride ?? (unitMode==="clause" ? 3 : unitMode==="shard" ? 4 : 6);
+    const catalogs=new Map(); active.forEach(s=>catalogs.set(s.index,unitCatalog(s,unitMode,rng)));
+    
+    return Array.from({length:beats},(_,beat)=>{
+      if(preserveLocked && old[beat]?.locked){ registerUse({key:normalizeUnit(old[beat].text)}); return old[beat]; }
+      const s=active[((lineIndex*beats)+beat)%active.length];
+      const catalog=catalogs.get(s.index)||[];
+      const lineExclusions=new Set(old.filter(Boolean).map(t=>normalizeUnit(t.text)));
+      const item=weightedChoice(catalog,rng,lineExclusions);
+      registerUse(item); return {text:item.text, source:s.index, locked:false};
+    });
+  }
+
+  function cutAll(){
+    const active=activeSources(); if(active.length<2){showToast("ENABLE 2+ SOURCES");return;}
+    snapshot(); generationUsage=new Map(); recentUnits=[];
+
+    const specs=[
+      {label:"INTRO",lines:2,beats:3}, {label:"VERSE 1",lines:4,beats:6},
+      {label:"PRE-CHORUS",lines:2,beats:4,repeatKey:"pre"}, {label:"CHORUS",lines:4,beats:4,repeatKey:"chorus"},
+      {label:"VERSE 2",lines:4,beats:6}, {label:"PRE-CHORUS",lines:2,beats:4,repeatKey:"pre",clone:true},
+      {label:"CHORUS",lines:4,beats:4,repeatKey:"chorus",clone:true}, {label:"VERSE 3",lines:4,beats:6},
+      {label:"BRIDGE",lines:4,beats:5}, {label:"BREAKDOWN",lines:2,beats:3},
+      {label:"FINAL CHORUS",lines:4,beats:4,repeatKey:"chorus",clone:true}, {label:"OUTRO",lines:2,beats:3}
+    ];
+
+    lines=[]; songForm=[]; const canonical={}; let cursor=0;
+    specs.forEach((spec,sectionIndex)=>{
+      const start=cursor; let sectionLines;
+      if(spec.clone && canonical[spec.repeatKey]) sectionLines=canonical[spec.repeatKey].map(line=>line.map(token=>({...token})));
+      else {
+        sectionLines=Array.from({length:spec.lines},(_,offset)=>buildLine(cursor+offset,false,spec.beats));
+        if(spec.repeatKey && !canonical[spec.repeatKey]) canonical[spec.repeatKey]=sectionLines.map(line=>line.map(token=>({...token})));
+      }
+      lines.push(...sectionLines); cursor+=sectionLines.length;
+      songForm.push({ label:spec.label, start, end:cursor, beats:spec.beats, repeatKey:spec.repeatKey||null, sectionIndex });
+    });
+
+    render(); $("#perfText").textContent = `CUT · ${lines.length} LINES`; syncSeedToCanvas(formattedCut(true));
+  }
+
+  function sectionForLine(index){ return songForm.find(section=>index>=section.start && index<section.end) || null; }
+  
+  function linkedRepeatLines(index){
+    const current = sectionForLine(index); 
+    if(!current?.repeatKey) return [];
+    const offset = index - current.start;
+    let linked = [];
+    songForm.forEach(sec => {
+      if(sec.repeatKey === current.repeatKey) {
+        let targetIndex = sec.start + offset;
+        if(targetIndex !== index && targetIndex < sec.end) {
+          linked.push(targetIndex);
+        }
+      }
+    });
+    return linked;
+  }
+
+  function recutLine(index){
+    snapshot(); const section=sectionForLine(index);
+    const fresh=buildLine(index,true,section?.beats||null); lines[index]=fresh;
+    linkedRepeatLines(index).forEach(lineIndex=>{ lines[lineIndex]=fresh.map(token=>({...token})); });
+    render(); syncSeedToCanvas(formattedCut(true));
+  }
+
+  function render(){
+    const poem = document.getElementById("poem"); poem.innerHTML="";
+    if(!lines.length){ poem.innerHTML='<div class="empty">ENABLE SOURCES AND CUT SEED</div>'; return; }
+    const sectionAt=new Map(songForm.map(section=>[section.start,section]));
+    
+    lines.forEach((line,lineIndex)=>{
+      const section=sectionAt.get(lineIndex);
+      if(section){
+        const label=document.createElement("div"); label.className=`section-label ${section.label==="CHORUS"?"chorus":""}`;
+        label.textContent=section.label; poem.append(label);
+      }
+      const row=document.createElement("div"); row.className="line"+(colorMode==="line"?" line-color":"");
+      const first=line[0]; row.style.setProperty("--line-color",sources[first?.source]?.color||"var(--ink)");
+      row.dataset.line=String(lineIndex);
+      
+      line.forEach((token,tokenIndex)=>{
+        const span=document.createElement("span");
+        span.className="token"+(token.locked?" locked":""); span.textContent=token.text;
+        span.style.setProperty("--token-color",sources[token.source]?.color||"var(--ink)");
+        span.dataset.line=String(lineIndex); span.dataset.token=String(tokenIndex);
+        if(selectedToken?.lineIndex===lineIndex && selectedToken?.tokenIndex===tokenIndex) span.classList.add("selected");
+        
+        span.addEventListener("click",e=>{ e.stopPropagation(); openCandidates(lineIndex,tokenIndex); });
+        row.append(span);
+      });
+      const rr=document.createElement("button"); rr.className="reroll"; rr.innerHTML="⟳"; 
+      rr.addEventListener("click",e=>{e.stopPropagation();recutLine(lineIndex)});
+      row.append(rr); row.addEventListener("click",()=>{ recutLine(lineIndex); });
+      poem.append(row);
+    });
+  }
+
+  // --- CANDIDATE TRAY LOGIC ---
+  function openCandidates(lineIndex, tokenIndex){
+    selectedToken={lineIndex, tokenIndex};
+    const token=lines[lineIndex]?.[tokenIndex]; if(!token)return;
+    const source=sources[token.source], tray=$("#candidateTray"), opts=$("#candidateOptions");
+    tray.style.setProperty("--candidate-color", source.color);
+    $("#candidateLabel").textContent=source.name; opts.innerHTML="";
+
+    const seed=Date.now()+hash(source.text)+hash(token.text);
+    const rng=rngFactory(seed); const catalog=unitCatalog(source,unitMode,rng);
+    const exclude=new Set([normalizeUnit(token.text)]);
+    const picks=[];
+    
+    while(picks.length<4 && exclude.size<=catalog.length){
+      const item=weightedChoice(catalog,rng,exclude); if(!item?.text)break;
+      picks.push(item); exclude.add(item.key);
+    }
+
+    picks.forEach(cand=>{
+      const b=document.createElement("button"); b.textContent=cand.text;
+      b.onclick=()=>{
+        snapshot();
+        const replacement={text:cand.text, source:token.source, locked:token.locked};
+        lines[lineIndex][tokenIndex]=replacement;
+        linkedRepeatLines(lineIndex).forEach(linkedIndex=>{ if(lines[linkedIndex]?.[tokenIndex]) lines[linkedIndex][tokenIndex]={...replacement}; });
+        registerUse(cand); closeCandidates(); render(); syncSeedToCanvas(formattedCut(true));
+      };
+      opts.append(b);
+    });
+
+    $("#candidateLock").textContent = token.locked ? "UNLOCK" : "LOCK";
+    tray.classList.add("open"); render();
+  }
+  function closeCandidates(){ selectedToken=null; $("#candidateTray").classList.remove("open"); render(); }
+  $("#candidateLock").addEventListener("click", ()=>{
+    if(!selectedToken)return; const {lineIndex,tokenIndex}=selectedToken; const token=lines[lineIndex]?.[tokenIndex]; if(!token)return;
+    snapshot(); token.locked=!token.locked;
+    linkedRepeatLines(lineIndex).forEach(linkedIndex=>{ if(lines[linkedIndex]?.[tokenIndex]) lines[linkedIndex][tokenIndex].locked=token.locked; });
+    $("#candidateLock").textContent=token.locked?"UNLOCK":"LOCK"; render(); showToast(token.locked?"LOCKED":"UNLOCKED");
+  });
+  $("#candidateClose").addEventListener("click", closeCandidates);
+
+  // --- TUNING LOGIC ---
+  function temperatureFromSlider(value){ return 0.28 + (Number(value)/100)*1.92; }
+  function updateTuning(){
+    temperature = temperatureFromSlider($("#tempSlider").value);
+    rarity = Number($("#raritySlider").value)/100;
+    $("#tempOutput").textContent = temperature.toFixed(2);
+    $("#rarityOutput").textContent = `${Math.round(rarity*100)}%`;
+  }
+  function toggleTune(force){
+    const panel=$("#tunePanel"); const open=typeof force==="boolean" ? force : !panel.classList.contains("open");
+    panel.classList.toggle("open",open); if(open){ toggleCopyPanel(false); closeCandidates(); }
+  }
+  $("#tempSlider").addEventListener("input", updateTuning);
+  $("#raritySlider").addEventListener("input", updateTuning);
+  $("#tuneButton").addEventListener("click", ()=>toggleTune());
+  updateTuning();
+
+  // --- SOURCE STRIP & DRAWER ---
+  function renderSources(){
+    const sourceStrip = document.getElementById("sourceStrip");
+    const drawerTabs = document.getElementById("drawerTabs");
+    sourceStrip.innerHTML=""; drawerTabs.innerHTML="";
+    sources.forEach((s,i)=>{
+      const chip=document.createElement("button"); chip.className="source-chip"; chip.style.setProperty("--source-color",s.color);
+      chip.setAttribute("aria-pressed",String(s.active));
+      chip.innerHTML=`<span class="swatch"></span>${s.name.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}`;
+      chip.addEventListener("click",()=>{ s.active=!s.active; renderSources(); });
+      sourceStrip.append(chip);
+
+      const tab=document.createElement("button"); tab.textContent=s.name; tab.style.setProperty("--source-color",s.color);
+      if(i===selectedSource) tab.classList.add("active");
+      tab.addEventListener("click",()=>{ saveEditor(); selectedSource=i; loadEditor(); renderSources(); });
+      drawerTabs.append(tab);
+    });
+    loadEditor();
+  }
+  function loadEditor(){ const s=sources[selectedSource]; if(!s)return; $("#sourceName").value=s.name; $("#sourceText").value=s.text; $("#removeSource").disabled=sources.length<=2; }
+  function saveEditor(){ const s=sources[selectedSource]; if(!s)return; s.name=$("#sourceName").value.trim()||`SOURCE ${selectedSource+1}`; s.text=$("#sourceText").value; }
+
+  $("#editButton").addEventListener("click",()=>{ $("#drawer").classList.add("open"); loadEditor(); });
+  $("#closeDrawer").addEventListener("click",()=>{ saveEditor(); renderSources(); $("#drawer").classList.remove("open"); });
+  $("#sourceName").addEventListener("input",saveEditor); $("#sourceText").addEventListener("input",saveEditor);
+  
+  $("#addSource").addEventListener("click",()=>{
+    saveEditor(); sources.push({name:`SOURCE ${sources.length+1}`,color:COLORS[sources.length%COLORS.length],active:true,text:""});
+    selectedSource=sources.length-1; renderSources(); loadEditor(); $("#sourceName").select();
+  });
+  $("#clearSource").addEventListener("click",()=>{ $("#sourceText").value=""; saveEditor(); });
+  $("#removeSource").addEventListener("click",()=>{
+    if(sources.length<=2)return; stop(); sources.splice(selectedSource,1); selectedSource=Math.max(0,Math.min(selectedSource,sources.length-1));
+    lines=[];songForm=[];history=[]; $("#undoButton").disabled=true; renderSources();render();
+  });
+  $("#importSource").addEventListener("click",()=>$("#fileInput").click());
+  $("#fileInput").addEventListener("change",async e=>{
+    const file=e.target.files?.[0];if(!file)return;
+    $("#sourceText").value=await file.text(); $("#sourceName").value=file.name.replace(/\.[^.]+$/,""); saveEditor(); renderSources(); showToast("IMPORTED");
+  });
+
+  // --- PLAYBACK ---
+  function play(){
+    if(!lines.length){cutAll();if(!lines.length)return}
+    if(playing){stop();return}
+    playing=true; document.getElementById("playButton").textContent="STOP"; $("#liveDot").classList.add("on"); playIndex=0;
+    const flat=[...document.querySelectorAll(".token")]; const rows=[...document.querySelectorAll(".line")];
+    const step=()=>{
+      flat.forEach(x=>x.classList.remove("playing")); rows.forEach(x=>x.classList.remove("playing"));
+      if(!playing||!flat.length)return;
+      const node=flat[playIndex%flat.length]; node.classList.add("playing"); node.closest(".line")?.classList.add("playing");
+      const li=+node.dataset.line, ti=+node.dataset.token; const token=lines[li][ti];
+      sound(token.source,playIndex);
+      playIndex++; playTimer=setTimeout(step,60000/bpm/2);
+    }; step();
+  }
+  function stop(){ playing=false; document.getElementById("playButton").textContent="PLAY"; $("#liveDot").classList.remove("on"); clearTimeout(playTimer); $$(".playing").forEach(x=>x.classList.remove("playing")); }
+  function sound(sourceIndex,step){
+    audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+    const now=audioCtx.currentTime; const osc=audioCtx.createOscillator(); const gain=audioCtx.createGain();
+    const base=[85,115,145,185,230,280,340,410,500,610][sourceIndex%10];
+    osc.type=step%4===0?"square":"sine"; osc.frequency.setValueAtTime(base,now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(45,base*.55),now+.045);
+    gain.gain.setValueAtTime(.0001,now); gain.gain.exponentialRampToValueAtTime(step%4===0?.11:.055,now+.004);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+.07);
+    osc.connect(gain).connect(audioCtx.destination); osc.start(now);osc.stop(now+.08);
+  }
+
+  // --- EXPORT & COPY ---
+  function formattedCut(withLabels=true){
+    return songForm.map(section => {
+      const body=lines.slice(section.start,section.end).map(line=>line.map(token=>token.text).join(" / ")).join("\n");
+      return withLabels ? `[${section.label}]\n${body}` : body;
+    }).join(withLabels ? "\n\n" : "\n");
+  }
+
+  async function copyText(text,message="COPIED"){
+    try{ await navigator.clipboard.writeText(text); }catch{
+      const ta=document.createElement("textarea"); ta.value=text; document.body.append(ta); ta.select(); document.execCommand("copy"); ta.remove();
+    } showToast(message);
+  }
+  function toggleCopyPanel(force){
+    const panel=$("#copyPanel"); const open=typeof force==="boolean" ? force : !panel.classList.contains("open");
+    panel.classList.toggle("open",open); if(open){ toggleTune(false); closeCandidates(); }
+  }
+
+  // --- BINDINGS ---
+  $("#cutButton").addEventListener("click",cutAll);
+  $("#playButton").addEventListener("click",play);
+  $$("[data-unit]").forEach(btn=>btn.addEventListener("click",()=>{ unitMode=btn.dataset.unit; $$("[data-unit]").forEach(b=>b.setAttribute("aria-pressed", String(b===btn))); }));
+  $("#colorMode").addEventListener("click",()=>{ colorMode=colorMode==="word"?"line":"word"; $("#colorMode").textContent=`COLOR: ${colorMode.toUpperCase()}`; render(); });
+  
+  $("#undoButton").addEventListener("click",()=>{
+    if(!history.length)return; const restored=JSON.parse(history.pop()); lines=restored.lines||[]; songForm=restored.songForm||[]; $("#undoButton").disabled=!history.length; render(); syncSeedToCanvas(formattedCut(true));
+  });
+
+  $("#bpmDown").addEventListener("click",()=>{bpm=Math.max(60,bpm-4);$("#bpmOutput").value=`${bpm} BPM`;});
+  $("#bpmUp").addEventListener("click",()=>{bpm=Math.min(200,bpm+4);$("#bpmOutput").value=`${bpm} BPM`;});
+
+  $("#copyButton").addEventListener("click",()=>toggleCopyPanel());
+  $("#copyAll").addEventListener("click",()=>copyText(formattedCut(true),"FULL LYRIC COPIED"));
+  $("#copyClean").addEventListener("click",()=>copyText(formattedCut(false),"CLEAN LYRIC COPIED"));
+  $("#closeCopy").addEventListener("click",()=>toggleCopyPanel(false));
+  $("#downloadText").addEventListener("click",()=>{
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([formattedCut(true)],{type:"text/plain;charset=utf-8"})); a.download="polliwog-station.txt"; a.click(); showToast("DOWNLOADED");
+  });
+  $("#exportJson").addEventListener("click",()=>{
+    const payload={ title:"Polliwog Station Cut", bpm,unitMode,colorMode, sources:sources.filter(s=>s.active).map(s=>s.name), form:songForm.map(s=>({ label:s.label, lines:lines.slice(s.start,s.end).map(l=>l.map(t=>({text:t.text,source:sources[t.source].name,locked:t.locked}))) })) };
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"})); a.download="polliwog-station.json"; a.click(); showToast("EXPORTED");
+  });
+
+  document.addEventListener("keydown",e=>{
+    if(["TEXTAREA","INPUT","SELECT"].includes(document.activeElement?.tagName))return;
+    if(e.code==="Space"){e.preventDefault();play()}
+    if(e.key.toLowerCase()==="c")copyText(formattedCut(true),"FULL LYRIC COPIED");
+    if(e.key.toLowerCase()==="g")cutAll();
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault(); $("#undoButton").click(); }
+    if(e.key==="Escape"){stop(); $("#drawer").classList.remove("open"); toggleCopyPanel(false); toggleTune(false); closeCandidates();}
+  });
+
+  renderSources();
+  cutAll();
+})();
+
+// ==========================================
+// MODULE 3: AUTOMATED DIFF ENGINE & API
+// ==========================================
+async function runMutation() {
+  if (!sharedState.apiKey) { openConfigModal(); return; }
+
+  const lineage = document.getElementById("lineage-textarea").value.trim();
+  const seedDoc = document.getElementById("canvas-seed").innerText.trim();
+
+  if (!seedDoc || seedDoc.includes("ENABLE SOURCES AND CUT SEED")) { showToast("CUT A SEED FIRST"); return; }
+  if (!lineage) { showToast("ADD CULTURAL DNA"); return; }
+
+  const btn = document.getElementById("btn-mutate");
+  const overlay = document.getElementById("loading-overlay");
+  const globalLed = document.getElementById("global-led");
+  const canvasStatus = document.getElementById("canvas-status");
+  
+  btn.disabled = true; overlay.classList.add("active");
+  globalLed.className = "led processing"; 
+
+  const systemInstruction = `You are a master lyricist and cultural adapter.
+I am providing a procedurally generated "Seed" song and a "Lineage DNA" document.
+Your goal is to "mush" the sampler seed through the lineage to make a new set of lyrics that is a descendant of both.
+
+CRITICAL RULES:
+1. Keep the exact song structure, rhythm, and approximate rhyme scheme of the Seed.
+2. Replace the vocabulary, slang, and cultural references in the Seed so they natively fit the Lineage DNA context.
+3. The Lineage DNA dictates the vibe. DO NOT literally mention meta-words like "lineage" or "instructions" in the lyrics.
+4. You MUST wrap the ENTIRE updated song inside <lyrics>...</lyrics> tags so my system can parse it.`;
+
+  const userPrompt = `--- LINEAGE DNA ---\n${lineage}\n\n--- SEED LYRICS ---\n${seedDoc}\n\nPlease generate the descendant lyrics now.`;
+
+  try {
+    const payload = {
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      generationConfig: { temperature: 0.7 }
+    };
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${sharedState.apiModel}:generateContent?key=${sharedState.apiKey}`;
+
+    const response = await fetch(endpoint, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || "API Error");
+
+    const replyText = data.candidates[0].content.parts[0].text;
+    const lyricsMatch = replyText.match(/<lyrics>([\s\S]*?)<\/lyrics>/i);
+
+    if (lyricsMatch) {
+      document.getElementById("canvas-mutation").textContent = lyricsMatch[1].trim();
+      canvasStatus.textContent = "MUTATION SUCCESS"; canvasStatus.style.color = "var(--danger)";
+      showToast("MUTATION COMPLETE");
+    } else {
+      const fallback = replyText.replace(/```.*?```/g, "").trim();
+      document.getElementById("canvas-mutation").textContent = fallback;
+      canvasStatus.textContent = "MUTATION (NO XML)"; showToast("MUTATION APPLIED");
+    }
+  } catch (err) { alert("Gemini Error: " + err.message); } 
+  finally {
+    btn.disabled = false; overlay.classList.remove("active");
+    globalLed.className = "led active"; 
+  }
+}
+</script>
+</body>
+</html>
