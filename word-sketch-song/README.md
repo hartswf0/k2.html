@@ -1,21 +1,18 @@
-# WORD / SKETCH / SONG
+# Sketchsong
 
-Static recursive music instrument for GitHub Pages.
+A no-scroll multimodal music instrument for learning through transformations.
 
-## Surface
+Core surface:
 
-- WORD / SKETCH
-- SONG / SPECTRUM
-- CODE / FLOW
-- GUIDE / HISTORY
+`FROM → THROUGH → TO`
 
-Every MAKE or LOOP creates a provenance branch. Any panel can be sent to the GUIDE. Images can be dropped or pasted into the GUIDE.
+- FROM: word or sketch
+- THROUGH: editable translation theory, then Python/JSON beneath it
+- TO: playable song and drawable spectrogram
+- GUIDE: contextual help attached to any artifact
+- HISTORY: branchable runs
+- STONES: reusable translation rules worth keeping
 
-## Export
+Generation exposes a six-stage construction surface: READ → MAP → A1 → B → A2 → JOIN. The displayed stages are structured program operations, not hidden model reasoning.
 
-- MP3 (WAV fallback if the encoder CDN is unavailable)
-- MIDI
-- standalone song HTML with provenance
-- TRACE JSON with pipeline, history and graph
-
-The GitHub Pages frontend calls a narrow Supabase Edge Function, which forwards only the allowed OpenAI endpoints. The entered OpenAI API key is passed per request and is not stored by the instrument. The Supabase publishable key in the frontend is intentionally public.
+API calls are routed through the configured Supabase edge proxy. The OpenAI key entered at the gate is passed per request and is not stored by the instrument.
