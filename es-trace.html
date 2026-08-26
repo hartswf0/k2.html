@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>ES/TRACE</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="white"/><path d="M16 12H8v40h8M48 12h8v40h-8M22 22h20M22 32h20M22 42h20M32 10v44" fill="none" stroke="black" stroke-width="4"/></svg>'>
+<style>
+:root{--ink:#000;--paper:#fff;--mw:64px;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:#fff;color:#000}
+body{font-family:Arial,sans-serif;overflow:hidden}button,input,select{font:inherit;color:inherit;border-radius:0}button{cursor:pointer}
+.load{position:fixed;z-index:200;left:0;right:0;top:0;height:2px;overflow:hidden}.load.busy:after{content:"";display:block;height:2px;width:22%;background:#000;animation:sweep .8s infinite linear}
+@keyframes sweep{from{transform:translateX(-110%)}to{transform:translateX(520%)}}
+.app{height:100dvh;display:grid;grid-template-rows:34px 21px minmax(0,1fr) 22px;background:#fff}
+.top,.crumb,.bar,.logbar,.mobileNav{border-bottom:1px solid #000;background:#fff}
+.top{display:grid;grid-template-columns:auto 1fr auto;align-items:center;padding:0 5px;gap:4px}
+.brand{font:700 10px var(--mono);letter-spacing:.12em;white-space:nowrap}.transport,.right{display:flex;align-items:center;gap:3px}.transport{justify-content:center}
+.btn{height:23px;min-width:23px;padding:0 6px;border:1px solid #000;background:#fff;font:8px var(--mono)}.btn:hover,.btn.on,.btn.black{background:#000;color:#fff}.btn:disabled{text-decoration:line-through}
+.model{height:23px;max-width:130px;border:1px solid #000;background:#fff;font:8px var(--mono)}
+.crumb{height:21px;display:flex;align-items:center;gap:4px;padding:0 6px;font:8px var(--mono);overflow:hidden;white-space:nowrap}.crumb button{border:0;background:none;padding:0;font:inherit}.crumb .push{margin-left:auto}
+.workspace{display:grid;grid-template-columns:30% 5px 50% 5px 20%;min-height:0}.panel{min-width:0;min-height:0;background:#fff;position:relative}.panel+.split,.split+.panel{border-left:1px solid #000}
+.split{cursor:col-resize;position:relative;background:#fff;touch-action:none}.split:after{content:"";position:absolute;left:2px;top:38%;bottom:38%;border-left:1px solid #000}.split.drag{background:#000}
+.bar{height:28px;display:flex;align-items:center;gap:3px;padding:0 5px}.tag{font:700 8px var(--mono);letter-spacing:.12em;margin-right:auto}
+.panel.collapsed{display:block!important;overflow:hidden}.panel.collapsed>:not(.bar){display:none!important}.panel.collapsed .bar{height:100%;flex-direction:column;padding:4px 0;border-bottom:0}.panel.collapsed .tag{writing-mode:vertical-rl;transform:rotate(180deg);margin:auto 0}.panel.collapsed .bar>:not(.tag):not(.collapse){display:none!important}
+.source{display:grid;grid-template-rows:28px minmax(0,1fr)}.code{overflow:auto;padding:6px 0 40px;font:11px/20px var(--mono)}
+.line{display:grid;grid-template-columns:28px 1fr;min-height:22px;border-left:3px solid #fff}.line:hover{outline:1px solid #000;outline-offset:-1px}.line.sel{border-left-color:#000;background:repeating-linear-gradient(135deg,#fff 0,#fff 5px,#000 5px,#000 6px)}.line.err{background:#000;color:#fff}.ln{font:8px/22px var(--mono);text-align:right;padding-right:6px}.txt{padding:1px 3px;min-height:20px;white-space:pre-wrap;background:#fff;color:#000}.line.err .txt{background:#000;color:#fff}
+.worldPanel{display:grid;grid-template-rows:28px 34px minmax(0,1fr)}.time{display:grid;grid-template-columns:28px 1fr;border-bottom:1px solid #000;padding:2px 5px}.time label{font:7px/12px var(--mono)}
+.ruler{position:relative;height:28px}.tick{position:absolute;height:8px;border-left:1px solid #000}.tick b{position:absolute;left:2px;top:-1px;font:7px var(--mono);font-weight:400}.tick.phys{top:15px}
+.world{position:relative;overflow:auto;min-height:0;--pm:0}.worldInner{position:relative;min-width:1080px;padding-bottom:30px}.grid{position:absolute;left:50px;right:0;top:0;bottom:0;background-image:linear-gradient(to right,#000 1px,transparent 1px);background-size:var(--mw) 100%;opacity:.12;pointer-events:none}.playhead{position:absolute;z-index:12;top:0;bottom:0;width:2px;background:#000;left:calc(50px + var(--pm)*var(--mw));pointer-events:none}
+.track{display:grid;grid-template-columns:50px minmax(1024px,1fr);min-height:47px;border-bottom:1px solid #000}.tname{position:sticky;left:0;z-index:15;background:#fff;border-right:1px solid #000;padding:6px 4px;font:8px var(--mono)}.tbody{position:relative}
+.clip{position:absolute;top:7px;height:32px;border:1px solid #000;background:#fff;overflow:hidden;cursor:grab}.clip:hover,.clip.sel,.clip.active{background:#000;color:#fff}.clip.match{border-bottom:5px solid #000}.clip b{display:block;padding:4px 5px;font:8px var(--mono)}.clip small{padding:0 5px;font:7px var(--mono)}.hit{position:absolute;top:12px;width:6px;height:22px;background:#000}.hit.sel,.hit.match{outline:2px solid #000;outline-offset:2px}
+.fail{display:none;position:absolute;left:50px;right:0;bottom:0;background:#000;color:#fff;padding:5px;font:8px var(--mono);z-index:20}.fail.show{display:block}
+.trace{display:grid;grid-template-rows:28px minmax(0,1fr)}.traceBody{overflow:auto;padding:8px 8px 50px}.hero{font:700 14px var(--mono);margin-bottom:9px}.metrics{display:grid;grid-template-columns:1fr 1fr;border:1px solid #000}.metric{padding:5px;border-right:1px solid #000;border-bottom:1px solid #000;font:8px var(--mono)}.metric:nth-child(2n){border-right:0}.metric:nth-last-child(-n+2){border-bottom:0}.metric small{display:block;font-size:6px;margin-bottom:2px}
+.spine{margin-top:8px;border-top:1px solid #000}.sp{padding:6px 0;border-bottom:1px solid #000;font:8px/1.4 var(--mono)}.sp small{display:block;font-size:6px}
+.ai{margin-top:8px;border-top:1px solid #000;padding-top:6px}.airow{display:grid;grid-template-columns:1fr auto;gap:3px}.airow input{height:25px;border:1px solid #000;padding:0 5px;font:8px var(--mono)}.tx{display:none;margin-top:6px;border:1px solid #000}.tx.show{display:block}.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #000}.tabs button{height:21px;border:0;border-right:1px solid #000;background:#fff;font:7px var(--mono)}.tabs button.on{background:#000;color:#fff}.body{max-height:220px;overflow:auto;padding:6px;font:8px/1.4 var(--mono);white-space:pre-wrap;word-break:break-word}
+.footer{display:flex;align-items:center;gap:5px;padding:0 6px;border-top:1px solid #000;font:8px var(--mono)}.footer .push{margin-left:auto}
+.pop{display:none;position:fixed;z-index:100;background:#fff;border:1px solid #000}.pop.show{display:block}.phead{height:27px;display:flex;align-items:center;padding:0 6px;border-bottom:1px solid #000;font:700 8px var(--mono)}.phead .push{margin-left:auto}
+.connect{right:5px;top:36px;width:min(390px,calc(100vw - 10px))}.connect .inner{padding:6px}.connectRow,.models{display:grid;grid-template-columns:1fr auto;gap:3px}.connect input,.connect select{height:28px;border:1px solid #000;padding:0 6px;font:8px var(--mono);min-width:0}.models{display:none;margin-top:4px}.models.show{display:grid}.connectMsg{min-height:16px;padding-top:4px;font:7px/1.3 var(--mono)}.connectFoot{display:flex;align-items:center;gap:5px;border-top:1px solid #000;padding-top:5px;margin-top:4px;font:7px var(--mono)}.connectFoot button{margin-left:auto;border:0;background:none;text-decoration:underline;font:inherit}
+.help{right:5px;top:36px;width:220px}.help div:not(.phead){display:grid;grid-template-columns:52px 1fr;gap:6px;padding:6px;border-bottom:1px solid #000;font:8px/1.3 var(--mono)}
+.logs{position:fixed;left:0;right:0;bottom:22px;z-index:90;background:#fff;border-top:1px solid #000;transform:translateY(calc(100% - 22px));transition:.12s}.logs.open{transform:translateY(0)}.logbar{height:22px;display:flex;align-items:center;gap:5px;padding:0 6px;font:8px var(--mono);cursor:pointer}.logbody{height:120px;overflow:auto;font:8px/1.3 var(--mono)}.logrow{display:grid;grid-template-columns:58px 52px 1fr;border-top:1px solid #000}.logrow span{padding:3px 5px;border-right:1px solid #000}
+.hint{position:fixed;left:50%;bottom:29px;transform:translateX(-50%);z-index:80;border:1px solid #000;background:#fff;padding:5px 6px;font:8px var(--mono);display:flex;gap:6px;align-items:center}.hint.hide{display:none}.mobileNav{display:none}
+@media(max-width:800px){
+ .app{grid-template-rows:34px 21px minmax(0,1fr) 22px 38px}.workspace{display:block;position:relative;overflow:hidden}.split{display:none}
+ .panel{display:none!important;position:absolute;inset:0;width:100%;height:100%;border:0!important}.panel.mobile{display:grid!important}.collapse{display:none}
+ .source.mobile{grid-template-rows:28px minmax(0,1fr)}.worldPanel.mobile{grid-template-rows:28px 34px minmax(0,1fr)}.trace.mobile{grid-template-rows:28px minmax(0,1fr)}
+ .panel.collapsed.mobile>:not(.bar){display:initial!important}.panel.collapsed.mobile .bar{height:28px;display:flex;flex-direction:row;padding:0 5px;border-bottom:1px solid #000}.panel.collapsed.mobile .tag{writing-mode:horizontal-tb;transform:none;margin-right:auto}
+ .model{display:none}.right #runs{display:none}.right{gap:2px}.brand{font-size:9px}.crumb .status{display:none}.mobileNav{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #000}.mobileNav button{border:0;border-right:1px solid #000;background:#fff;font:8px var(--mono)}.mobileNav button.on{background:#000;color:#fff}
+ .logs{bottom:60px}.hint{bottom:66px;max-width:calc(100vw - 10px);white-space:normal}.connect{left:4px;right:4px;width:auto}.worldInner{min-width:900px}
+}
+</style>
+</head>
+<body>
+<div class="load" id="load"></div>
+<div class="app">
+ <header class="top">
+  <div class="brand">ES/TRACE</div>
+  <div class="transport"><button class="btn black" id="run">RUN</button><button class="btn" id="play">▶</button><span id="runState" style="font:8px var(--mono)">R1</span></div>
+  <div class="right"><button class="btn" id="api">OPENAI</button><select class="model" id="model" disabled><option>MODEL</option></select><button class="btn" id="runs">R1</button><button class="btn" id="help">?</button></div>
+ </header>
+ <div class="crumb"><button id="crun">R1</button><b>/</b><button id="cline">SRC</button><b>/</b><button id="cobj">WORLD</button><span class="push status">SYS <b>OK</b> · AUDIO <b id="audioState">OK</b> · API <b id="apiState">KEY</b></span></div>
+ <main class="workspace" id="workspace">
+  <section class="panel source" data-panel="0">
+   <div class="bar"><span class="tag">SRC</span><button class="btn collapse" data-collapse="0">−</button></div>
+   <div class="code" id="code"></div>
+  </section>
+  <div class="split" data-split="0"></div>
+  <section class="panel worldPanel mobile" data-panel="1">
+   <div class="bar"><span class="tag">WORLD</span><button class="btn collapse" data-collapse="1">−</button><button class="btn on" id="out">OUT</button><button class="btn" id="why">TRACE</button></div>
+   <div class="time"><label>M<br>T</label><div class="ruler" id="ruler"></div></div>
+   <div class="world" id="world"><div class="worldInner" id="worldInner"><div class="grid"></div><div class="playhead"></div><div id="tracks"></div><div class="fail" id="fail"></div></div></div>
+  </section>
+  <div class="split" data-split="1"></div>
+  <aside class="panel trace" data-panel="2">
+   <div class="bar"><span class="tag">TRACE</span><button class="btn collapse" data-collapse="2">−</button><button class="btn" id="clear">×</button></div>
+   <div class="traceBody"><div class="hero" id="hero">select a clip</div><div class="metrics" id="metrics"></div><div class="spine" id="spine"></div>
+    <div class="ai"><div class="airow"><input id="ask" placeholder="change selected…" disabled><button class="btn black" id="askBtn" disabled>AI</button></div>
+     <div class="tx" id="tx"><div class="tabs"><button class="on" data-tab="result">RESULT</button><button data-tab="response">RESPONSE</button><button data-tab="reason">REASON</button><button data-tab="request">REQUEST</button></div><div class="body" id="txbody"></div></div>
+    </div>
+   </div>
+  </aside>
+ </main>
+ <div class="footer"><b>ACT → HEAR → TRACE</b><span id="last">starter world ready</span><span class="push">LOG</span></div>
+ <nav class="mobileNav" id="mobile"><button data-i="0">SRC</button><button class="on" data-i="1">WORLD</button><button data-i="2">TRACE</button></nav>
+</div>
+
+<div class="pop connect" id="connect"><div class="phead">OPENAI<button class="btn push" id="xconnect">×</button></div><div class="inner"><div class="connectRow"><input id="key" type="password" autocomplete="off" placeholder="API KEY"><button class="btn black" id="connectBtn">CONNECT</button></div><div class="models" id="models"><select id="pick"></select><button class="btn black" id="use">USE</button></div><div class="connectMsg" id="connectMsg">The app already works. Add OpenAI for AI patches.</div><div class="connectFoot"><span>Test client · key is not saved.</span><button id="later">NOT NOW</button></div></div></div>
+<div class="pop help" id="helpPop"><div class="phead">HELP</div><div><b>WORLD</b><span>tap a clip</span></div><div><b>TRACE</b><span>see source → event → audio</span></div><div><b>SRC</b><span>edit, then RUN</span></div><div><b>DRAG</b><span>move a clip → patch source</span></div><div><b>AI</b><span>operate on selected line</span></div></div>
+<div class="hint" id="hint"><span>Tap a clip. TRACE shows the cause.</span><button class="btn" id="xhint">×</button></div>
+<section class="logs" id="logs"><div class="logbar" id="logbar"><b>LOG</b><span id="loglast">ready</span></div><div class="logbody" id="logbody"></div></section>
+
+<script>
+(()=>{
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)], uid=()=>Math.random().toString(36).slice(2,9), clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), fmt=n=>Number.isInteger(n)?String(n):Number(n.toFixed(2)).toString();
+const SRC=`# trace
+setTempo(94)
+
+fitMedia(KICK, 1, 1, 17)
+fitMedia(BASS, 2, 1, 9)
+
+def chorus():
+  makeBeat(HAT, 3, 1, "0-0-0-0-0-0-0-0-")
+  setEffect(3, "VOLUME", -18, 1, -4, 9)
+
+chorus()
+fitMedia(BASS, 2, 9, 17)
+fitMedia(VOICE, 4, 9, 13)`;
+const sound={KICK:{f:70,t:"sine",d:.15,g:.6},BASS:{f:92,t:"sawtooth",d:.4,g:.16},HAT:{f:700,t:"square",d:.04,g:.04},VOICE:{f:220,t:"triangle",d:.28,g:.12}};
+const S={lines:SRC.split("\n"),run:0,runs:[],view:null,line:null,event:null,dirty:false,tempo:{a:94,b:126,m0:1,m1:17},audio:{ctx:null,on:false,start:0,dur:0,nodes:[],raf:null},api:{key:"",model:"",ready:false,models:[],tx:null,tab:"result"},panels:{w:[0,0,0],save:[0,0,0],c:[false,false,false],mobile:1}};
+const log=(sys,msg)=>{const t=new Date().toLocaleTimeString([],{hour12:false});$("#loglast").textContent=`${sys} · ${msg}`;const r=document.createElement("div");r.className="logrow";r.innerHTML=`<span>${t}</span><span>${sys}</span><span>${msg}</span>`;$("#logbody").append(r);$("#logbody").scrollTop=1e9};
+const busy=(v,m="")=>{$("#load").classList.toggle("busy",v);if(m)$("#last").textContent=m};
+function args(s){let a=[],c="",q=null;for(let i=0;i<s.length;i++){let x=s[i];if(q){c+=x;if(x===q&&s[i-1]!=="\\")q=null}else if(x==="'"||x==='"'){q=x;c+=x}else if(x===","){a.push(c.trim());c=""}else c+=x}if(c.trim())a.push(c.trim());return a}
+function atom(x){x=x.trim();if(/^-?\d+(\.\d+)?$/.test(x))return +x;if((x[0]==='"'&&x.at(-1)==='"')||(x[0]==="'"&&x.at(-1)==="'"))return x.slice(1,-1);return x}
+function call(t){let m=t.trim().match(/^([A-Za-z_]\w*)\((.*)\)$/);return m?{n:m[1],a:args(m[2])}:null}
+function indent(s){return (s.match(/^\s*/)||[""])[0].length}
+function execute(lines){
+ let r={events:[],fx:[],tempo:94,max:17,error:null,func:new Map(),gen:new Map(),lines:[...lines]},add=(ln,id)=>{if(!r.gen.has(ln))r.gen.set(ln,[]);r.gen.get(ln).push(id)};
+ for(let i=0;i<lines.length;i++){let m=lines[i].match(/^(\s*)def\s+([A-Za-z_]\w*)\(\)\s*:/);if(!m)continue;let base=m[1].length,b=[],j=i+1;while(j<lines.length&&(!lines[j].trim()||indent(lines[j])>base))b.push({line:j+1,text:lines[j++]});r.func.set(m[2],b)}
+ const prim=(c,ln,prov=[])=>{let a=c.a.map(atom);
+  if(c.n==="setTempo"){if(a.length!==1||a[0]<40||a[0]>300)throw Error("BAD BPM");r.tempo=a[0];S.tempo.a=a[0];return}
+  if(c.n==="fitMedia"){if(a.length!==4||!sound[a[0]]||!(a[1]>=1&&a[2]>=1&&a[3]>a[2]))throw Error("BAD fitMedia");let id=uid(),e={id,type:"clip",sound:a[0],track:+a[1],start:+a[2],end:+a[3],origin:ln,src:[ln,...prov]};r.events.push(e);add(ln,id);prov.forEach(x=>add(x,id));r.max=Math.max(r.max,e.end);return}
+  if(c.n==="makeBeat"){if(a.length!==4||!sound[a[0]]||typeof a[3]!=="string")throw Error("BAD makeBeat");[...a[3]].forEach((x,i)=>{if(x==="0"){let id=uid(),p=+a[2]+i*.25,e={id,type:"hit",sound:a[0],track:+a[1],start:p,end:p+.15,origin:ln,src:[ln,...prov]};r.events.push(e);add(ln,id);prov.forEach(y=>add(y,id))}});return}
+  if(c.n==="setEffect"){return}
+  throw Error("UNKNOWN "+c.n)};
+ const fn=(n,cl,prov=[])=>{let b=r.func.get(n);if(!b)throw Error("UNKNOWN "+n);for(let it of b){let t=it.text.trim();if(!t||t[0]==="#")continue;let c=call(t);if(!c)throw Object.assign(Error("PARSE"),{line:it.line});r.func.has(c.n)?fn(c.n,it.line,[cl,...prov]):prim(c,it.line,[cl,...prov])}};
+ for(let i=0;i<lines.length;i++){let t=lines[i].trim(),ln=i+1;if(!t||t[0]==="#")continue;if(/^def /.test(t)){let base=indent(lines[i]);i++;while(i<lines.length&&(!lines[i].trim()||indent(lines[i])>base))i++;i--;continue}if(indent(lines[i]))continue;try{let c=call(t);if(!c)throw Error("PARSE");r.func.has(c.n)?fn(c.n,ln):prim(c,ln)}catch(e){r.error={line:e.line||ln,msg:e.message};break}}
+ return r
+}
+function run(){
+ stop();busy(true,"RUNNING");let r=execute(S.lines);r.id=++S.run;S.view=r;S.runs.unshift(r);S.dirty=false;$("#runState").textContent=`R${r.id}${r.error?" · PARTIAL":""}`;$("#runs").textContent=`R${r.id}`;render();if(r.error){S.line=r.error.line;$("#fail").textContent=`PARTIAL · L${r.error.line} · ${r.error.msg}`;$("#fail").classList.add("show")}else $("#fail").classList.remove("show");log("RUN",r.error?`ERROR L${r.error.line}`:`${r.events.length} EVENTS`);setTimeout(()=>busy(false,"ready"),180)}
+function render(){renderCode();renderWorld();trace();ruler();crumb()}
+function renderCode(){
+ $("#code").innerHTML="";S.lines.forEach((t,i)=>{let n=i+1,r=document.createElement("div");r.className="line"+(S.line===n?" sel":"")+(S.view?.error?.line===n?" err":"");r.innerHTML=`<div class="ln">${n}</div><div class="txt" contenteditable="true" spellcheck="false"></div>`;let e=r.querySelector(".txt");e.textContent=t;e.onfocus=()=>selectLine(n);e.oninput=()=>{S.lines[n-1]=e.textContent.replace(/\n/g,"");S.dirty=true;$("#runState").textContent=`R${S.view?.id||1} · STALE`;crumb()};$("#code").append(r)})
+}
+function renderWorld(){
+ let h=$("#tracks");h.innerHTML="";if(!S.view)return;let max=Math.max(4,...S.view.events.map(e=>e.track));for(let t=1;t<=max;t++){let row=document.createElement("div");row.className="track";row.innerHTML=`<div class="tname">${t}</div><div class="tbody"></div>`;let b=row.lastChild;S.view.events.filter(e=>e.track===t).forEach(e=>{let x=document.createElement("div");x.dataset.e=e.id;x.className=e.type==="clip"?"clip":"hit";x.style.left=`calc(${e.start-1} * var(--mw)${e.type==="hit"?" - 3px":""})`;if(e.type==="clip"){x.style.width=`calc(${e.end-e.start} * var(--mw))`;x.innerHTML=`<b>${e.sound}</b><small>m${fmt(e.start)}–${fmt(e.end)}</small>`;drag(x,e)}x.onclick=ev=>{ev.stopPropagation();selectEvent(e.id)};b.append(x)});h.append(row)}sync()
+}
+function find(id){return S.view?.events.find(e=>e.id===id)}
+function selectLine(n){S.line=n;S.event=null;sync();trace();crumb()}
+function selectEvent(id){let e=find(id);if(!e)return;S.event=id;S.line=e.origin;sync();trace();crumb();if(innerWidth<=800)$("#mobile button[data-i='2']").textContent="TRACE ·"}
+function sync(){$$(".line").forEach(x=>x.classList.toggle("sel",+x.querySelector(".ln").textContent===S.line));$$(".clip,.hit").forEach(x=>{let e=find(x.dataset.e);x.classList.toggle("sel",x.dataset.e===S.event);x.classList.toggle("match",!!(e&&S.line&&e.src.includes(S.line)))})}
+function metric(k,v){return `<div class="metric"><small>${k}</small>${v}</div>`}function sp(k,v){return `<div class="sp"><small>${k}</small>${v}</div>`}
+function trace(){if(!S.view)return;let e=S.event?find(S.event):null;if(!e&&S.line){let id=(S.view.gen.get(S.line)||[])[0];e=find(id)}if(!e){$("#hero").textContent=S.line?`L${S.line}`:`R${S.view.id}`;$("#metrics").innerHTML=metric("RUN",`R${S.view.id}`)+metric("EVENTS",S.view.events.length)+metric("BPM",S.view.tempo)+metric("STATE",S.dirty?"STALE":S.view.error?"PARTIAL":"LIVE");$("#spine").innerHTML=sp("SOURCE",S.line?`line ${S.line}`:"program")+sp("WORLD",`${S.view.events.length} events`);return}let sec=m2t(e.start);$("#hero").textContent=e.sound;$("#metrics").innerHTML=metric("M",fmt(e.start))+metric("SEC",sec.toFixed(3))+metric("BPM",tempo(e.start).toFixed(1))+metric("SMP",Math.round(sec*44100));$("#spine").innerHTML=sp("SOURCE","L"+e.src.join(" → L"))+sp("EVENT",`T${e.track} · m${fmt(e.start)}–${fmt(e.end)}`)+sp("AUDIO",sound[e.sound].t)}
+function crumb(){$("#crun").textContent=S.view?`R${S.view.id}`:"R–";$("#cline").textContent=S.line?`L${S.line}`:"SRC";$("#cobj").textContent=S.event?find(S.event)?.sound||"WORLD":S.view?.error?`ERROR L${S.view.error.line}`:"WORLD"}
+function tempo(m){let t=S.tempo;if(m<=t.m0)return t.a;if(m>=t.m1)return t.b;return t.a+(t.b-t.a)*(m-t.m0)/(t.m1-t.m0)}
+function m2t(m){let t=S.tempo,C=240;if(m<=1)return 0;let k=(t.b-t.a)/(t.m1-t.m0);return Math.abs(k)<1e-9?(m-1)*C/t.a:(C/k)*Math.log((t.a+k*(m-1))/t.a)}
+function t2m(sec){let t=S.tempo,C=240,k=(t.b-t.a)/(t.m1-t.m0);return Math.abs(k)<1e-9?1+sec*t.a/C:1+t.a*(Math.exp(sec*k/C)-1)/k}
+function ruler(){let h=$("#ruler");h.innerHTML="";for(let m=1;m<=17;m+=2){let p=(m-1)/16*100,s=m2t(m),tp=s/m2t(17)*100;h.innerHTML+=`<span class="tick" style="left:${p}%"><b>${m}</b></span><span class="tick phys" style="left:${tp}%"><b>${s.toFixed(1)}</b></span>`}}
+function drag(el,e){let x=0,d=0,on=false;el.onpointerdown=v=>{x=v.clientX;on=true;el.setPointerCapture(v.pointerId)};el.onpointermove=v=>{if(on){d=v.clientX-x;el.style.transform=`translateX(${d}px)`}};el.onpointerup=v=>{if(!on)return;on=false;el.style.transform="";let dm=Math.round(d/64*4)/4;if(!dm)return;let old=S.lines[e.origin-1],m=old.match(/fitMedia\(([^,]+),\s*([^,]+),\s*([\d.]+),\s*([\d.]+)\)/);if(!m)return;let ns=Math.max(1,+m[3]+dm),ne=ns+(+m[4]-+m[3]),neu=`fitMedia(${m[1].trim()}, ${m[2].trim()}, ${fmt(ns)}, ${fmt(ne)})`;if(confirm(`${old}\n→\n${neu}`)){S.lines[e.origin-1]=neu;run()}}}
+async function play(){if(S.audio.on)return stop();let AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!S.audio.ctx)S.audio.ctx=new AC();await S.audio.ctx.resume();let c=S.audio.ctx,st=c.currentTime+.04;S.audio.on=true;S.audio.start=st;S.audio.dur=m2t(17);$("#play").textContent="■";for(let e of S.view.events){let so=sound[e.sound];if(e.type==="clip"){for(let m=e.start;m<e.end;m+=(e.sound==="BASS"?1:.5))voice(c,st+m2t(m),so,e.sound,m)}else voice(c,st+m2t(e.start),so,e.sound,e.start)}animate()}
+function voice(c,w,s,n,m){let o=c.createOscillator(),g=c.createGain();o.type=s.t;o.frequency.value=s.f*(n==="BASS"?[1,1.125,1.25,.875][Math.floor(m)%4]:1);g.gain.setValueAtTime(.0001,w);g.gain.exponentialRampToValueAtTime(s.g,w+.005);g.gain.exponentialRampToValueAtTime(.0001,w+s.d);o.connect(g).connect(c.destination);o.start(w);o.stop(w+s.d+.02);S.audio.nodes.push(o,g)}
+function animate(){let f=()=>{if(!S.audio.on)return;let sec=S.audio.ctx.currentTime-S.audio.start;if(sec>=S.audio.dur)return stop();let m=t2m(sec);$("#world").style.setProperty("--pm",m-1);$$(".clip,.hit").forEach(x=>{let e=find(x.dataset.e);x.classList.toggle("active",!!(e&&m>=e.start&&m<=e.end))});S.audio.raf=requestAnimationFrame(f)};f()}
+function stop(){if(!S.audio.on)return;S.audio.on=false;cancelAnimationFrame(S.audio.raf);S.audio.nodes.forEach(n=>{try{n.disconnect()}catch{}});S.audio.nodes=[];$("#play").textContent="▶";$("#world").style.setProperty("--pm",0)}
+async function api(path,opt={}){let r=await fetch("https://api.openai.com/v1"+path,{...opt,headers:{Authorization:`Bearer ${S.api.key}`,"Content-Type":"application/json"}}),txt=await r.text(),data;try{data=JSON.parse(txt)}catch{data={raw:txt}}log("API",`${r.status} ${path}`);if(!r.ok)throw Error(data?.error?.message||`HTTP ${r.status}`);return data}
+function output(d){if(d.output_text)return d.output_text;let a=[];for(let i of d.output||[])for(let c of i.content||[])if(c.text)a.push(c.text);return a.join("\n")}
+function reason(d){let a=[];for(let i of d.output||[])if(i.type==="reasoning")for(let x of i.summary||[])a.push(x.text||x);return a.join("\n")||"NO REASONING SUMMARY RETURNED."}
+async function connect(){S.api.key=$("#key").value.trim();if(!S.api.key)return;busy(true,"OPENAI · MODELS");$("#connectMsg").textContent="CHECKING";try{let d=await api("/models"),ids=(d.data||[]).map(x=>x.id).filter(x=>/^gpt-5\./.test(x)&&!/(audio|realtime|image|codex)/i.test(x));ids=[...new Set(ids)];ids.sort((a,b)=>(a==="gpt-5.6-sol"?-1:b==="gpt-5.6-sol"?1:a.localeCompare(b)));S.api.models=ids;$("#pick").innerHTML=ids.map(x=>`<option>${x}</option>`).join("");$("#models").classList.add("show");await useModel(ids[0])}catch(e){$("#connectMsg").textContent=e.message}finally{busy(false)}}
+async function useModel(m){if(!m)return;busy(true,"OPENAI · PING");try{let d=await api("/responses",{method:"POST",body:JSON.stringify({model:m,input:"Reply exactly OK.",max_output_tokens:64,store:false})});if(!/OK/i.test(output(d)))throw Error("PING FAILED");S.api.model=m;S.api.ready=true;$("#apiState").textContent="OK";$("#api").textContent="OPENAI";$("#model").disabled=false;$("#model").innerHTML=S.api.models.map(x=>`<option>${x}</option>`).join("");$("#model").value=m;$("#ask").disabled=$("#askBtn").disabled=false;$("#connect").classList.remove("show");$("#connectMsg").textContent="READY";log("MODEL",m)}catch(e){$("#connectMsg").textContent=e.message}finally{busy(false)}}
+async function ask(){if(!S.api.ready)return;let ins=$("#ask").value.trim();if(!ins)return;busy(true,"AI · ASKING");let ctx={line:S.line,text:S.line?S.lines[S.line-1]:null,event:S.event?find(S.event):null,source:S.lines.join("\n")},req={model:S.api.model,input:`Return JSON only: {"note":"short","replacement_line":""}. Change only the selected line when requested.\nInstruction: ${ins}\nContext:${JSON.stringify(ctx)}`,max_output_tokens:350,store:false,reasoning:{effort:"medium",generate_summary:"auto"},text:{format:{type:"json_schema",name:"trace",strict:true,schema:{type:"object",properties:{note:{type:"string"},replacement_line:{type:"string"}},required:["note","replacement_line"],additionalProperties:false}}}};try{let d=await api("/responses",{method:"POST",body:JSON.stringify(req)}),raw=output(d),p;try{p=JSON.parse(raw)}catch(e){p={note:`PARSE FAIL · ${e.message}`,replacement_line:""}}S.api.tx={result:p,response:d,reason:reason(d),request:req};S.api.tab="result";renderTx();$("#tx").classList.add("show");if(p.replacement_line&&S.line&&confirm(`${S.lines[S.line-1]}\n→\n${p.replacement_line}`)){S.lines[S.line-1]=p.replacement_line;run()}}catch(e){S.api.tx={result:{note:e.message},response:{error:e.message},reason:"NO REASONING SUMMARY RETURNED.",request:req};renderTx();$("#tx").classList.add("show")}finally{busy(false)}}
+function renderTx(){let t=S.api.tx;if(!t)return;$$(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===S.api.tab));let v=t[S.api.tab]??t.result;$("#txbody").textContent=typeof v==="string"?v:JSON.stringify(v,null,2)}
+const mins=[150,240,140];
+function initPanels(){if(innerWidth<=800)return;let total=$("#workspace").clientWidth-10;if(!S.panels.w[0]){S.panels.w=[total*.3,total*.5,total*.2];S.panels.save=[...S.panels.w]}applyPanels()}
+function applyPanels(){if(innerWidth<=800)return;$("#workspace").style.gridTemplateColumns=`${S.panels.w[0]}px 5px ${S.panels.w[1]}px 5px ${S.panels.w[2]}px`;$$(".panel").forEach(p=>{let i=+p.dataset.panel;p.classList.toggle("collapsed",S.panels.c[i]);p.querySelector(".collapse").textContent=S.panels.c[i]?"+":"−"})}
+function collapse(i){if(innerWidth<=800)return;let w=S.panels.w;if(!S.panels.c[i]){S.panels.save[i]=w[i];let d=w[i]-30;w[i]=30;S.panels.c[i]=true;w[i===2?1:i===0?1:0]+=d}else{let target=i===2?1:i===0?1:0,need=(S.panels.save[i]||mins[i])-30,take=Math.min(need,Math.max(0,w[target]-mins[target]));w[target]-=take;w[i]+=take;S.panels.c[i]=false}applyPanels()}
+function splitters(){$$(".split").forEach(sp=>sp.onpointerdown=e=>{if(innerWidth<=800)return;let i=+sp.dataset.split;if(S.panels.c[i]||S.panels.c[i+1])return;let x=e.clientX,b=[...S.panels.w];sp.setPointerCapture(e.pointerId);sp.classList.add("drag");sp.onpointermove=v=>{let d=v.clientX-x,l=Math.max(mins[i],b[i]+d),delta=l-b[i],r=Math.max(mins[i+1],b[i+1]-delta),actual=b[i+1]-r;S.panels.w[i]=b[i]+actual;S.panels.w[i+1]=r;applyPanels()};sp.onpointerup=v=>{sp.classList.remove("drag");sp.onpointermove=null;sp.onpointerup=null;S.panels.save=[...S.panels.w]}})}
+function mobile(i){S.panels.mobile=i;if(innerWidth>800)return;$$(".panel").forEach(p=>p.classList.toggle("mobile",+p.dataset.panel===i));$$("#mobile button").forEach(b=>b.classList.toggle("on",+b.dataset.i===i))}
+$("#run").onclick=run;$("#play").onclick=play;$("#api").onclick=()=>$("#connect").classList.toggle("show");$("#connectBtn").onclick=connect;$("#use").onclick=()=>useModel($("#pick").value);$("#xconnect").onclick=()=>$("#connect").classList.remove("show");$("#later").onclick=()=>$("#connect").classList.remove("show");$("#model").onchange=e=>useModel(e.target.value);$("#help").onclick=()=>$("#helpPop").classList.toggle("show");$("#xhint").onclick=()=>{$("#hint").classList.add("hide");localStorage.setItem("trace_hint","1")};$("#logbar").onclick=()=>$("#logs").classList.toggle("open");$("#clear").onclick=()=>{S.line=S.event=null;sync();trace();crumb()};$("#askBtn").onclick=ask;$("#ask").onkeydown=e=>{if(e.key==="Enter")ask()};$$(".tabs button").forEach(b=>b.onclick=()=>{S.api.tab=b.dataset.tab;renderTx()});$$("[data-collapse]").forEach(b=>b.onclick=()=>collapse(+b.dataset.collapse));$$("#mobile button").forEach(b=>b.onclick=()=>mobile(+b.dataset.i));$("#crun").onclick=()=>{};$("#cline").onclick=()=>mobile(0);$("#cobj").onclick=()=>mobile(S.event?1:1);splitters();
+window.onresize=()=>{if(innerWidth<=800){$("#workspace").style.gridTemplateColumns="";mobile(S.panels.mobile||1)}else{$$(".panel").forEach(p=>p.classList.remove("mobile"));initPanels()}};
+if(localStorage.getItem("trace_hint")==="1")$("#hint").classList.add("hide");
+$("#audioState").textContent=(window.AudioContext||window.webkitAudioContext)?"OK":"NO";
+run();initPanels();mobile(1);setTimeout(()=>$("#connect").classList.add("show"),450);
+})();
+</script>
+</body>
+</html>
