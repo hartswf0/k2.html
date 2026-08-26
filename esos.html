@@ -3,33 +3,97 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ESOS</title>
 <style>
-html,body{height:100%;margin:0;background:#fffef7;color:#0b0c0c;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}body{display:grid;place-items:center}#s{font-size:11px;font-weight:800;letter-spacing:.08em}
+html,body{height:100%;margin:0;background:#fffef7;color:#0b0c0c;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}body{display:grid;place-items:center}#s{font-size:11px;font-weight:800;letter-spacing:.08em;text-align:center;line-height:1.7;padding:24px}
 </style>
 <div id="s">ESOS · LOADING</div>
 <script>
 (async()=>{
-  const files=[
+  const names=[
     'p01a.b64','p01b.b64','p02.b64','p03.b64','p04.b64','p05.b64','p06.b64','p07.b64','p08.b64',
     'p09a.b64','p09b.b64','p10a.b64','p10b.b64','p11a.b64','p11b.b64','p12x.b64','p12b.b64'
-  ].map(x=>'esos_parts/'+x+'?v=2');
-  try{
-    const parts=[];
-    for(const file of files){
-      const r=await fetch(file,{cache:'no-store'});
-      if(!r.ok) throw new Error(file+' '+r.status);
-      parts.push((await r.text()).trim());
-    }
-    // p09a/p09b were split with one duplicated boundary character.
-    // Remove the duplicate before decoding the original 67,841-byte HTML payload.
-    if(parts[9].endsWith(parts[10][0])) parts[10]=parts[10].slice(1);
-    const b64=parts.join('');
-    if(b64.length!==90456) throw new Error('payload '+b64.length);
+  ];
+  const files=names.map(x=>'esos_parts/'+x+'?v=3');
+  const EXPECTED=90456;
+
+  function decode64(b64){
     const bin=atob(b64);
     const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-    const html=new TextDecoder('utf-8').decode(bytes);
-    if(!html.startsWith('<!doctype html>')) throw new Error('payload decode');
+    return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+  }
+
+  function validHTML(html){
+    if(!html.startsWith('<!doctype html>')) return false;
+    if(!html.includes('<title>ESOS — Learning Surface</title>')) return false;
+    if(!html.includes('function renderTeacher')) return false;
+    if(!html.includes('function observerAccount')) return false;
+    if(!html.includes('function bindGutters')) return false;
+    if(!html.includes('bootSequence();')) return false;
+    if(!html.trim().endsWith('</html>')) return false;
+    const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+    if(!scripts.length) return false;
+    try{
+      for(const m of scripts) new Function(m[1]);
+    }catch(_){
+      return false;
+    }
+    return true;
+  }
+
+  function repairOneExtraChar(parts){
+    const raw=parts.join('');
+    if(raw.length===EXPECTED){
+      try{
+        const html=decode64(raw);
+        if(validHTML(html)) return {b64:raw,html,repair:'none'};
+      }catch(_){}
+    }
+    if(raw.length!==EXPECTED+1) return null;
+
+    const boundaries=[];
+    let n=0;
+    for(let i=0;i<parts.length-1;i++){
+      n+=parts[i].length;
+      boundaries.push({index:n,left:names[i],right:names[i+1]});
+    }
+
+    // The payload was assembled from split text files. Test a small window
+    // around every split boundary and accept only a candidate whose decoded
+    // HTML and embedded JavaScript both validate.
+    for(const b of boundaries){
+      for(let delta=-4;delta<=4;delta++){
+        const pos=b.index+delta;
+        if(pos<0||pos>=raw.length) continue;
+        const candidate=raw.slice(0,pos)+raw.slice(pos+1);
+        if(candidate.length!==EXPECTED) continue;
+        try{
+          const html=decode64(candidate);
+          if(validHTML(html)){
+            return {b64:candidate,html,repair:`${b.left}|${b.right}@${delta}`};
+          }
+        }catch(_){}
+      }
+    }
+    return null;
+  }
+
+  try{
+    const parts=[];
+    for(let i=0;i<files.length;i++){
+      document.getElementById('s').textContent=`ESOS · LOADING · ${i+1}/${files.length}`;
+      const r=await fetch(files[i],{cache:'no-store'});
+      if(!r.ok) throw new Error(names[i]+' '+r.status);
+      parts.push((await r.text()).trim());
+    }
+
+    const rawLength=parts.reduce((n,p)=>n+p.length,0);
+    document.getElementById('s').textContent=`ESOS · VERIFYING · ${rawLength}`;
+
+    const repaired=repairOneExtraChar(parts);
+    if(!repaired) throw new Error(`payload ${rawLength} · repair failed`);
+
+    console.info('ESOS payload repair:',repaired.repair);
     document.open();
-    document.write(html);
+    document.write(repaired.html);
     document.close();
   }catch(e){
     document.getElementById('s').textContent='ESOS · LOAD FAULT · '+e.message;
