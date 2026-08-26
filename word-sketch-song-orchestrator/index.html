@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#fffef3">
+<title>Sketchsong / Orchestrator</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fffef3'/%3E%3Cpath d='M5 5h22v22H5zM16 5v22M5 16h22' fill='none' stroke='%230a0a0a' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23ff4d25'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="orchestrator.css">
+</head>
+<body>
+<svg class="defs" aria-hidden="true"><defs>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+<symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></symbol>
+<symbol id="i-word" viewBox="0 0 24 24"><path d="M4 6h16M4 11h13M4 16h16M4 21h10"/></symbol>
+<symbol id="i-draw" viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 7l3 3"/></symbol>
+<symbol id="i-theory" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="12" cy="18" r="2"/><path d="M8 8.5l3 7M16 8.5l-3 7M8 7h8"/></symbol>
+<symbol id="i-code" viewBox="0 0 24 24"><path d="M8 5l-5 7 5 7M16 5l5 7-5 7M14 3l-4 18"/></symbol>
+<symbol id="i-song" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-3-3h3M19 16a3 3 0 1 1-3-3h3"/></symbol>
+<symbol id="i-spectrum" viewBox="0 0 24 24"><path d="M3 17V9M7 21V5M11 18V3M15 21V8M19 16V5M22 19V10"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4v16M17 4v16"/></symbol>
+<symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14"/></symbol>
+<symbol id="i-loop" viewBox="0 0 24 24"><path d="M5 7h12l-3-3M19 17H7l3 3M19 7v4M5 17v-4"/></symbol>
+<symbol id="i-run" viewBox="0 0 24 24"><path d="M6 5l12 7-12 7z"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M3 12L21 4l-6 16-4-6zM11 14l4-4"/></symbol>
+<symbol id="i-flow" viewBox="0 0 24 24"><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="12" cy="19" r="2"/><path d="M7 5h10M6 7l5 10M18 7l-5 10"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></symbol>
+<symbol id="i-new" viewBox="0 0 24 24"><path d="M5 5h14v14H5zM12 8v8M8 12h8"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 17V4M7 9l5-5 5 5M4 20h16"/></symbol>
+<symbol id="i-clear" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.1c-.9.5-1.3 1-1.3 2M12 17h.01"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-branch" viewBox="0 0 24 24"><path d="M6 4v10a4 4 0 0 0 4 4h8M6 9h7a4 4 0 0 0 4-4V4M14 4h6M17 1v6"/></symbol>
+</defs></svg>
+
+<section class="gate" id="gate">
+  <div class="gateBox">
+    <div class="gateLogo"><span></span><span></span><span></span></div>
+    <div class="keyLine"><input id="keyInput" type="password" autocomplete="off" placeholder="OPENAI API KEY"><button id="checkKey">CHECK</button></div>
+    <div class="gateModels"><select id="gateModel"><option>gpt-5.6-terra</option><option>gpt-5.6-sol</option></select><select id="gateImage"><option>gpt-image-2</option><option>gpt-image-1.5</option></select></div>
+    <div class="gateState" id="gateState"><span></span>KEY FIRST</div>
+  </div>
+</section>
+
+<div class="app" id="app" aria-hidden="true">
+<header class="topbar">
+  <div class="brand"><b class="brandMark"></b><span>SKETCHSONG / ORCHESTRATOR</span></div>
+  <div class="buildPath" id="buildPath">
+    <button data-agent="source"><i></i>SOURCE</button><b>→</b><button data-agent="theory"><i></i>THEORY</button><b>→</b><button data-agent="code"><i></i>CODE</button><b>→</b><button data-agent="listener"><i></i>LISTEN</button>
+  </div>
+  <div class="topState"><span id="stateDot"></span><b id="stateText">READY</b></div>
+  <button class="topIcon" id="flowBtn" aria-label="Flow"><svg><use href="#i-flow"/></svg></button>
+  <button class="topIcon" id="settingsBtn" aria-label="Settings"><svg><use href="#i-settings"/></svg></button>
+  <button class="topIcon" id="newBtn" aria-label="New"><svg><use href="#i-new"/></svg></button>
+</header>
+
+<main class="workspace" id="workspace">
+  <section class="column fromCol" data-column="from" style="--split:43%">
+    <article class="panel" id="wordPanel" data-panel="word">
+      <header class="panelHead"><svg><use href="#i-word"/></svg><b>WORD</b><span class="panelState" id="wordState"></span><span class="headFill"></span><button data-chat="word" aria-label="Chat with word"><svg><use href="#i-chat"/></svg></button><button data-focus="word" aria-label="Focus word"><svg><use href="#i-focus"/></svg></button></header>
+      <div class="panelBody wordBody"><textarea id="wordInput" placeholder="say it"></textarea><div class="microLabel">SOURCE</div></div>
+    </article>
+    <div class="rowResizer" data-row-resizer="from"></div>
+    <article class="panel" id="sketchPanel" data-panel="sketch">
+      <header class="panelHead"><svg><use href="#i-draw"/></svg><b>SKETCH</b><span class="panelState" id="sketchState"></span><span class="headFill"></span><button data-chat="sketch" aria-label="Chat with sketch"><svg><use href="#i-chat"/></svg></button><button data-focus="sketch" aria-label="Focus sketch"><svg><use href="#i-focus"/></svg></button></header>
+      <div class="panelBody canvasBody"><canvas id="sketch" width="1000" height="800"></canvas><div class="canvasTools"><button id="uploadSketch"><svg><use href="#i-upload"/></svg></button><button id="clearSketch"><svg><use href="#i-clear"/></svg></button></div><input id="sketchFile" type="file" accept="image/*" hidden></div>
+    </article>
+  </section>
+
+  <div class="colResizer" data-col-resizer="left"></div>
+
+  <section class="column throughCol" data-column="through" style="--split:38%">
+    <article class="panel" id="theoryPanel" data-panel="theory">
+      <header class="panelHead"><svg><use href="#i-theory"/></svg><b>THEORY</b><span class="panelState" id="theoryState"></span><span class="headFill"></span><button id="stoneBtn" title="Keep selected rule">KEEP</button><button data-chat="theory" aria-label="Chat with theory"><svg><use href="#i-chat"/></svg></button><button data-focus="theory" aria-label="Focus theory"><svg><use href="#i-focus"/></svg></button></header>
+      <div class="panelBody theoryBody"><div id="theoryRules" class="theoryRules"><div class="emptyTheory">MAKE A SONG.<br>THE RULES APPEAR HERE.</div></div></div>
+    </article>
+    <div class="rowResizer" data-row-resizer="through"></div>
+    <article class="panel" id="codePanel" data-panel="code">
+      <header class="panelHead"><svg><use href="#i-code"/></svg><b>CODE</b><span class="panelState" id="codeState"></span><span class="headFill"></span><button id="runCode" class="runCode"><svg><use href="#i-run"/></svg>RUN</button><button data-chat="code" aria-label="Chat with code"><svg><use href="#i-chat"/></svg></button><button data-focus="code" aria-label="Focus code"><svg><use href="#i-focus"/></svg></button></header>
+      <div class="panelBody codeBody"><div class="codeGutter" id="codeGutter">1</div><textarea id="codeEditor" spellcheck="false"># MAKE A SONG TO BUILD PLAYABLE CODE</textarea><div class="codeStatus" id="codeStatus">CODE IS THE SCORE</div></div>
+    </article>
+  </section>
+
+  <div class="colResizer" data-col-resizer="right"></div>
+
+  <section class="column toCol" data-column="to" style="--split:47%">
+    <article class="panel" id="songPanel" data-panel="song">
+      <header class="panelHead"><svg><use href="#i-song"/></svg><b>SONG</b><span class="panelState" id="songState"></span><span class="headFill"></span><button id="exportBtn" aria-label="Export"><svg><use href="#i-download"/></svg></button><button data-chat="song" aria-label="Chat with song"><svg><use href="#i-chat"/></svg></button><button data-focus="song" aria-label="Focus song"><svg><use href="#i-focus"/></svg></button></header>
+      <div class="panelBody songBody"><div class="songMeta"><strong id="songTitle">NO SONG</strong><span id="songMeta">A1 / B / A2</span></div><canvas id="songViz" width="1100" height="500"></canvas><div class="sections"><button data-section="A1">A1</button><button data-section="B">B</button><button data-section="A2">A2</button></div></div>
+    </article>
+    <div class="rowResizer" data-row-resizer="to"></div>
+    <article class="panel" id="spectrumPanel" data-panel="spectrum">
+      <header class="panelHead"><svg><use href="#i-spectrum"/></svg><b>SPECTRUM</b><span class="panelState" id="spectrumState"></span><span class="headFill"></span><button data-chat="spectrum" aria-label="Chat with spectrum"><svg><use href="#i-chat"/></svg></button><button data-focus="spectrum" aria-label="Focus spectrum"><svg><use href="#i-focus"/></svg></button></header>
+      <div class="panelBody spectrumBody"><canvas id="spectrumBase" width="1100" height="500"></canvas><canvas id="spectrumInk" width="1100" height="500"></canvas><div class="canvasTools"><button id="clearSpectrum"><svg><use href="#i-clear"/></svg></button></div></div>
+    </article>
+  </section>
+</main>
+
+<nav class="mobileRail" id="mobileRail"><button data-mobile="from" class="on">FROM</button><button data-mobile="through">THROUGH</button><button data-mobile="to">TO</button></nav>
+
+<footer class="transport">
+  <button class="transportPlay" id="playBtn"><svg><use id="playUse" href="#i-play"/></svg></button>
+  <button class="transportStop" id="stopBtn"><svg><use href="#i-stop"/></svg></button>
+  <div class="scrubWrap"><input type="range" id="scrub" min="0" max="48" value="0" step="0.01"><div class="transportMeta"><span id="transportTitle">NO SONG</span><span id="transportTime">0:00</span></div></div>
+  <button class="makeBtn" id="makeBtn" disabled><svg><use href="#i-loop"/></svg><b id="makeLabel">MAKE</b></button>
+</footer>
+</div>
+
+<aside class="chatDock" id="chatDock" aria-hidden="true">
+  <header><button id="chatClose"><svg><use href="#i-back"/></svg></button><div><b id="chatTitle">CODE AGENT</b><span id="chatContext">NO CONTEXT</span></div><button id="chatFocus"><svg><use href="#i-focus"/></svg></button></header>
+  <div class="chatQuick"><button data-quick="why">WHY</button><button data-quick="show">SHOW</button><button data-quick="change">CHANGE</button><button data-quick="try">TRY</button></div>
+  <div class="chatThread" id="chatThread"></div>
+  <div class="chatDrop" id="chatDrop"><span>DROP / PASTE IMAGE</span><img id="chatImage" alt=""></div>
+  <div class="chatComposer"><textarea id="chatInput" placeholder="ask"></textarea><button id="chatSend"><svg><use href="#i-send"/></svg></button></div>
+</aside>
+
+<section class="flowOverlay" id="flowOverlay" aria-hidden="true">
+  <header><b>ORCHESTRATION</b><span id="flowCount">0 TRANSFORMS</span><button id="flowClose"><svg><use href="#i-clear"/></svg></button></header>
+  <div class="flowCanvas"><svg id="flowSvg" viewBox="0 0 1200 720" preserveAspectRatio="xMidYMid meet"></svg></div>
+  <footer><button id="flowBranch"><svg><use href="#i-branch"/></svg>BRANCH HERE</button><button id="flowExport"><svg><use href="#i-download"/></svg>TRACE</button></footer>
+</section>
+
+<section class="settings" id="settings" aria-hidden="true">
+  <label>TEXT<select id="textModel"><option>gpt-5.6-terra</option><option>gpt-5.6-sol</option></select></label>
+  <label>IMAGE<select id="imageModel"><option>gpt-image-2</option><option>gpt-image-1.5</option></select></label>
+  <button id="recheck">CHECK API</button>
+</section>
+
+<section class="exportMenu" id="exportMenu" aria-hidden="true"><button data-export="json">SONG JSON</button><button data-export="code">CODE</button><button data-export="trace">TRACE JSON</button><button data-export="html">PLAYABLE HTML</button><button data-export="wav">WAV</button></section>
+
+<div class="busyLayer" id="busyLayer"><div class="busyBar"><span></span></div><div class="busyText" id="busyText">READ</div></div>
+<script src="orchestrator.js"></script>
+</body>
+</html>
