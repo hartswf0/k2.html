@@ -17,19 +17,20 @@
 (()=>{
   const frame=document.getElementById('sketchsong');
   const boot=document.getElementById('boot');
-  const radioURL=new URL('radio.js',location.href).href;
-  const deepURL=new URL('radio-deep.js',location.href).href;
-  frame.addEventListener('load',()=>{
+  const radioURL=new URL('radio.js?v=3',location.href).href;
+  const deepURL=new URL('radio-deep.js?v=3',location.href).href;
+  const audioURL=new URL('radio-audio-fix.js?v=3',location.href).href;
+  const inject=(d,src,ok,fail)=>{const s=d.createElement('script');s.src=src;s.onload=ok;s.onerror=fail;d.body.appendChild(s)};
+  const start=()=>{
     try{
       const d=frame.contentDocument;
       if(!d||d.getElementById('sketchradio-runtime'))return;
       const mark=d.createElement('meta');mark.id='sketchradio-runtime';d.head.appendChild(mark);
-      const a=d.createElement('script');a.src=radioURL;
-      a.onload=()=>{const b=d.createElement('script');b.src=deepURL;b.onload=()=>boot.classList.add('off');b.onerror=()=>{boot.textContent='RADIO DEEP LAYER FAILED'};d.body.appendChild(b)};
-      a.onerror=()=>{boot.textContent='RADIO LAYER FAILED'};
-      d.body.appendChild(a);
+      inject(d,radioURL,()=>inject(d,deepURL,()=>inject(d,audioURL,()=>boot.classList.add('off'),()=>{boot.textContent='AUDIO HEAR LAYER FAILED'}),()=>{boot.textContent='RADIO DEEP LAYER FAILED'}),()=>{boot.textContent='RADIO LAYER FAILED'});
     }catch(e){boot.textContent='SKETCHRADIO BOOT FAILED'}
-  });
+  };
+  frame.addEventListener('load',start);
+  try{if(frame.contentDocument?.readyState==='complete')start()}catch{}
 })();
 </script>
 </body>
