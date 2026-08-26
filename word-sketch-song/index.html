@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#fffdf4">
+<title>WORD / SKETCH / SONG</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fffdf4'/%3E%3Cpath d='M5 6h22v20H5zM11 6v20M21 6v20M5 16h22' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="instrument.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M15 12v2"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></symbol>
+<symbol id="i-new" viewBox="0 0 24 24"><path d="M5 5h14v14H5zM12 8v8M8 12h8"/></symbol>
+<symbol id="i-word" viewBox="0 0 24 24"><path d="M4 6h16M4 11h12M4 16h16M4 21h9"/></symbol>
+<symbol id="i-draw" viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 7l3 3"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 17V4M7 9l5-5 5 5M4 20h16"/></symbol>
+<symbol id="i-clear" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16"/><circle cx="9" cy="9" r="2"/><path d="M4 18l5-5 4 4 3-3 4 4"/></symbol>
+<symbol id="i-read" viewBox="0 0 24 24"><path d="M3 6h7v13H3zM14 6h7v13h-7zM10 9h4M10 16h4"/></symbol>
+<symbol id="i-song" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-3-3h3M19 16a3 3 0 1 1-3-3h3"/></symbol>
+<symbol id="i-spectrum" viewBox="0 0 24 24"><path d="M3 16v-5M7 20V7M11 17V4M15 20V9M19 15V6M22 18v-8"/></symbol>
+<symbol id="i-code" viewBox="0 0 24 24"><path d="M8 5l-5 7 5 7M16 5l5 7-5 7M14 3l-4 18"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8L7 20z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4v16M17 4v16"/></symbol>
+<symbol id="i-loop" viewBox="0 0 24 24"><path d="M5 7h12l-3-3M19 17H7l3 3M19 7v4M5 17v-4"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></symbol>
+<symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+<symbol id="i-return" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M4 12h11a5 5 0 0 1 5 5v2"/></symbol>
+</defs></svg>
+
+<div class="gate" id="gate">
+  <div class="gateCard">
+    <div class="gateMark"><div class="gateGlyph"><i></i><i></i><i></i><i></i></div></div>
+    <div class="keyRow">
+      <div class="keyIcon"><svg class="icon"><use href="#i-key"/></svg></div>
+      <input id="keyInput" class="keyInput" type="password" autocomplete="off" placeholder="OPENAI API KEY" aria-label="OpenAI API key">
+      <button id="checkKey" class="checkBtn" aria-label="Check API key">CHECK</button>
+    </div>
+    <div class="gateModels">
+      <div class="modelCell"><span>TEXT</span><select id="gateTextModel"><option>gpt-5.6-terra</option><option>gpt-5.6-luna</option><option>gpt-5.6-sol</option></select></div>
+      <div class="modelCell"><span>IMAGE</span><select id="gateImageModel"><option>gpt-image-2</option><option>gpt-image-1.5</option><option>gpt-image-1-mini</option></select></div>
+    </div>
+    <div class="gateState" id="gateState"><span class="dot"></span>KEY FIRST</div>
+  </div>
+</div>
+
+<div class="app" id="app" aria-hidden="true">
+  <header class="topbar">
+    <div class="mark"><div class="markbox"></div><span>WORD / SKETCH / SONG</span></div>
+    <div class="topstate" id="topState"><span class="dot" id="topDot"></span><span id="topStateText">NO KEY</span></div>
+    <div class="toptools">
+      <button class="squareBtn" id="settingsBtn" aria-label="AI settings"><svg class="icon"><use href="#i-settings"/></svg></button>
+      <button class="squareBtn" id="newBtn" aria-label="New"><svg class="icon"><use href="#i-new"/></svg></button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <section class="column colSource" data-col="0">
+      <article class="panel" id="wordPanel">
+        <div class="ph"><svg class="icon"><use href="#i-word"/></svg><span>WORD</span><span class="dirty"></span><span class="spacer"></span></div>
+        <div class="wordBody"><textarea id="wordInput" class="wordInput" placeholder="say it" maxlength="900"></textarea><span class="wordHint">TEXT → SOUND</span></div>
+      </article>
+      <article class="panel" id="sketchPanel">
+        <div class="ph"><svg class="icon"><use href="#i-draw"/></svg><span>SKETCH</span><span class="dirty"></span><span class="spacer"></span></div>
+        <div class="canvasWrap sketchGrid" id="sketchWrap">
+          <canvas id="sketch" width="1024" height="1024"></canvas>
+          <div class="canvasTools">
+            <button class="mini" id="uploadBtn" aria-label="Load sketch" title="Load sketch"><svg class="icon"><use href="#i-upload"/></svg></button>
+            <button class="mini" id="clearSketch" aria-label="Clear sketch" title="Clear sketch"><svg class="icon"><use href="#i-clear"/></svg></button>
+          </div>
+          <div class="canvasTools right">
+            <button class="mini" id="wordToSketch" aria-label="Turn words into sketch" title="Words to sketch"><svg class="icon"><use href="#i-image"/></svg></button>
+            <button class="mini" id="sketchToWord" aria-label="Read sketch as words" title="Sketch to words"><svg class="icon"><use href="#i-read"/></svg></button>
+          </div>
+          <input id="fileInput" type="file" accept="image/*" class="hidden">
+        </div>
+      </article>
+    </section>
+
+    <section class="column colSound" data-col="1">
+      <article class="panel" id="songPanel">
+        <div class="ph"><svg class="icon"><use href="#i-song"/></svg><span>SONG</span><span class="spacer"></span><button class="mini hidden" id="midiBtn" aria-label="Download MIDI" title="Download MIDI"><svg class="icon"><use href="#i-download"/></svg></button></div>
+        <div class="songBody">
+          <div class="songMeta"><div class="songTitle" id="songTitle">NO SONG</div><div class="songStats" id="songStats">A1 / B / A2</div></div>
+          <div class="songCanvas"><canvas id="songViz" width="1024" height="420"></canvas><div class="sectionStrip"><div data-sec="0">A1</div><div data-sec="1">B</div><div data-sec="2">A2</div></div></div>
+        </div>
+      </article>
+      <article class="panel" id="specPanel">
+        <div class="ph"><svg class="icon"><use href="#i-spectrum"/></svg><span>SPECTRUM</span><span class="dirty"></span><span class="spacer"></span></div>
+        <div class="specWrap" id="specWrap">
+          <canvas id="specBase" width="1024" height="512"></canvas>
+          <canvas id="specInk" width="1024" height="512"></canvas>
+          <div class="specEmpty" id="specEmpty">////</div>
+          <div class="specTools">
+            <button class="mini" id="clearSpec" aria-label="Clear spectrum drawing" title="Clear drawing"><svg class="icon"><use href="#i-clear"/></svg></button>
+            <button class="mini" id="specToSketch" aria-label="Send spectrum to sketch" title="Spectrum to sketch"><svg class="icon"><use href="#i-return"/></svg></button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="column colCode" data-col="2">
+      <article class="panel" id="codePanel">
+        <div class="ph"><svg class="icon"><use href="#i-code"/></svg><span>CODE</span><span class="spacer"></span><button class="mini on" id="pyBtn">PY</button><button class="mini" id="jsonBtn">JSON</button></div>
+        <div class="codeBody">
+          <div class="codeHead"><button class="mini" id="codePrev" aria-label="Previous code page"><svg class="icon"><use href="#i-left"/></svg></button><button class="mini" id="codeNext" aria-label="Next code page"><svg class="icon"><use href="#i-right"/></svg></button><button class="mini" id="copyCode" aria-label="Copy code"><svg class="icon"><use href="#i-copy"/></svg></button><button class="mini hidden" id="jsonDownload" aria-label="Download JSON"><svg class="icon"><use href="#i-download"/></svg></button><span class="page" id="codePage">1/1</span></div>
+          <pre class="codeView" id="codeView">MAKE A SONG TO EXPOSE THE PROGRAM.</pre>
+        </div>
+      </article>
+      <article class="panel" id="changePanel">
+        <div class="ph"><svg class="icon"><use href="#i-loop"/></svg><span>CHANGE</span><span class="dirty"></span><span class="spacer"></span></div>
+        <div class="changeBody"><input id="changeInput" class="changeInput" placeholder="wrong?" maxlength="500"><button class="changeClear" id="clearChange" aria-label="Clear change"><svg class="icon"><use href="#i-clear"/></svg></button></div>
+      </article>
+    </section>
+  </main>
+
+  <nav class="mobileRail" id="mobileRail" aria-label="Surface">
+    <button class="on" data-go="0" aria-label="Word and sketch"><svg class="icon"><use href="#i-draw"/></svg></button>
+    <button data-go="1" aria-label="Song and spectrum"><svg class="icon"><use href="#i-song"/></svg></button>
+    <button data-go="2" aria-label="Code and change"><svg class="icon"><use href="#i-code"/></svg></button>
+  </nav>
+
+  <footer class="transport">
+    <button id="playBtn" class="playBtn" aria-label="Play or pause"><svg class="icon"><use id="playUse" href="#i-play"/></svg></button>
+    <div class="scrubBox"><div class="scrubLine"><input id="scrub" type="range" min="0" max="48" value="0" step="0.02" aria-label="Song position"><span class="time" id="timeText">0:00</span></div><div class="transportInfo"><span id="transportName">NO SONG</span><span id="transportSec">A1</span></div></div>
+    <button id="makeBtn" class="makeBtn" disabled><svg class="icon"><use href="#i-loop"/></svg><span id="makeLabel">MAKE</span></button>
+  </footer>
+</div>
+
+<div class="settings" id="settings">
+  <div class="settingRow"><label>TEXT</label><select id="textModel"><option>gpt-5.6-terra</option><option>gpt-5.6-luna</option><option>gpt-5.6-sol</option></select></div>
+  <div class="settingRow"><label>IMAGE</label><select id="imageModel"><option>gpt-image-2</option><option>gpt-image-1.5</option><option>gpt-image-1-mini</option></select></div>
+  <div class="settingRow"><label>API</label><button id="recheck">CHECK AGAIN</button></div>
+</div>
+<div class="busyShade" id="busy"><div class="busyMeter"></div></div>
+
+<script src="instrument.js"></script>
+</body>
+</html>
