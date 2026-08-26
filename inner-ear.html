@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>INNER EAR</title>
+<style>
+:root{--paper:#fffef8;--ink:#11110f;--line:#cfc9bc;--muted:#777268;--mint:#dfeee7}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--paper);color:var(--ink)}
+body{font:12px/1.25 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;padding:12px}
+main{max-width:760px;margin:0 auto;min-height:calc(100dvh - 24px);display:grid;grid-template-rows:auto 1fr auto;border:1px solid var(--ink)}
+header{height:42px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--ink)}
+h1{font-size:14px;letter-spacing:.12em;margin:0}header span{margin-left:auto;color:var(--muted);font-size:8px}
+nav{display:grid;grid-template-columns:repeat(3,1fr);min-height:0}
+a{color:inherit;text-decoration:none;border-right:1px solid var(--ink);padding:14px;display:flex;flex-direction:column;justify-content:space-between;min-height:240px;background:var(--paper)}
+a:last-child{border-right:0}a:hover,a:focus-visible{background:var(--mint);outline:0}
+.num{font-size:9px;color:var(--muted)}
+.name{font:700 clamp(18px,4vw,34px)/.95 Arial,sans-serif;letter-spacing:-.05em;max-width:8ch}
+.desc{font-size:9px;color:var(--muted);max-width:20ch}
+.go{font-size:16px;align-self:flex-end}
+footer{height:32px;border-top:1px solid var(--ink);display:flex;align-items:center;padding:0 10px;color:var(--muted);font-size:8px}
+@media(max-width:620px){body{padding:0}main{border:0;min-height:100dvh}nav{grid-template-columns:1fr}a{min-height:0;height:calc((100dvh - 74px)/3);border-right:0;border-bottom:1px solid var(--ink);padding:12px;display:grid;grid-template-columns:34px 1fr auto;grid-template-rows:1fr auto;gap:6px 10px;align-items:center}a:last-child{border-bottom:0}.num{grid-row:1/3}.name{font-size:26px;max-width:none}.desc{grid-column:2;max-width:none}.go{grid-row:1/3;grid-column:3;align-self:center;font-size:18px}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>INNER EAR</h1><span>THREE CURRENT SURFACES</span></header>
+<nav>
+<a href="earsketch.html"><span class="num">01</span><span class="name">ES</span><span class="desc">The smallest path: source → code → sound.</span><span class="go">→</span></a>
+<a href="es-trace.html"><span class="num">02</span><span class="name">ES / TRACE</span><span class="desc">Resizable single-file instrument with visible operational trace.</span><span class="go">→</span></a>
+<a href="trace/"><span class="num">03</span><span class="name">TRACE</span><span class="desc">The split, mobile-first theory-building trail.</span><span class="go">→</span></a>
+</nav>
+<footer>MAKE → RUN → HEAR → CHANGE</footer>
+</main>
+</body>
+</html>
