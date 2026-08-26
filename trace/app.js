@@ -1,6 +1,6 @@
 "use strict";
 (async()=>{
-  for(const src of ["core.js","ai.js","audio.js","ui.js"]){
+  for(const src of ["core.js","ai.js","audio.js","ui-render.js","ui-interact.js","ui-tools.js","ui-boot.js"]){
     await new Promise((resolve,reject)=>{
       const s=document.createElement("script");
       s.src=src;
