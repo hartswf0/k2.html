@@ -12,7 +12,7 @@ html,body{height:100%;margin:0;background:#fffef7;color:#0b0c0c;font-family:ui-m
     'p01a.b64','p01b.b64','p02.b64','p03.b64','p04.b64','p05.b64','p06.b64','p07.b64','p08.b64',
     'p09a.b64','p09b.b64','p10a.b64','p10b.b64','p11a.b64','p11b.b64','p12x.b64','p12b.b64'
   ];
-  const files=names.map(x=>'esos_parts/'+x+'?v=3');
+  const files=names.map(x=>'esos_parts/'+x+'?v=4');
   const EXPECTED=90456;
 
   function decode64(b64){
@@ -31,49 +31,56 @@ html,body{height:100%;margin:0;background:#fffef7;color:#0b0c0c;font-family:ui-m
     if(!html.trim().endsWith('</html>')) return false;
     const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
     if(!scripts.length) return false;
-    try{
-      for(const m of scripts) new Function(m[1]);
-    }catch(_){
-      return false;
-    }
+    try{ for(const m of scripts) new Function(m[1]); }
+    catch(_){ return false; }
     return true;
   }
 
   function repairOneExtraChar(parts){
     const raw=parts.join('');
     if(raw.length===EXPECTED){
-      try{
-        const html=decode64(raw);
-        if(validHTML(html)) return {b64:raw,html,repair:'none'};
-      }catch(_){}
+      try{ const html=decode64(raw); if(validHTML(html)) return {html,repair:'none'}; }catch(_){}
     }
     if(raw.length!==EXPECTED+1) return null;
-
-    const boundaries=[];
-    let n=0;
+    const boundaries=[]; let n=0;
     for(let i=0;i<parts.length-1;i++){
       n+=parts[i].length;
       boundaries.push({index:n,left:names[i],right:names[i+1]});
     }
-
-    // The payload was assembled from split text files. Test a small window
-    // around every split boundary and accept only a candidate whose decoded
-    // HTML and embedded JavaScript both validate.
     for(const b of boundaries){
       for(let delta=-4;delta<=4;delta++){
         const pos=b.index+delta;
         if(pos<0||pos>=raw.length) continue;
         const candidate=raw.slice(0,pos)+raw.slice(pos+1);
-        if(candidate.length!==EXPECTED) continue;
         try{
           const html=decode64(candidate);
-          if(validHTML(html)){
-            return {b64:candidate,html,repair:`${b.left}|${b.right}@${delta}`};
-          }
+          if(validHTML(html)) return {html,repair:`${b.left}|${b.right}@${delta}`};
         }catch(_){}
       }
     }
     return null;
+  }
+
+  function patchApp(html){
+    const normalize=`function normalizeSong(s){\n  s=s&&typeof s===\"object\"?s:{};\n  const currentTake=s.currentTake||null;\n  return {\n    id:s.id||\"song_01\",name:s.name||\"SONG 01\",createdAt:s.createdAt||new Date().toISOString(),\n    takes:Array.isArray(s.takes)?s.takes:[],actions:Array.isArray(s.actions)?s.actions:[],edges:Array.isArray(s.edges)?s.edges:[],\n    stones:Array.isArray(s.stones)?s.stones:[],theory:Array.isArray(s.theory)?s.theory:[],\n    currentTake,currentBranch:s.currentBranch||\"main\",branches:s.branches&&typeof s.branches===\"object\"?s.branches:{main:currentTake},\n    onboarding:Number.isFinite(s.onboarding)?s.onboarding:0\n  }\n}\n`;
+
+    html=html.replace('let song=loadSong()||{',normalize+'let song=normalizeSong(loadSong())||{');
+    html=html.replace(
+      'function loadSong(){try{return JSON.parse(localStorage.getItem("esos_learning_song")||"null")}catch(_){return null}}',
+      'function loadSong(){try{const raw=localStorage.getItem("esos_learning_song")||localStorage.getItem("esos_song_current")||"null";return JSON.parse(raw)}catch(_){return null}}'
+    );
+
+    const early=`/* boot controls first: saved-state faults must never trap onboarding */\nels.checkApi.addEventListener(\"click\",checkApi);\nels.enterBtn.addEventListener(\"click\",enter);\nels.offlineBtn.addEventListener(\"click\",offline);\nsetTimeout(()=>{if(!els.boot.classList.contains(\"out\")){els.bootline.textContent=api.ready?\"READY\":\"AI OPTIONAL · ENTERING\";finishBoot()}},2600);\n\n`;
+    html=html.replace('/* init */\nels.sketch.value=',early+'/* init */\nels.sketch.value=');
+    html=html.replace(
+      'els.apiChip.addEventListener("click",openApi);els.checkApi.addEventListener("click",checkApi);els.enterBtn.addEventListener("click",enter);els.offlineBtn.addEventListener("click",offline);',
+      'els.apiChip.addEventListener("click",openApi);'
+    );
+    html=html.replace(
+      '}catch(err){api.ready=false;els.gateStatus.textContent=`failed · ${err.message}`;els.gateStatus.className="bootstatus bad";renderApi()}',
+      '}catch(err){api.ready=false;sessionStorage.removeItem("esos_api_key");els.gateStatus.textContent=`AI off · ${err.message}`;els.gateStatus.className="bootstatus bad";renderApi()}'
+    );
+    return html;
   }
 
   try{
@@ -87,13 +94,14 @@ html,body{height:100%;margin:0;background:#fffef7;color:#0b0c0c;font-family:ui-m
 
     const rawLength=parts.reduce((n,p)=>n+p.length,0);
     document.getElementById('s').textContent=`ESOS · VERIFYING · ${rawLength}`;
-
     const repaired=repairOneExtraChar(parts);
     if(!repaired) throw new Error(`payload ${rawLength} · repair failed`);
 
+    const html=patchApp(repaired.html);
+    if(!validHTML(html)) throw new Error('patched app failed validation');
     console.info('ESOS payload repair:',repaired.repair);
     document.open();
-    document.write(repaired.html);
+    document.write(html);
     document.close();
   }catch(e){
     document.getElementById('s').textContent='ESOS · LOAD FAULT · '+e.message;
