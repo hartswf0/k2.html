@@ -17,16 +17,17 @@
 (()=>{
   const frame=document.getElementById('sketchsong');
   const boot=document.getElementById('boot');
-  const radioURL=new URL('radio.js?v=3',location.href).href;
-  const deepURL=new URL('radio-deep.js?v=3',location.href).href;
-  const audioURL=new URL('radio-audio-fix.js?v=3',location.href).href;
-  const inject=(d,src,ok,fail)=>{const s=d.createElement('script');s.src=src;s.onload=ok;s.onerror=fail;d.body.appendChild(s)};
+  const urls=['radio.js?v=4','radio-deep.js?v=4','radio-audio-fix.js?v=4','radio-runtime.js?v=4'].map(x=>new URL(x,location.href).href);
+  const injectChain=(d,i=0)=>{
+    if(i>=urls.length){boot.classList.add('off');return}
+    const s=d.createElement('script');s.src=urls[i];s.onload=()=>injectChain(d,i+1);s.onerror=()=>{boot.textContent=['RADIO LAYER FAILED','RADIO DEEP LAYER FAILED','AUDIO HEAR LAYER FAILED','RELATION RUNTIME FAILED'][i]||'SKETCHRADIO FAILED'};d.body.appendChild(s);
+  };
   const start=()=>{
     try{
       const d=frame.contentDocument;
       if(!d||d.getElementById('sketchradio-runtime'))return;
       const mark=d.createElement('meta');mark.id='sketchradio-runtime';d.head.appendChild(mark);
-      inject(d,radioURL,()=>inject(d,deepURL,()=>inject(d,audioURL,()=>boot.classList.add('off'),()=>{boot.textContent='AUDIO HEAR LAYER FAILED'}),()=>{boot.textContent='RADIO DEEP LAYER FAILED'}),()=>{boot.textContent='RADIO LAYER FAILED'});
+      injectChain(d);
     }catch(e){boot.textContent='SKETCHRADIO BOOT FAILED'}
   };
   frame.addEventListener('load',start);
