@@ -1,0 +1,2 @@
+'use strict';
+(()=>{const a=document.createElement('script');a.src='instrument-4a.js';a.onload=()=>{const b=document.createElement('script');b.src='instrument-4b.js';document.body.appendChild(b)};document.body.appendChild(a)})();

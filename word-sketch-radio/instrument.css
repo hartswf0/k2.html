@@ -1,0 +1,40 @@
+@import url("../word-sketch-song/instrument.css");
+
+:root{--transport:96px}
+.radioSource{height:31px;flex:0 0 31px;display:grid;grid-template-columns:auto auto auto minmax(0,1fr);border-bottom:1px solid rgba(8,10,8,.34);background:var(--paper)}
+.radioSource button{border:0;border-right:1px solid rgba(8,10,8,.34);background:var(--paper);padding:0 8px;font:900 7px/1 var(--mono);letter-spacing:.04em}
+.radioSource button:disabled{color:#b8b5aa;background:#eeece3}
+.radioSource button:not(:disabled):active{background:var(--ink);color:var(--paper)}
+#radioSourceState{min-width:0;display:flex;align-items:center;padding:0 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 7px/1 var(--mono);color:var(--muted)}
+.radioReading{height:28px;flex:0 0 28px;padding:5px 8px;border-bottom:1px solid rgba(8,10,8,.22);overflow:hidden;font:700 7px/1.25 var(--mono);color:#696860;background:#faf9f0}
+.wordInput{padding-top:10px;font-size:24px}
+#radioTimeInk{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:2}
+.canvasTools{z-index:5}
+#radioWorldCursor{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.specTools{z-index:5}
+.transport{grid-template-rows:36px minmax(0,1fr)}
+.radioCommand{grid-column:1/-1;display:grid;grid-template-columns:104px minmax(0,1fr) 78px;border-bottom:1px solid var(--ink);min-width:0}
+.radioCommand select,.radioCommand input,.radioCommand button{height:100%;border:0;background:var(--paper);outline:0;font:850 8px/1 var(--mono)}
+.radioCommand select{border-right:1px solid var(--ink);padding:0 7px}
+.radioCommand input{min-width:0;padding:0 10px}
+.radioCommand input::placeholder{color:#9c998f}
+.radioCommand button{border-left:1px solid var(--ink);background:var(--acid);font-weight:950;letter-spacing:.06em}
+.makeBtn{background:var(--signal)}
+#timeText{width:92px}
+.theoryEmpty .relationBig{font-size:clamp(19px,2.7vw,42px)}
+.flowPath{font-size:6.5px}
+@media(max-width:900px){
+  :root{--transport:104px}
+  .radioSource{grid-template-columns:1.15fr .55fr .9fr}
+  #radioSourceState{grid-column:1/-1;height:18px;border-top:1px solid rgba(8,10,8,.2)}
+  .radioSource{height:49px;flex-basis:49px}
+  .radioReading{height:34px;flex-basis:34px;font-size:6.5px}
+  .radioCommand{grid-template-columns:88px minmax(0,1fr) 62px}
+  .radioCommand select,.radioCommand input,.radioCommand button{font-size:7px}
+  .wordInput{font-size:22px}
+}
+@media(max-width:520px){
+  .radioSource button{padding:0 5px;font-size:6.5px}
+  .radioCommand{grid-template-columns:79px minmax(0,1fr) 56px}
+  #timeText{width:82px;font-size:7px}
+}
