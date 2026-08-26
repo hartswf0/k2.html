@@ -4,85 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#fffef7">
-<title>Sketchsong</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fffef7'/%3E%3Cpath d='M4 16h7l3-8 4 16 3-8h7' fill='none' stroke='%23080a08' stroke-width='2.5'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="instrument.css">
+<title>Sketchradio — Poem · Voice · Sketch · World</title>
+<style>
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#fffef7}iframe{position:fixed;inset:0;width:100%;height:100dvh;border:0;background:#fffef7}
+#boot{position:fixed;inset:0;z-index:3;display:grid;place-items:center;background:#fffef7;color:#080a08;font:900 10px ui-monospace,monospace;letter-spacing:.12em}#boot.off{display:none}
+</style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute"><defs>
-<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M15 12v2"/></symbol>
-<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></symbol>
-<symbol id="i-new" viewBox="0 0 24 24"><path d="M5 5h14v14H5zM12 8v8M8 12h8"/></symbol>
-<symbol id="i-word" viewBox="0 0 24 24"><path d="M4 6h16M4 11h12M4 16h16M4 21h9"/></symbol>
-<symbol id="i-draw" viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 7l3 3"/></symbol>
-<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 17V4M7 9l5-5 5 5M4 20h16"/></symbol>
-<symbol id="i-clear" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol>
-<symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16"/><circle cx="9" cy="9" r="2"/><path d="M4 18l5-5 4 4 3-3 4 4"/></symbol>
-<symbol id="i-read" viewBox="0 0 24 24"><path d="M3 6h7v13H3zM14 6h7v13h-7zM10 9h4M10 16h4"/></symbol>
-<symbol id="i-song" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12M9 18a3 3 0 1 1-3-3h3M19 16a3 3 0 1 1-3-3h3"/></symbol>
-<symbol id="i-spectrum" viewBox="0 0 24 24"><path d="M3 16v-5M7 20V7M11 17V4M15 20V9M19 15V6M22 18v-8"/></symbol>
-<symbol id="i-code" viewBox="0 0 24 24"><path d="M8 5l-5 7 5 7M16 5l5 7-5 7M14 3l-4 18"/></symbol>
-<symbol id="i-theory" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6h10M6 8l5 8M18 8l-5 8"/></symbol>
-<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8L7 20z"/></symbol>
-<symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4v16M17 4v16"/></symbol>
-<symbol id="i-loop" viewBox="0 0 24 24"><path d="M5 7h12l-3-3M19 17H7l3 3M19 7v4M5 17v-4"/></symbol>
-<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></symbol>
-<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></symbol>
-<symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
-<symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
-<symbol id="i-return" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M4 12h11a5 5 0 0 1 5 5v2"/></symbol>
-<symbol id="i-send" viewBox="0 0 24 24"><path d="M3 12h14M13 7l5 5-5 5M18 5h3v14h-3"/></symbol>
-<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
-<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 18h.01"/></symbol>
-<symbol id="i-history" viewBox="0 0 24 24"><path d="M4 5v5h5M5 10a8 8 0 1 0 2-5M12 7v5l4 2"/></symbol>
-<symbol id="i-flow" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6l10-1M6 8l5 8M18 7l-5 9"/></symbol>
-<symbol id="i-export" viewBox="0 0 24 24"><path d="M12 4v11M8 8l4-4 4 4M5 14v6h14v-6"/></symbol>
-<symbol id="i-audio" viewBox="0 0 24 24"><path d="M5 10h4l5-4v12l-5-4H5zM17 9c2 2 2 4 0 6M19 6c4 4 4 8 0 12"/></symbol>
-<symbol id="i-stone" viewBox="0 0 24 24"><path d="M5 17l3-8 5-3 6 5-2 7H8z"/></symbol>
-</defs></svg>
-
-<div class="gate" id="gate">
-  <div class="gateCard">
-    <div class="gateGlyph" aria-hidden="true"><i></i><i></i><i></i></div>
-    <div class="keyRow"><svg class="icon"><use href="#i-key"/></svg><input id="keyInput" class="keyInput" type="password" autocomplete="off" placeholder="OPENAI API KEY" aria-label="OpenAI API key"><button id="checkKey">CHECK</button></div>
-    <div class="gateModels"><select id="gateTextModel" aria-label="Text model"><option>gpt-5.6-terra</option><option>gpt-5.6-luna</option><option>gpt-5.6-sol</option></select><select id="gateImageModel" aria-label="Image model"><option>gpt-image-2</option><option>gpt-image-1.5</option><option>gpt-image-1-mini</option></select></div>
-    <div class="gateState" id="gateState"><span class="dot"></span>KEY FIRST</div>
-  </div>
-</div>
-
-<div class="app" id="app" aria-hidden="true">
-  <header class="topbar"><div class="brand"><span class="brandMark"></span><span>SKETCHSONG</span></div><div class="topstate"><span class="dot" id="topDot"></span><span id="topStateText">NO KEY</span></div><div class="toptools"><button class="squareBtn" id="helpBtn" aria-label="Guide"><svg class="icon"><use href="#i-help"/></svg></button><button class="squareBtn" id="historyBtn" aria-label="History"><svg class="icon"><use href="#i-history"/></svg></button><button class="squareBtn" id="settingsBtn" aria-label="AI settings"><svg class="icon"><use href="#i-settings"/></svg></button><button class="squareBtn" id="newBtn" aria-label="New"><svg class="icon"><use href="#i-new"/></svg></button></div></header>
-
-  <main class="stage" id="stage">
-    <section class="column fromCol" data-col="0">
-      <div class="columnLabel"><b>FROM</b><span>give it something</span></div>
-      <article class="panel wordPanel" id="wordPanel"><div class="ph"><svg class="icon"><use href="#i-word"/></svg><span>WORD</span><span class="dirty"></span><span class="spacer"></span><button class="mini panelSend" data-panel="word" aria-label="Ask about words"><svg class="icon"><use href="#i-help"/></svg></button></div><div class="wordBody"><textarea id="wordInput" class="wordInput" placeholder="say it" maxlength="900"></textarea><div class="startCue"><span>WRITE</span><span>OR</span><span>DRAW</span></div></div></article>
-      <article class="panel sketchPanel" id="sketchPanel"><div class="ph"><svg class="icon"><use href="#i-draw"/></svg><span>SKETCH</span><span class="dirty"></span><span class="spacer"></span><button class="mini panelSend" data-panel="sketch" aria-label="Ask about sketch"><svg class="icon"><use href="#i-help"/></svg></button></div><div class="canvasWrap sketchGrid" id="sketchWrap"><canvas id="sketch" width="1024" height="1024"></canvas><div class="canvasTools"><button class="mini" id="uploadBtn" aria-label="Load sketch"><svg class="icon"><use href="#i-upload"/></svg></button><button class="mini" id="clearSketch" aria-label="Clear sketch"><svg class="icon"><use href="#i-clear"/></svg></button></div><div class="canvasTools right"><button class="mini" id="wordToSketch" aria-label="Words to sketch"><svg class="icon"><use href="#i-image"/></svg></button><button class="mini" id="sketchToWord" aria-label="Sketch to words"><svg class="icon"><use href="#i-read"/></svg></button></div><input id="fileInput" type="file" accept="image/*" class="hidden"></div></article>
-    </section>
-
-    <section class="column throughCol" data-col="1">
-      <div class="columnLabel"><b>THROUGH</b><span>change the relation</span></div>
-      <article class="panel theoryPanel" id="codePanel"><div class="ph modeHead"><svg class="icon"><use href="#i-theory"/></svg><span id="throughTitle">THEORY</span><span class="spacer"></span><button class="modeBtn on" id="theoryBtn">THEORY</button><button class="modeBtn" id="pyBtn">PY</button><button class="modeBtn" id="jsonBtn">JSON</button><button class="mini panelSend" data-panel="theory" aria-label="Ask about theory"><svg class="icon"><use href="#i-help"/></svg></button></div><div class="theoryBody" id="theoryBody"><div id="theoryEmpty" class="theoryEmpty"><span class="relationBig">MARK → SOUND</span><span>MAKE ONCE. THEN CHANGE THE RULE.</span></div><div id="theoryView" class="theoryView"></div></div><div class="codeBody hidden" id="codeBody"><div class="codeHead"><button class="mini" id="codePrev"><svg class="icon"><use href="#i-left"/></svg></button><button class="mini" id="codeNext"><svg class="icon"><use href="#i-right"/></svg></button><button class="mini" id="copyCode"><svg class="icon"><use href="#i-copy"/></svg></button><button class="mini hidden" id="jsonDownload"><svg class="icon"><use href="#i-download"/></svg></button><span class="page" id="codePage">1/1</span></div><pre class="codeView" id="codeView">MAKE A SONG TO EXPOSE THE PROGRAM.</pre></div></article>
-      <article class="panel flowPanel" id="flowPanel"><div class="ph"><svg class="icon"><use href="#i-flow"/></svg><span>PATH</span><span class="spacer"></span><button class="mini panelSend" data-panel="flow" aria-label="Ask about path"><svg class="icon"><use href="#i-help"/></svg></button></div><div class="flowWrap"><canvas id="flowCanvas" width="900" height="420"></canvas><div class="flowPath" id="flowPath">SOURCE → THEORY → SONG</div></div></article>
-    </section>
-
-    <section class="column toCol" data-col="2">
-      <div class="columnLabel"><b>TO</b><span>hear what the rule did</span></div>
-      <article class="panel songPanel" id="songPanel"><div class="ph"><svg class="icon"><use href="#i-song"/></svg><span>SONG</span><span class="spacer"></span><button class="mini panelSend" data-panel="song" aria-label="Ask about song"><svg class="icon"><use href="#i-help"/></svg></button><button class="mini" id="exportOpen" aria-label="Export"><svg class="icon"><use href="#i-export"/></svg></button><button class="mini hidden" id="midiBtn"><svg class="icon"><use href="#i-download"/></svg></button></div><div class="songBody"><div class="songMeta"><div class="songTitle" id="songTitle">NO SONG</div><div class="songStats" id="songStats">A1 / B / A2</div></div><div class="songCanvas"><canvas id="songViz" width="1024" height="420"></canvas><div class="sectionStrip"><div data-sec="0">A1</div><div data-sec="1">B</div><div data-sec="2">A2</div></div></div></div></article>
-      <article class="panel specPanel" id="spectrumPanel"><div class="ph"><svg class="icon"><use href="#i-spectrum"/></svg><span>SPECTRUM</span><span class="dirty"></span><span class="spacer"></span><button class="mini panelSend" data-panel="spectrum" aria-label="Ask about spectrum"><svg class="icon"><use href="#i-help"/></svg></button></div><div class="specWrap" id="specWrap"><canvas id="specBase" width="1024" height="512"></canvas><canvas id="specInk" width="1024" height="512"></canvas><div class="specEmpty" id="specEmpty">DRAW ON SOUND</div><div class="specTools"><button class="mini" id="clearSpec"><svg class="icon"><use href="#i-clear"/></svg></button><button class="mini" id="specToSketch"><svg class="icon"><use href="#i-return"/></svg></button></div></div></article>
-    </section>
-  </main>
-
-  <nav class="mobileRail" id="mobileRail" aria-label="Surface"><button class="on" data-go="0"><span>FROM</span></button><button data-go="1"><span>THROUGH</span></button><button data-go="2"><span>TO</span></button></nav>
-  <footer class="transport"><button id="playBtn" class="playBtn" aria-label="Play or pause"><svg class="icon"><use id="playUse" href="#i-play"/></svg></button><div class="scrubBox"><div class="scrubLine"><input id="scrub" type="range" min="0" max="48" value="0" step="0.02"><span class="time" id="timeText">0:00</span></div><div class="transportInfo"><span id="transportName">NO SONG</span><span id="transportSec">A1</span></div></div><button id="makeBtn" class="makeBtn" disabled><svg class="icon"><use href="#i-loop"/></svg><span id="makeLabel">MAKE</span></button></footer>
-</div>
-
-<aside class="utility" id="utility" aria-hidden="true"><div class="utilityTop"><div class="utilityTabs"><button class="on" data-util="guide">GUIDE</button><button data-util="history">HISTORY</button><button data-util="stones">STONES</button></div><button id="utilityClose" aria-label="Close"><svg class="icon"><use href="#i-clear"/></svg></button></div><article class="utilityPane on" id="guidePane" data-pane="guide"><div class="chatBody" id="chatDrop"><div class="quickHelp"><button data-ask="what">WHAT</button><button data-ask="next">NEXT</button><button data-ask="fix">FIX</button><button id="guideDraw">DRAW</button></div><button id="clearChat" class="hidden"></button><div class="chatFeed" id="chatFeed"><div class="guideEmpty"><svg class="icon"><use href="#i-help"/></svg><span>TOUCH ? ON ANYTHING</span></div></div><div class="attachments" id="attachments"></div><div class="chatCompose"><input id="chatInput" placeholder="ask" autocomplete="off"><button id="chatSend"><svg class="icon"><use href="#i-send"/></svg></button></div><button class="useGuide hidden" id="useChat"><svg class="icon"><use href="#i-loop"/></svg><span>USE IN LOOP</span></button><div class="dropCue" id="dropCue"><svg class="icon"><use href="#i-image"/></svg></div></div></article><article class="utilityPane" id="historyPanel" data-pane="history"><div class="utilHead"><span>BRANCHES</span><span></span><button class="mini" id="histPrev"><svg class="icon"><use href="#i-left"/></svg></button><button class="mini" id="histNext"><svg class="icon"><use href="#i-right"/></svg></button></div><div class="historyGrid" id="historyGrid"><div class="historyEmpty">NO RUNS</div></div></article><article class="utilityPane" id="stonesPanel" data-pane="stones"><div class="utilHead"><span>KEPT RELATIONS</span><span></span><button class="mini" id="clearStones"><svg class="icon"><use href="#i-clear"/></svg></button></div><div class="stonesGrid" id="stonesGrid"><div class="historyEmpty">NO STONES</div></div></article></aside>
-
-<div class="exportTray" id="exportTray"><div class="exportHead"><svg class="icon"><use href="#i-export"/></svg><span>EXPORT</span><button id="exportClose"><svg class="icon"><use href="#i-clear"/></svg></button></div><div class="exportGrid"><button id="mp3Btn"><svg class="icon"><use href="#i-audio"/></svg><span>MP3</span></button><button id="exportMidi"><svg class="icon"><use href="#i-song"/></svg><span>MIDI</span></button><button id="htmlBtn"><svg class="icon"><use href="#i-code"/></svg><span>HTML</span></button><button id="projectBtn"><svg class="icon"><use href="#i-flow"/></svg><span>TRACE</span></button></div></div>
-<div class="settings" id="settings"><div class="settingRow"><label>TEXT</label><select id="textModel"><option>gpt-5.6-terra</option><option>gpt-5.6-luna</option><option>gpt-5.6-sol</option></select></div><div class="settingRow"><label>IMAGE</label><select id="imageModel"><option>gpt-image-2</option><option>gpt-image-1.5</option><option>gpt-image-1-mini</option></select></div><div class="settingRow"><label>API</label><button id="recheck">CHECK AGAIN</button></div></div>
-<input id="changeInput" class="hidden" maxlength="500"><button id="clearChange" class="hidden"></button><div id="chatPanel" class="hidden"></div>
-<div class="busyShade" id="busy"><div class="buildCard"><div class="buildTop"><span id="buildVerb">MAKING</span><span id="buildCount">01 / 06</span></div><div class="buildStages" id="buildStages"><div data-build="0"><b>READ</b><span>find evidence</span></div><div data-build="1"><b>MAP</b><span>propose relations</span></div><div data-build="2"><b>A1</b><span>make a loop</span></div><div data-build="3"><b>B</b><span>break the rule</span></div><div data-build="4"><b>A2</b><span>return changed</span></div><div data-build="5"><b>JOIN</b><span>make it playable</span></div></div><div class="buildEvidence" id="buildEvidence">WATCH THE PROGRAM TAKE SHAPE</div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script><script src="instrument-1.js"></script><script src="instrument-2.js"></script><script src="instrument-3.js"></script><script src="instrument-4.js"></script><script src="instrument-5.js"></script>
+<div id="boot">SKETCHRADIO</div>
+<iframe id="sketchsong" title="Sketchradio instrument" src="../word-sketch-song/"></iframe>
+<script>
+(()=>{
+  const frame=document.getElementById('sketchsong');
+  const boot=document.getElementById('boot');
+  const radioURL=new URL('radio.js',location.href).href;
+  const deepURL=new URL('radio-deep.js',location.href).href;
+  frame.addEventListener('load',()=>{
+    try{
+      const d=frame.contentDocument;
+      if(!d||d.getElementById('sketchradio-runtime'))return;
+      const mark=d.createElement('meta');mark.id='sketchradio-runtime';d.head.appendChild(mark);
+      const a=d.createElement('script');a.src=radioURL;
+      a.onload=()=>{const b=d.createElement('script');b.src=deepURL;b.onload=()=>boot.classList.add('off');b.onerror=()=>{boot.textContent='RADIO DEEP LAYER FAILED'};d.body.appendChild(b)};
+      a.onerror=()=>{boot.textContent='RADIO LAYER FAILED'};
+      d.body.appendChild(a);
+    }catch(e){boot.textContent='SKETCHRADIO BOOT FAILED'}
+  });
+})();
+</script>
 </body>
 </html>
