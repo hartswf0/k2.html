@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#ffffff" />
+<title>TRACE — Music as a Trail of Operations</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Cpath d='M3 19h6l3-10 4 16 4-12 3 6h6' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='square' stroke-linejoin='miter'/%3E%3Ccircle cx='29' cy='19' r='2.2' fill='%23ef2200'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <button class="mark" id="markBtn" aria-label="TRACE home" title="TRACE"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M2 18h6l3-10 4 16 4-12 3 6h8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="30" cy="18" r="2.2" fill="#ef2200"/></svg></button>
+    <input class="projectName" id="projectName" value="UNTITLED TRACE" aria-label="Project name" />
+    <nav class="menus">
+      <details class="menu"><summary>PROJECT</summary><div class="menuBox">
+        <button data-action="new">NEW <span>⌘N</span></button><button data-action="snapshot">SNAPSHOT <span>⌘S</span></button><button data-action="fork">FORK HERE <span>↗</span></button>
+        <div class="menuSep"></div><button data-action="exportSong">DOWNLOAD SONG <span>JSON</span></button><button data-action="exportMidi">DOWNLOAD MIDI <span>.MID</span></button><button data-action="exportLog">DOWNLOAD LOG <span>.JSON</span></button><button data-action="exportSession">DOWNLOAD SESSION <span>.JSON</span></button><label>IMPORT SESSION <span>↑</span><input id="importSession" type="file" accept="application/json" hidden /></label>
+      </div></details>
+      <details class="menu"><summary>LEARN</summary><div class="menuBox">
+        <button data-action="teacherToggle">TEACHER <span id="teacherMenuState">ON</span></button><button data-action="explainSelection">EXPLAIN SELECTION <span>?</span></button><button data-action="lessonPrompt">PROMPT LESSON <span>P</span></button><button data-action="lessonCode">CODE LESSON <span>C</span></button><button data-action="lessonMusic">MUSIC LESSON <span>M</span></button><div class="menuSep"></div><button data-action="tour">START TOUR <span>1–4</span></button>
+      </div></details>
+      <details class="menu"><summary>VIEW</summary><div class="menuBox">
+        <button data-action="resetWidths">RESET WIDTHS <span>⇆</span></button><button data-action="sourceView">SOURCE VIEW <span>V</span></button><button data-action="sourceEdit">SOURCE EDIT <span>E</span></button><button data-action="chatView">CHAT <span>C</span></button><button data-action="traceView">TRACE <span>D</span></button>
+      </div></details>
+      <details class="menu"><summary>SYSTEM</summary><div class="menuBox">
+        <button data-action="aiSetup">AI SETUP <span>↗</span></button><button data-action="health">CHECK API <span>●</span></button><button data-action="diagnostics">DIAGNOSTICS <span>↓</span></button><div class="menuSep"></div><button data-action="demoMode">DEMO MODE <span>LOCAL</span></button>
+      </div></details>
+    </nav>
+    <div class="topSpacer"></div>
+    <button class="machine" id="machineBtn" title="System status"><span class="tracePulse"></span><span class="statusText" id="statusText">READY</span></button>
+  </header>
+
+  <main class="workbench" id="workbench">
+    <section class="panel worldPanel mobileActive" data-surface="world">
+      <div class="cap"><span>A · WORLD</span><span class="muted" id="worldMeta">8 BARS · 150 BPM</span><span class="capSpacer"></span><button class="tiny" id="clearScopeBtn">ALL</button></div>
+      <div class="worldBody"><div class="sections" id="sections"></div><div class="timelineWrap" id="timelineWrap"><div id="timeline"></div></div></div>
+    </section>
+    <div class="split" id="split1" aria-hidden="true"></div>
+    <section class="panel sourcePanel" data-surface="source">
+      <div class="cap"><span>B · SOURCE</span><span class="muted" id="sourceMeta">CURRENT</span><span class="capSpacer"></span><button class="tiny active" id="viewBtn">VIEW</button><button class="tiny" id="editBtn">EDIT</button></div>
+      <div class="sourceBody"><div class="codeView" id="codeView"></div><textarea id="sourceEdit" hidden spellcheck="false"></textarea><div class="sourceFoot"><button class="btn signal" id="runSourceBtn">RUN</button><button class="btn" id="regenerateBtn">REGENERATE</button><span class="capSpacer"></span><span class="muted" id="bindMeta">NO BINDING</span></div></div>
+    </section>
+    <div class="split" id="split2" aria-hidden="true"></div>
+    <section class="panel sidePanel" data-surface="side">
+      <div class="sideTabs"><button class="active" data-side="chat">C · CHAT</button><button data-side="trace">D · TRACE</button></div>
+      <div class="sideView active" id="chatView"><div class="messages" id="messages"></div><div class="composer"><div class="scopeChip">SCOPE <b id="scopeLabel">WHOLE SONG</b></div><textarea id="prompt" maxlength="3500" placeholder="Make, ask, learn, debug, or describe what you hear…"></textarea><div class="composeRow"><button class="btn" id="drawBtn">DRAW</button><button class="btn" id="modelViewBtn">WHAT TRACE SENDS</button><div class="spacer"></div><button class="btn signal" id="sendBtn">SEND</button></div><div id="sketchWrap" hidden style="margin-top:6px"><canvas id="sketch" width="640" height="170" style="width:100%;height:105px;border:1px solid #000;touch-action:none;background:#fff"></canvas><div class="composeRow"><button class="btn" id="clearSketchBtn">CLEAR</button><span class="spacer"></span><span class="muted" id="sketchMeta">0 POINTS</span></div></div></div></div>
+      <div class="sideView" id="traceView"><div class="traceScroll"><div class="traceCard"><div class="traceHead"><span>DOWNSTREAM CONSEQUENCE</span><span id="traceSelectionLabel">NONE</span></div><div class="traceBody"><div class="chain" id="causalChain"></div></div></div><div class="traceCard"><div class="traceHead"><span>OBSERVER NOTES</span><span>EVIDENCE + UNCERTAINTY</span></div><div class="traceBody" id="observerNotes">No observer notes yet.</div></div><div class="traceCard"><div class="traceHead"><span>ANALOG TRACE</span><span>OUTPUT MEMORY</span></div><div class="traceBody"><canvas id="scopeTrace" width="520" height="100"></canvas></div></div><div class="traceCard"><div class="traceHead"><span>ITINERANT PATH</span><span id="runCount">1 RUN</span></div><div class="traceBody"><div class="path" id="pathView"></div></div></div></div></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="transport"><button class="btn signal" id="playBtn">▶</button><button class="btn" id="stopBtn">■</button></div>
+    <button class="navKey active" data-nav="world"><b>A</b>WORLD</button><button class="navKey" data-nav="source"><b>B</b>SOURCE</button><button class="navKey" data-nav="chat"><b>C</b>CHAT</button><button class="navKey" data-nav="trace"><b>D</b>TRACE</button><button class="navKey" data-nav="help"><b>?</b>HELP</button>
+    <div class="footMeta"><span id="footScope">SCOPE · ALL</span><span id="footRun">RUN · 1</span><span id="footMemory">MEMORY · 1</span></div>
+  </footer>
+</div>
+
+<div class="modalBack" id="aiModal"><div class="modal"><h2>AI SETUP</h2><div class="notice">GitHub Pages is static. PROXY is the safer public configuration. DIRECT keeps a key only in this browser tab and is for personal testing.</div><div class="field"><label>MODE</label><select id="aiMode"><option value="demo">DEMO · LOCAL</option><option value="proxy">PROXY</option><option value="direct">DIRECT · SESSION KEY</option></select></div><div class="field"><label>MODEL</label><input id="modelInput" value="gpt-5.6-terra" /></div><div class="field"><label>ENDPOINT</label><input id="endpointInput" value="/api/trace-ai" /></div><div class="field"><label>SESSION KEY</label><input id="keyInput" type="password" autocomplete="off" placeholder="sk-…" /></div><div class="modalRow"><button class="btn signal" id="saveAiBtn">USE</button><button class="btn" data-close="aiModal">CLOSE</button></div></div></div>
+<div class="modalBack" id="modelModal"><div class="modal"><h2>WHAT TRACE SENDS</h2><div class="field"><label>COMPOSER PREPROMPT</label><textarea id="composerPromptView" rows="10" readonly></textarea></div><div class="field"><label>OBSERVER PREPROMPT</label><textarea id="observerPromptView" rows="10" readonly></textarea></div><div class="field"><label>VISIBLE CONTEXT</label><textarea id="contextView" rows="8" readonly></textarea></div><div class="modalRow"><button class="btn" data-close="modelModal">CLOSE</button></div></div></div>
+<div class="modalBack" id="helpModal"><div class="modal"><h2>TRACE IN FOUR MOVES</h2><div class="helpGrid"><div class="helpCell"><b>A · WORLD</b>Hear and touch the consequence. Tap a section or event first.</div><div class="helpCell"><b>B · SOURCE</b>See the executable description. Tap a line to find what it made.</div><div class="helpCell"><b>C · CHAT</b>Make, ask, study, debug. CHAT inherits your current selection.</div><div class="helpCell"><b>D · TRACE</b>Follow prompt → operation → source → event → sound, including uncertainty.</div></div><div class="notice" style="margin-top:8px">There is no required route. Make a detour, restore an older run, fork it, ask why, or turn a mistake into the next version.</div><div class="modalRow"><button class="btn signal" data-close="helpModal">START</button></div></div></div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
