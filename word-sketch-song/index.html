@@ -31,6 +31,15 @@
 <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
 <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
 <symbol id="i-return" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5M4 12h11a5 5 0 0 1 5 5v2"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M3 12h14M13 7l5 5-5 5M18 5h3v14h-3"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 18h.01"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M4 5v5h5M5 10a8 8 0 1 0 2-5M12 7v5l4 2"/></symbol>
+<symbol id="i-flow" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6l10-1M6 8l5 8M18 7l-5 9"/></symbol>
+<symbol id="i-export" viewBox="0 0 24 24"><path d="M12 4v11M8 8l4-4 4 4M5 14v6h14v-6"/></symbol>
+<symbol id="i-audio" viewBox="0 0 24 24"><path d="M5 10h4l5-4v12l-5-4H5zM17 9c2 2 2 4 0 6M19 6c4 4 4 8 0 12"/></symbol>
+<symbol id="i-branch" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="7" cy="19" r="2"/><path d="M6 7v4c0 3 2 4 5 4h1c4 0 6-2 6-6M7 17v-5"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
 </defs></svg>
 
 <div class="gate" id="gate">
@@ -54,6 +63,7 @@
     <div class="mark"><div class="markbox"></div><span>WORD / SKETCH / SONG</span></div>
     <div class="topstate" id="topState"><span class="dot" id="topDot"></span><span id="topStateText">NO KEY</span></div>
     <div class="toptools">
+      <button class="squareBtn" id="helpBtn" aria-label="Help"><svg class="icon"><use href="#i-help"/></svg></button>
       <button class="squareBtn" id="settingsBtn" aria-label="AI settings"><svg class="icon"><use href="#i-settings"/></svg></button>
       <button class="squareBtn" id="newBtn" aria-label="New"><svg class="icon"><use href="#i-new"/></svg></button>
     </div>
@@ -62,11 +72,11 @@
   <main class="stage" id="stage">
     <section class="column colSource" data-col="0">
       <article class="panel" id="wordPanel">
-        <div class="ph"><svg class="icon"><use href="#i-word"/></svg><span>WORD</span><span class="dirty"></span><span class="spacer"></span></div>
+        <div class="ph"><svg class="icon"><use href="#i-word"/></svg><span>WORD</span><span class="dirty"></span><span class="spacer"></span><button class="mini panelSend" data-panel="word" aria-label="Send words to guide"><svg class="icon"><use href="#i-send"/></svg></button></div>
         <div class="wordBody"><textarea id="wordInput" class="wordInput" placeholder="say it" maxlength="900"></textarea><span class="wordHint">TEXT → SOUND</span></div>
       </article>
       <article class="panel" id="sketchPanel">
-        <div class="ph"><svg class="icon"><use href="#i-draw"/></svg><span>SKETCH</span><span class="dirty"></span><span class="spacer"></span></div>
+        <div class="ph"><svg class="icon"><use href="#i-draw"/></svg><span>SKETCH</span><span class="dirty"></span><span class="spacer"></span><button class="mini panelSend" data-panel="sketch" aria-label="Send sketch to guide"><svg class="icon"><use href="#i-send"/></svg></button></div>
         <div class="canvasWrap sketchGrid" id="sketchWrap">
           <canvas id="sketch" width="1024" height="1024"></canvas>
           <div class="canvasTools">
@@ -84,14 +94,14 @@
 
     <section class="column colSound" data-col="1">
       <article class="panel" id="songPanel">
-        <div class="ph"><svg class="icon"><use href="#i-song"/></svg><span>SONG</span><span class="spacer"></span><button class="mini hidden" id="midiBtn" aria-label="Download MIDI" title="Download MIDI"><svg class="icon"><use href="#i-download"/></svg></button></div>
+        <div class="ph"><svg class="icon"><use href="#i-song"/></svg><span>SONG</span><span class="spacer"></span><button class="mini panelSend" data-panel="song" aria-label="Send song to guide"><svg class="icon"><use href="#i-send"/></svg></button><button class="mini" id="exportOpen" aria-label="Export song"><svg class="icon"><use href="#i-export"/></svg></button><button class="mini hidden" id="midiBtn" aria-label="Download MIDI" title="Download MIDI"><svg class="icon"><use href="#i-download"/></svg></button></div>
         <div class="songBody">
           <div class="songMeta"><div class="songTitle" id="songTitle">NO SONG</div><div class="songStats" id="songStats">A1 / B / A2</div></div>
           <div class="songCanvas"><canvas id="songViz" width="1024" height="420"></canvas><div class="sectionStrip"><div data-sec="0">A1</div><div data-sec="1">B</div><div data-sec="2">A2</div></div></div>
         </div>
       </article>
       <article class="panel" id="specPanel">
-        <div class="ph"><svg class="icon"><use href="#i-spectrum"/></svg><span>SPECTRUM</span><span class="dirty"></span><span class="spacer"></span></div>
+        <div class="ph"><svg class="icon"><use href="#i-spectrum"/></svg><span>SPECTRUM</span><span class="dirty"></span><span class="spacer"></span><button class="mini panelSend" data-panel="spectrum" aria-label="Send spectrum to guide"><svg class="icon"><use href="#i-send"/></svg></button></div>
         <div class="specWrap" id="specWrap">
           <canvas id="specBase" width="1024" height="512"></canvas>
           <canvas id="specInk" width="1024" height="512"></canvas>
@@ -106,23 +116,42 @@
 
     <section class="column colCode" data-col="2">
       <article class="panel" id="codePanel">
-        <div class="ph"><svg class="icon"><use href="#i-code"/></svg><span>CODE</span><span class="spacer"></span><button class="mini on" id="pyBtn">PY</button><button class="mini" id="jsonBtn">JSON</button></div>
+        <div class="ph"><svg class="icon"><use href="#i-code"/></svg><span>CODE</span><span class="spacer"></span><button class="mini panelSend" data-panel="code" aria-label="Send code to guide"><svg class="icon"><use href="#i-send"/></svg></button><button class="mini on" id="pyBtn">PY</button><button class="mini" id="jsonBtn">JSON</button></div>
         <div class="codeBody">
           <div class="codeHead"><button class="mini" id="codePrev" aria-label="Previous code page"><svg class="icon"><use href="#i-left"/></svg></button><button class="mini" id="codeNext" aria-label="Next code page"><svg class="icon"><use href="#i-right"/></svg></button><button class="mini" id="copyCode" aria-label="Copy code"><svg class="icon"><use href="#i-copy"/></svg></button><button class="mini hidden" id="jsonDownload" aria-label="Download JSON"><svg class="icon"><use href="#i-download"/></svg></button><span class="page" id="codePage">1/1</span></div>
           <pre class="codeView" id="codeView">MAKE A SONG TO EXPOSE THE PROGRAM.</pre>
         </div>
       </article>
-      <article class="panel" id="changePanel">
-        <div class="ph"><svg class="icon"><use href="#i-loop"/></svg><span>CHANGE</span><span class="dirty"></span><span class="spacer"></span></div>
-        <div class="changeBody"><input id="changeInput" class="changeInput" placeholder="wrong?" maxlength="500"><button class="changeClear" id="clearChange" aria-label="Clear change"><svg class="icon"><use href="#i-clear"/></svg></button></div>
+      <article class="panel" id="flowPanel">
+        <div class="ph"><svg class="icon"><use href="#i-flow"/></svg><span>FLOW</span><span class="spacer"></span><button class="mini panelSend" data-panel="flow" aria-label="Send flow to guide"><svg class="icon"><use href="#i-send"/></svg></button></div>
+        <div class="flowWrap"><canvas id="flowCanvas" width="900" height="420"></canvas><div class="flowPath" id="flowPath">WORD · SKETCH · CODE · SONG</div></div>
       </article>
+    </section>
+
+    <section class="column colGuide" data-col="3">
+      <article class="panel" id="chatPanel">
+        <div class="ph"><svg class="icon"><use href="#i-chat"/></svg><span>GUIDE</span><span class="spacer"></span><button class="mini hidden" id="useChat" aria-label="Use guide reply as next change"><svg class="icon"><use href="#i-loop"/></svg></button><button class="mini" id="clearChat" aria-label="Clear guide"><svg class="icon"><use href="#i-clear"/></svg></button></div>
+        <div class="chatBody" id="chatDrop">
+          <div class="quickHelp"><button data-ask="what">WHAT</button><button data-ask="next">NEXT</button><button data-ask="fix">FIX</button><button id="guideDraw">DRAW</button></div>
+          <div class="chatFeed" id="chatFeed"><div class="guideEmpty"><svg class="icon"><use href="#i-help"/></svg><span>ASK ANY PANEL</span></div></div>
+          <div class="attachments" id="attachments"></div>
+          <div class="chatCompose"><input id="chatInput" placeholder="ask" autocomplete="off"><button id="chatSend" aria-label="Send"><svg class="icon"><use href="#i-send"/></svg></button></div>
+          <div class="dropCue" id="dropCue"><svg class="icon"><use href="#i-image"/></svg></div>
+        </div>
+      </article>
+      <article class="panel" id="historyPanel">
+        <div class="ph"><svg class="icon"><use href="#i-history"/></svg><span>HISTORY</span><span class="spacer"></span><button class="mini" id="histPrev" aria-label="Previous history"><svg class="icon"><use href="#i-left"/></svg></button><button class="mini" id="histNext" aria-label="Next history"><svg class="icon"><use href="#i-right"/></svg></button></div>
+        <div class="historyGrid" id="historyGrid"><div class="historyEmpty">NO RUNS</div></div>
+      </article>
+      <input id="changeInput" class="hidden" maxlength="500"><button id="clearChange" class="hidden"></button>
     </section>
   </main>
 
   <nav class="mobileRail" id="mobileRail" aria-label="Surface">
     <button class="on" data-go="0" aria-label="Word and sketch"><svg class="icon"><use href="#i-draw"/></svg></button>
     <button data-go="1" aria-label="Song and spectrum"><svg class="icon"><use href="#i-song"/></svg></button>
-    <button data-go="2" aria-label="Code and change"><svg class="icon"><use href="#i-code"/></svg></button>
+    <button data-go="2" aria-label="Code and flow"><svg class="icon"><use href="#i-code"/></svg></button>
+    <button data-go="3" aria-label="Guide and history"><svg class="icon"><use href="#i-chat"/></svg></button>
   </nav>
 
   <footer class="transport">
@@ -132,6 +161,16 @@
   </footer>
 </div>
 
+<div class="exportTray" id="exportTray">
+  <div class="exportHead"><svg class="icon"><use href="#i-export"/></svg><span>EXPORT</span><button id="exportClose" aria-label="Close"><svg class="icon"><use href="#i-clear"/></svg></button></div>
+  <div class="exportGrid">
+    <button id="mp3Btn"><svg class="icon"><use href="#i-audio"/></svg><span>MP3</span></button>
+    <button id="exportMidi"><svg class="icon"><use href="#i-song"/></svg><span>MIDI</span></button>
+    <button id="htmlBtn"><svg class="icon"><use href="#i-code"/></svg><span>HTML</span></button>
+    <button id="projectBtn"><svg class="icon"><use href="#i-flow"/></svg><span>TRACE</span></button>
+  </div>
+</div>
+
 <div class="settings" id="settings">
   <div class="settingRow"><label>TEXT</label><select id="textModel"><option>gpt-5.6-terra</option><option>gpt-5.6-luna</option><option>gpt-5.6-sol</option></select></div>
   <div class="settingRow"><label>IMAGE</label><select id="imageModel"><option>gpt-image-2</option><option>gpt-image-1.5</option><option>gpt-image-1-mini</option></select></div>
@@ -139,8 +178,10 @@
 </div>
 <div class="busyShade" id="busy"><div class="busyMeter"></div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 <script src="instrument-1.js"></script>
 <script src="instrument-2.js"></script>
 <script src="instrument-3.js"></script>
+<script src="instrument-4.js"></script>
 </body>
 </html>
