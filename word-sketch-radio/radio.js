@@ -77,6 +77,7 @@ function installRadioSurface(){
     <span id="radioSourceState">NO SOUND</span>`;
   $('#wordPanel .ph').after(source);
   const reading=radioEl('div','radioReading','AI LISTENING APPEARS HERE');
+  reading.id='radioReading';
   source.after(reading);
 
   const timeInk=document.createElement('canvas');
@@ -135,7 +136,7 @@ async function loadVoiceFile(file){
     updateTransport();
     updateMakeState();
     if(typeof traceNode==='function'){
-      const id=traceNode('spectrum','VOICE / RADIO',voiceSummary());
+      traceNode('spectrum','VOICE / RADIO',voiceSummary());
       persistTrace?.();refreshFlow?.();
     }
     setState('VOICE / RADIO READY','good');
