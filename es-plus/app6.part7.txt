@@ -1,0 +1,59 @@
+
+/* mute is silence, never disappearance */
+const applyPatchesMuteBase=applyPatches;
+applyPatches=function(events,p){
+  const patches=p.trackPatches||{}, muted=new Set(Object.entries(patches).filter(([,x])=>x?.mute&&!x?.delete).map(([k])=>Number(k)));
+  const audiblePatches=Object.fromEntries(Object.entries(patches).map(([k,x])=>[k,{...x,mute:false}]));
+  const out=applyPatchesMuteBase(events,{...p,trackPatches:audiblePatches});
+  for(const e of out)e.muted=muted.has(e.track);
+  return out;
+};
+
+function unmutedIR(ir){return ir?{...ir,events:ir.events.filter(e=>!e.muted)}:ir}
+
+const renderTimelineMuteBase=renderTimeline;
+renderTimeline=function(){
+  renderTimelineMuteBase();
+  for(const row of document.querySelectorAll('.track')){
+    const lab=row.querySelector('.tlabel'),tr=Number(lab?.textContent),muted=Number.isFinite(tr)&&!!trackPatch(tr).mute;
+    row.classList.toggle('muted',muted);
+    row.style.opacity=muted?'.42':'';
+    if(lab){lab.style.textDecoration=muted?'line-through':'';lab.title=`${trackName(tr)}${muted?' · MUTED · tap to edit / unmute':''}`}
+  }
+};
+
+function refreshMuteControl(){
+  const b=document.querySelector('[data-track-op="mute"]');if(!b)return;
+  const targets=editableSelected(),all=targets.length&&targets.every(t=>!!trackPatch(t).mute),some=targets.some(t=>!!trackPatch(t).mute);
+  b.textContent=all?'UNMUTE':some?'MUTE ALL':'MUTE';
+}
+const openSelectionSheetMuteBase=openSelectionSheet;
+openSelectionSheet=function(focusTrack=null){openSelectionSheetMuteBase(focusTrack);refreshMuteControl()};
+const muteControl=document.querySelector('[data-track-op="mute"]');
+if(muteControl)muteControl.onclick=async()=>{
+  const targets=editableSelected();if(!targets.length){E.trackReadout.textContent='selected tracks are invariant';return}
+  const allMuted=targets.every(t=>!!trackPatch(t).mute),patches=targets.map(track=>({track,mute:!allMuted}));
+  await applyPatchBatch(patches);openSelectionSheet();setTrace(allMuted?'UNMUTE':'MUTE',targets.map(t=>`T${t}`).join(' + '),allMuted?'audible again':'still visible / silent');
+};
+
+const runMuteBase=run;
+run=async function(){
+  await runMuteBase();
+  if(state.ir){const mutedTracks=[...new Set(state.ir.events.filter(e=>e.muted).map(e=>e.track))],audible=state.ir.events.filter(e=>!e.muted).length;E.soundState.textContent=`${audible} audible events${mutedTracks.length?` · ${mutedTracks.length} muted`:''}`;E.playBtn.disabled=!audible;renderTimeline()}
+};
+E.runBtn.onclick=run;
+
+const playMuteBase=play;
+play=async function(){
+  if(!state.ir||state.playing)return playMuteBase();
+  const real=state.ir;state.ir=unmutedIR(real);
+  try{return await playMuteBase()}finally{state.ir=real}
+};
+E.playBtn.onclick=play;
+
+const midiBytesMuteBase=midiBytes;
+midiBytes=function(){const real=state.ir;if(!real)return midiBytesMuteBase();state.ir=unmutedIR(real);try{return midiBytesMuteBase()}finally{state.ir=real}};
+
+const exportWavMuteBase=exportWav;
+exportWav=async function(){const real=state.ir;if(!real)return exportWavMuteBase();state.ir=unmutedIR(real);try{return await exportWavMuteBase()}finally{state.ir=real}};
+E.wavExport.onclick=exportWav;
