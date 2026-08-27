@@ -7,7 +7,6 @@
 <title>ES+ / Variety Engine</title>
 <link rel="stylesheet" href="es-plus/style.css">
 <style>
-/* Mobile is a separate surface: desktop minimization never controls internals. */
 @media(max-width:720px){
   #codePane>.body.codeBody{display:block!important;position:relative!important;min-width:0!important;min-height:0!important;overflow:hidden!important}
   #codePane .gutter{display:none!important}
@@ -31,4 +30,7 @@
 <nav class="mobileNav"><button class="on" data-mobile="source">SOURCE</button><button id="mobileCode" data-mobile="code" disabled>CODE</button><button id="mobileSound" data-mobile="sound" disabled>SOUND</button></nav>
 </div>
 <div id="sheetBack" class="sheetBack"><div class="sheet"><div class="sheetRow"><input id="keyInput" type="password" placeholder="OPENAI API KEY" autocomplete="off"><input id="modelInput" value="gpt-5.6-terra" aria-label="model"></div><div class="sheetRow"><input id="routeInput" value="https://api.openai.com/v1" aria-label="API route"><button id="connectBtn" class="primary">CONNECT</button></div><div class="sheetStatus"><span id="sheetDot" class="dot"></span><span id="sheetStatus">not checked</span></div><div class="sheetActions"><button id="forgetBtn">FORGET KEY</button><button id="closeSheet">CLOSE</button></div></div></div>
+<script>
+(function(){function fault(msg){var t=document.getElementById('trace');if(t)t.textContent='FAULT → '+String(msg).slice(0,160)}window.addEventListener('error',function(e){fault(e.message||'runtime error')});window.addEventListener('unhandledrejection',function(e){fault((e.reason&&e.reason.message)||e.reason||'promise failed')})})();
+</script>
 <script src="es-plus/app5.js?v=5"></script></body></html>
