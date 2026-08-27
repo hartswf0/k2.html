@@ -1,0 +1,106 @@
+
+/* v13: region-scoped editing + multimodal image texture prompting
+   - Draw/circle on the lower vertical-film canvas to create a time region.
+   - Region edits are local: track(s) × [startBeat,endBeat), never outside.
+   - Region TUNE branches into four REGION STONES and commits only on USE.
+   - Images are resized locally, analyzed into executable texture profiles, and
+     also passed as real multimodal image inputs to every AI composition/edit call. */
+state.regionSelection=null;
+state.regionGesture=[];
+state.regionStones=[];
+state.regionStonePreview=-1;
+state.regionStoneBase=null;
+state.regionStoneTargets=[];
+state.regionStoneLogId=null;
+state.imagePrompts=[];
+
+/* ---------- multimodal image prompting ---------- */
+function imageDescriptor(p){
+  const tone=p.brightness<.34?'dark':p.brightness>.7?'luminous':'mid-tone';
+  const contrast=p.contrast>.48?'high-contrast':p.contrast<.2?'soft-contrast':'moderate-contrast';
+  const grain=p.edgeDensity>.34?'jagged / granular':p.edgeDensity<.14?'smooth / broad':'textured';
+  const chroma=p.saturation>.5?'saturated':p.saturation<.18?'muted':'moderately chromatic';
+  const temp=p.warmth>.57?'warm':p.warmth<.43?'cool':'balanced-color';
+  const orient=p.verticality>.59?'vertical / rising gesture':p.verticality<.41?'horizontal / layered gesture':'mixed-direction gesture';
+  return `${tone}, ${contrast}, ${grain}, ${chroma}, ${temp}, ${orient}`;
+}
+function imageMusicBias(p){
+  const density=clamp(.26+p.edgeDensity*.55+p.contrast*.28,.18,1);
+  const duration=clamp(1.65-p.edgeDensity*.9-p.contrast*.25,.35,1.7);
+  const space=clamp(.72-p.edgeDensity*.42-p.saturation*.18+(p.brightness<.35?.12:0),.08,.9);
+  const brightness=clamp(.25+p.brightness*.55+p.contrast*.2,.1,1);
+  return{density:+density.toFixed(2),duration:+duration.toFixed(2),space:+space.toFixed(2),brightness:+brightness.toFixed(2)};
+}
+function imagePromptText(){
+  if(!state.imagePrompts.length)return'';
+  return state.imagePrompts.map((x,i)=>{
+    const b=imageMusicBias(x.profile);
+    return `IMAGE ${i+1} \"${x.name}\": ${imageDescriptor(x.profile)}. Numeric texture: brightness ${x.profile.brightness.toFixed(2)}, contrast ${x.profile.contrast.toFixed(2)}, saturation ${x.profile.saturation.toFixed(2)}, edge density ${x.profile.edgeDensity.toFixed(2)}, verticality ${x.profile.verticality.toFixed(2)}. Musical bias: density ${b.density}, duration ${b.duration}, space ${b.space}, spectral brightness ${b.brightness}. Treat the IMAGE ITSELF as executable musical texture: map surface, gesture, color, contrast, repetition and empty space into instrumentation, rhythm, register, sample-material search, articulation and silence. Do not merely caption or describe the image.`;
+  }).join('\n');
+}
+async function imageSource(file){
+  const url=URL.createObjectURL(file);let img=null;
+  try{
+    if(window.createImageBitmap){try{img=await createImageBitmap(file)}catch(_){}}
+    if(!img)img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=url});
+    const w=img.width||img.naturalWidth||1,h=img.height||img.naturalHeight||1,scale=Math.min(1,512/Math.max(w,h));
+    const cw=Math.max(1,Math.round(w*scale)),ch=Math.max(1,Math.round(h*scale)),c=document.createElement('canvas');c.width=cw;c.height=ch;
+    const g=c.getContext('2d',{willReadFrequently:true});g.fillStyle='#fff';g.fillRect(0,0,cw,ch);g.drawImage(img,0,0,cw,ch);
+    const sw=Math.min(96,cw),sh=Math.min(96,ch),s=document.createElement('canvas');s.width=sw;s.height=sh;const sg=s.getContext('2d',{willReadFrequently:true});sg.drawImage(c,0,0,sw,sh);
+    const d=sg.getImageData(0,0,sw,sh).data,luma=new Float32Array(sw*sh);let sum=0,sum2=0,sat=0,warm=0,dx=0,dy=0,edges=0,n=0;
+    for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){
+      const i=(y*sw+x)*4,r=d[i],gg=d[i+1],b=d[i+2],L=.2126*r+.7152*gg+.0722*b;luma[y*sw+x]=L;sum+=L;sum2+=L*L;sat+=(Math.max(r,gg,b)-Math.min(r,gg,b))/255;warm+=(r-b+255)/510;n++;
+    }
+    for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){
+      const L=luma[y*sw+x];if(x+1<sw)dx+=Math.abs(L-luma[y*sw+x+1]);if(y+1<sh)dy+=Math.abs(L-luma[(y+1)*sw+x]);
+    }
+    const gradCount=Math.max(1,(sw-1)*sh+(sh-1)*sw),edgeMean=(dx+dy)/gradCount/255;
+    edges=clamp(edgeMean*3.1,0,1);
+    const mean=sum/n,varL=Math.max(0,sum2/n-mean*mean),contrast=clamp(Math.sqrt(varL)/96,0,1),verticality=(dx+dy)>1?dx/(dx+dy):.5;
+    const profile={width:w,height:h,brightness:clamp(mean/255,0,1),contrast,saturation:clamp(sat/n,0,1),warmth:clamp(warm/n,0,1),edgeDensity:edges,verticality:clamp(verticality,0,1)};
+    return{name:file.name||'image',type:file.type||'image',profile,dataUrl:c.toDataURL('image/jpeg',.8)};
+  }finally{URL.revokeObjectURL(url);if(img?.close)try{img.close()}catch(_){}}
+}
+const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/*';imageInput.multiple=true;imageInput.hidden=true;document.body.appendChild(imageInput);
+const imageSourceBtn=document.createElement('button');imageSourceBtn.textContent='IMAGE';imageSourceBtn.title='Add image texture prompt';
+E.clearBtn.parentElement.insertBefore(imageSourceBtn,E.clearBtn);
+const imageTrackBtn=document.createElement('button');imageTrackBtn.textContent='IMAGE';imageTrackBtn.title='Add image texture prompt to this edit';
+const selectOpsEl=X?.anchorBtn?.parentElement;if(selectOpsEl){selectOpsEl.appendChild(imageTrackBtn);selectOpsEl.style.gridTemplateColumns='repeat(5,1fr)'}
+function refreshImageButtons(){
+  const n=state.imagePrompts.length,txt=n?`IMAGE ${n}`:'IMAGE';imageSourceBtn.textContent=txt;imageTrackBtn.textContent=txt;
+  imageSourceBtn.classList.toggle('on',!!n);imageTrackBtn.classList.toggle('on',!!n);
+  const title=n?state.imagePrompts.map(x=>`${x.name}: ${imageDescriptor(x.profile)}`).join(' | '):'Add image texture prompt';imageSourceBtn.title=title;imageTrackBtn.title=title;
+}
+imageSourceBtn.onclick=imageTrackBtn.onclick=()=>imageInput.click();
+imageInput.onchange=async()=>{
+  const files=[...imageInput.files].slice(0,4);if(!files.length)return;
+  setTrace('IMAGE',`${files.length} file${files.length===1?'':'s'}`,'extracting texture…');
+  try{state.imagePrompts=[];for(const f of files)state.imagePrompts.push(await imageSource(f));refreshImageButtons();const d=state.imagePrompts.map(x=>imageDescriptor(x.profile)).join(' + ');setTrace('IMAGE TEXTURE',d,'active for next prompt');if(E.trackReadout&&E.trackBack.classList.contains('open'))E.trackReadout.textContent=`IMAGE ACTIVE · ${d}`}
+  catch(e){setTrace('FAULT','image preserved',e.message)}finally{imageInput.value=''}
+};
+function clearImages(){state.imagePrompts=[];refreshImageButtons()}
+const clearImageBase=E.clearBtn.onclick;E.clearBtn.onclick=()=>{clearImages();if(clearImageBase)clearImageBase()};
+
+/* Inject the actual images + deterministic local texture description into every model call. */
+const apiFetchImageBase=apiFetch;
+apiFetch=async function(path,opt={}){
+  if(path!=='/responses'||!state.imagePrompts.length||!opt.body)return apiFetchImageBase(path,opt);
+  try{
+    const original=typeof opt.body==='string'?JSON.parse(opt.body):cloneValue(opt.body),textOnly=cloneValue(original),vision=cloneValue(original);
+    const textUser=[...(textOnly.input||[])].reverse().find(x=>x?.role==='user'&&Array.isArray(x.content)),visionUser=[...(vision.input||[])].reverse().find(x=>x?.role==='user'&&Array.isArray(x.content));
+    const texture={type:'input_text',text:`\nACTIVE MULTIMODAL TEXTURE INPUT\n${imagePromptText()}`};
+    if(textUser)textUser.content.push(texture);
+    if(visionUser){visionUser.content.push(texture);for(const x of state.imagePrompts)visionUser.content.push({type:'input_image',image_url:x.dataUrl})}
+    try{return await apiFetchImageBase(path,{...opt,body:JSON.stringify(vision)})}
+    catch(e){
+      if(/image|input_image|vision|content.?type|unsupported/i.test(String(e?.message||e)))return apiFetchImageBase(path,{...opt,body:JSON.stringify(textOnly)});
+      throw e;
+    }
+  }catch(e){if(/JSON|clone/i.test(String(e?.message||e)))return apiFetchImageBase(path,opt);throw e}
+};
+const recordPairImageBase=recordPair;
+recordPair=function(entry){return recordPairImageBase({...entry,imageTextures:state.imagePrompts.map(x=>({name:x.name,profile:cloneValue(x.profile),descriptor:imageDescriptor(x.profile)}))})};
+const saveCurrentImageBase=saveCurrent;
+saveCurrent=function(){const s=current();if(s)s.imageTextures=state.imagePrompts.map(x=>({name:x.name,profile:cloneValue(x.profile),descriptor:imageDescriptor(x.profile)}));return saveCurrentImageBase()};
+E.keepBtn.onclick=saveCurrent;
+
