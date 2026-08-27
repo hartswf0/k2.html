@@ -1,0 +1,56 @@
+/* ---------- region selection on the vertical film ---------- */
+const regionHeadBtn=document.createElement('button');regionHeadBtn.id='regionHeadBtn';regionHeadBtn.className='headTool';regionHeadBtn.hidden=true;regionHeadBtn.textContent='REGION';
+if(soloHeadBtn?.parentElement)soloHeadBtn.after(regionHeadBtn);else if(X?.groupBtn?.parentElement)X.groupBtn.after(regionHeadBtn);
+const specLabel=document.querySelector('.specLabel');if(specLabel)specLabel.textContent='result · circle / drag film to select time · tap track numbers to select channels';
+E.spec.style.touchAction='none';E.spec.style.cursor='crosshair';
+
+function snapBeat(x){return Math.round(x*4)/4}
+function regionFromGesture(path){
+  if(!state.ir||!path?.length)return null;const r=E.spec.getBoundingClientRect(),xs=path.map(p=>p.x),min=Math.min(...xs),max=Math.max(...xs);if(max-min<10)return null;
+  let start=snapBeat(clamp(min/r.width*state.ir.length,0,state.ir.length)),end=snapBeat(clamp(max/r.width*state.ir.length,0,state.ir.length));
+  if(end-start<.5)end=Math.min(state.ir.length,start+.5);return{start:+start.toFixed(2),end:+end.toFixed(2),label:'REGION',energy:[]};
+}
+function regionEnergy(selection=state.regionSelection,ir=state.ir){
+  if(!selection||!ir)return{label:'REGION',bins:[0,0,0,0]};const bins=[0,0,0,0],span=Math.max(.001,selection.end-selection.start);
+  for(const e of ir.events){if(e.muted||e.start<selection.start||e.start>=selection.end)continue;const i=clamp(Math.floor((e.start-selection.start)/span*4),0,3);bins[i]+=(e.vel||.5)*Math.min(1,Math.max(.2,e.dur||.1))}
+  const mx=Math.max(.001,...bins),n=bins.map(x=>x/mx),first=(n[0]+n[1])*.5,last=(n[2]+n[3])*.5,mid=(n[1]+n[2])*.5,edges=(n[0]+n[3])*.5;let label='HOLD';
+  if(last>first+.28)label='RISE';else if(first>last+.28)label='DROP';else if(mid<edges-.3)label='BREAK';else if(Math.max(...n)-Math.min(...n)>.35)label='ENERGY';
+  return{label,bins:n.map(x=>+x.toFixed(2))};
+}
+function regionText(r=state.regionSelection){if(!r)return'';return `${r.label} ${r.start.toFixed(2)}–${r.end.toFixed(2)}b`}
+function refreshRegionUI(){
+  const r=state.regionSelection;regionHeadBtn.hidden=!r;if(r)regionHeadBtn.textContent=regionText(r);
+  if(regionOps)regionOps.hidden=!r;
+  if(E.trackBack.classList.contains('open')){
+    if(r){const targets=regionTargets();E.trackMeta.textContent=`${regionText(r)} · ${targets.length?targets.map(t=>`T${t}`).join('+'):'all tracks'}`;E.trackAI.textContent='CAST 4'}
+  }
+  drawRegionOverlay();
+}
+function clearRegion({restorePreview=true}={}){
+  if(restorePreview&&state.regionStonePreview>=0&&state.regionStoneBase)restoreRegionOriginal(false);
+  state.regionSelection=null;state.regionGesture=[];clearRegionStones(false);refreshRegionUI();setTrace('REGION','cleared','whole song active');
+}
+function drawRegionOverlay(){
+  if(!state.ir)return;const c=E.spec.getContext('2d'),r=E.spec.getBoundingClientRect();if(r.width<1||r.height<1)return;const orange=getComputedStyle(document.documentElement).getPropertyValue('--orange').trim()||'#d85e25';
+  if(state.regionSelection){const x=state.regionSelection.start/state.ir.length*r.width,w=(state.regionSelection.end-state.regionSelection.start)/state.ir.length*r.width;c.save();c.fillStyle='rgba(216,94,37,.12)';c.fillRect(x,0,w,r.height);c.strokeStyle=orange;c.lineWidth=2;c.strokeRect(x+1,1,Math.max(1,w-2),Math.max(1,r.height-2));c.fillStyle=orange;c.font='700 9px ui-monospace,monospace';c.fillText(regionText(),x+5,16);c.restore()}
+  if(state.regionGesture.length>1){c.save();c.strokeStyle=orange;c.lineWidth=2;c.beginPath();c.moveTo(state.regionGesture[0].x,state.regionGesture[0].y);for(const p of state.regionGesture.slice(1))c.lineTo(p.x,p.y);c.stroke();c.restore()}
+}
+const drawSpecRegionBase=drawSpec;
+drawSpec=function(){drawSpecRegionBase();drawRegionOverlay()};
+let regionPointer=null;
+E.spec.onpointerdown=e=>{if(!state.ir)return;regionPointer=e.pointerId;E.spec.setPointerCapture?.(e.pointerId);const r=E.spec.getBoundingClientRect();state.regionGesture=[{x:e.clientX-r.left,y:e.clientY-r.top}];drawSpec()};
+E.spec.onpointermove=e=>{if(e.pointerId!==regionPointer)return;const r=E.spec.getBoundingClientRect();state.regionGesture.push({x:clamp(e.clientX-r.left,0,r.width),y:clamp(e.clientY-r.top,0,r.height)});if(state.regionGesture.length%2===0)drawSpec()};
+E.spec.onpointerup=E.spec.onpointercancel=e=>{if(e.pointerId!==regionPointer)return;regionPointer=null;const r=regionFromGesture(state.regionGesture);state.regionGesture=[];if(!r){drawSpec();return}const en=regionEnergy(r);r.label=en.label;r.energy=en.bins;state.regionSelection=r;clearRegionStones(false);refreshRegionUI();setTrace(r.label,`${r.start.toFixed(2)}–${r.end.toFixed(2)} beats`,`select tracks or edit whole region`)};
+
+function regionTargets(){const selected=selectedArray().filter(t=>!state.anchorTracks.has(t));return selected.length?selected:allTracks().filter(t=>!state.anchorTracks.has(t))}
+function openRegionEditor(){if(!state.regionSelection)return;openSelectionSheet();E.trackTitle.textContent=`${state.regionSelection.label} REGION`;E.trackMeta.textContent=`${state.regionSelection.start.toFixed(2)}–${state.regionSelection.end.toFixed(2)}b · ${regionTargets().length} target tracks`;E.trackPrompt.placeholder='Change only this time-region…';E.trackAI.textContent='CAST 4';refreshRegionUI()}
+regionHeadBtn.onclick=openRegionEditor;
+
+/* Region-only controls appear only when a region exists. */
+const regionOps=document.createElement('div');regionOps.className='selectOps';regionOps.hidden=true;regionOps.style.gridTemplateColumns='repeat(3,1fr)';
+regionOps.innerHTML='<button id="regionAudition">▶ REGION</button><button id="regionAllTracks">ALL TRACKS</button><button id="regionClear">CLEAR REGION</button>';
+selectOpsEl.after(regionOps);
+const regionAuditionBtn=$('regionAudition'),regionAllTracksBtn=$('regionAllTracks'),regionClearBtn=$('regionClear');
+regionAllTracksBtn.onclick=()=>{state.selectedTracks=new Set(allTracks().filter(t=>!state.anchorTracks.has(t)));state.selectedTrack=selectedArray()[0]??null;updateSelectionUI();openRegionEditor()};
+regionClearBtn.onclick=()=>{clearRegion();E.trackBack.classList.remove('open')};
+
