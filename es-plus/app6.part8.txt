@@ -1,0 +1,86 @@
+
+/* v9: mixer isolation + deterministic reruns
+   MUTE changes audibility only. It never invokes the arranger.
+   Palette resolution is locked per stone/query so identical code re-runs identically. */
+
+function stablePaletteKey(i,role,query,genre){return `${i}|${role}|${query}|${genre}`}
+resolvePlanPalette=async function(p){
+  await loadCatalog();
+  const stone=current();
+  if(stone&&!stone.soundLocks)stone.soundLocks={};
+  p.palette=p.palette.map((x,i)=>{
+    const patch=p.trackPatches[String(7+i)]||{},query=patch.query||x.query,role=patch.role||x.role,explicit=patch.soundName;
+    const key=stablePaletteKey(i,role,query,p.genre);
+    let sound=null;
+    const locked=stone?.soundLocks?.[key];
+    if(explicit)sound=(state.catalog||[]).find(s=>s.name===explicit)||null;
+    if(!sound&&locked)sound=(state.catalog||[]).find(s=>s.name===locked)||null;
+    if(!sound)sound=resolveSound(role,query,p.genre);
+    if(sound&&stone&&!explicit)stone.soundLocks[key]=sound.name;
+    if(sound)state.usedSounds.add(sound.name);
+    return{...x,query,role,sound};
+  });
+};
+
+function arrangementSeedShape(p){
+  return{
+    genre:p.genre,tempo:p.tempo,key:p.key,mode:p.mode,swing:p.swing,bars:p.bars,groove:p.groove,density:p.density,
+    progression:p.progression,bass:p.bass,lead:p.lead,drawRhythm:p.drawRhythm,drawContour:p.drawContour,
+    drawEnergy:p.drawEnergy,drawBlank:p.drawBlank
+  };
+}
+
+arrange=async function(p){
+  await resolvePlanPalette(p);
+  const events=[],fam=family(p.genre,p.palette),seed=hash(JSON.stringify(arrangementSeedShape(p))),r=seeded(seed),dr=drumPattern(p.groove);
+  const add=(type,track,start,dur,note=0,vel=.7,meta={})=>events.push({id:`e${events.length+1}`,type,track,start,dur,note,vel,...meta});
+  for(let bar=0;bar<p.bars;bar++){
+    const base=bar*4,en=sectionEnergy(p,bar),blank=blankSection(p,bar);if(blank&&bar%2===1)continue;
+    dr[0].forEach(st=>{if(r()<p.density*en*drawingGate(p,st))add('kick',1,base+st/4,.12,36,.8*en)});
+    dr[1].forEach(st=>{if(r()<Math.min(1,.7+p.density*.3))add('snare',2,base+st/4,.1,38,.68*en)});
+    dr[2].forEach(st=>{if(r()<p.density*en*drawingGate(p,st))add('hat',3,base+st/4,.05,42,.3+.3*en)});
+    const deg=p.progression[bar%p.progression.length]||1;
+    add('chord',5,base,.9,degreeMidi(p,deg,4),.36*en,{degree:deg,family:fam});
+    const bm=p.bass.length?p.bass:[0];
+    for(let i=0;i<4;i++){const st=i*4;if(r()<(.55+p.density*.35)*drawingGate(p,st))add('bass',4,base+i,.55,degreeMidi(p,deg,2)+(bm[(bar*2+i)%bm.length]||0),.55*en,{family:fam})}
+    const lm=p.lead.length?p.lead:[0,2,4,5],cont=p.drawContour?.length?p.drawContour:null;
+    for(let i=0;i<4;i++){const st=i*4;if(r()<p.density*.52*en*drawingGate(p,st))add('lead',6,base+i+.25,.35,degreeMidi(p,1,5)+(lm[(bar*3+i)%lm.length]||0)+(cont?cont[(bar+i)%cont.length]:0),.38*en,{family:fam})}
+  }
+  p.palette.forEach((x,idx)=>{
+    const patch=p.trackPatches[String(7+idx)]||{},behavior=patch.behavior||x.behavior,every=behavior==='loop'?4:behavior==='punctuate'?3:behavior==='chop'?2:Math.max(4,p.bars);
+    for(let bar=idx%2;bar<p.bars;bar+=every)add('sample',7+idx,bar*4,behavior==='one_shot'?.8:3.8,0,x.level,{paletteIndex:idx,role:x.role,query:x.query,behavior,sound:x.sound});
+  });
+  if(p.drawRhythm)for(let st=0;st<16;st++)if(p.drawRhythm[st])add('draw',20,st/4,.04,72+(p.drawContour?.[st%8]||0),.22);
+  return{...p,family:fam,events:applyPatches(events,p),length:p.bars*4};
+};
+
+function writeMixerMute(track,muted){
+  const lines=E.code.value.split('\n');
+  patchLine(lines,track,{mute:!!muted});
+  E.code.value=lines.join('\n');
+  if(state.plan){
+    state.plan.trackPatches=state.plan.trackPatches||{};
+    const k=String(track),next={...(state.plan.trackPatches[k]||{})};
+    if(muted)next.mute=true;else delete next.mute;
+    if(Object.keys(next).length)state.plan.trackPatches[k]=next;else delete state.plan.trackPatches[k];
+  }
+  if(state.ir)for(const e of state.ir.events)if(e.track===track)e.muted=!!muted;
+}
+function refreshMixerSurface(){
+  state.dirty=false;E.codeState.textContent='matches sound';updateGutter();
+  if(state.ir){
+    const muted=[...new Set(state.ir.events.filter(e=>e.muted).map(e=>e.track))],audible=state.ir.events.filter(e=>!e.muted).length;
+    E.soundState.textContent=`${audible} audible events${muted.length?` · ${muted.length} muted`:''}`;
+    E.playBtn.disabled=!audible;renderTimeline();drawSpec();
+  }
+  refreshMuteControl();
+}
+const mixerMuteButton=document.querySelector('[data-track-op="mute"]');
+if(mixerMuteButton)mixerMuteButton.onclick=async()=>{
+  const targets=editableSelected();
+  if(!targets.length){E.trackReadout.textContent='selected tracks are invariant';return}
+  const allMuted=targets.every(t=>!!trackPatch(t).mute),next=!allMuted;
+  for(const tr of targets)writeMixerMute(tr,next);
+  refreshMixerSurface();openSelectionSheet();
+  setTrace(next?'MUTE':'UNMUTE',targets.map(t=>`T${t}`).join(' + '),next?'mixer only · arrangement untouched':'mixer only · arrangement untouched');
+};
