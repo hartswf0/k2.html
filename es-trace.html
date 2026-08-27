@@ -4,28 +4,56 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="color-scheme" content="light">
-<title>ES/TRACE — Requisite Variety v8.3</title>
-<link rel="stylesheet" href="es-trace-v82.css">
+<title>ES/TRACE — TUNEHOUNDS v9</title>
+<link rel="stylesheet" href="es-trace-v9.css">
 <script src="https://unpkg.com/soundfont-player@0.12.0/dist/soundfont-player.js"></script>
 </head>
 <body>
 <div class="loading" id="loading"></div>
 <div class="app">
-<header class="top"><div class="brand">ES/TRACE<small>REQUISITE VARIETY</small></div><div class="grow"></div><div class="topStat" id="topStat">128 MIDI · 47 DRUMS · ES … · TAGS …</div><button class="topBtn" id="aiBtn">AI</button></header>
+<header class="top"><div class="brand">ES/TRACE<small>TUNEHOUNDS · SOUND OBJECTS</small></div><div class="grow"></div><div class="topStat" id="topStat">128 MIDI · 47 DRUMS · ES … · TAGS …</div><button class="topBtn" id="aiBtn">AI</button></header>
 <main class="main" id="main">
 <section class="mode worldMode active" id="worldMode"><div class="worldHead"><div class="tabs3"><button class="on" data-world="0">A</button><button data-world="1">B</button><button data-world="2">C</button></div><div class="songMeta"><b id="songTitle">WORLD</b><span id="songTags"></span></div><div class="grow"></div><button class="mini" id="midiBtn">MIDI</button></div><div class="timeline" id="timeline"><div class="timelineInner" id="timelineInner"><div class="grid"></div><div class="playhead"></div><div id="lanes"></div></div></div></section>
 <div class="resize" id="resize"></div>
-<section class="mode traceMode" id="traceMode"><div class="tracePanel"><div class="hero" id="traceHero">TRACE</div><div class="traceGrid" id="traceGrid"></div><div class="causal" id="causal"></div><div class="traceActions"><button id="instrumentBtn">SOUND</button><button id="backBtn">WORLD</button></div><div class="aiRow"><input id="ask" placeholder="change selected…" disabled><button id="askBtn" disabled>AI</button></div><div class="tx" id="tx"><div class="txTabs"><button class="on" data-tab="result">RESULT</button><button data-tab="response">RESPONSE</button><button data-tab="reason">REASON</button><button data-tab="request">REQUEST</button></div><div class="txBody" id="txBody"></div></div></div></section>
+<section class="mode traceMode" id="traceMode"><div class="tracePanel"><div class="hero" id="traceHero">TRACE</div><div class="traceGrid" id="traceGrid"></div><div class="causal" id="causal"></div><div class="traceActions four"><button id="instrumentBtn">SOUND</button><button id="sculptBtn">SCULPT</button><button id="forageBtn">FORAGE</button><button id="backBtn">WORLD</button></div><div class="aiRow"><input id="ask" placeholder="change selected…" disabled><button id="askBtn" disabled>AI</button></div><div class="tx" id="tx"><div class="txTabs"><button class="on" data-tab="result">RESULT</button><button data-tab="response">RESPONSE</button><button data-tab="reason">REASON</button><button data-tab="request">REQUEST</button></div><div class="txBody" id="txBody"></div></div></div></section>
 </main>
 <div class="status"><span class="pulse" id="pulse"></span><b id="statusKey">READY</b><span class="grow" id="statusText">tap MAKE or PLAY</span><span id="laneCount">8 / 64</span></div>
 <nav class="dock"><button class="primary" id="makeBtn">MAKE</button><button id="playBtn">▶ PLAY</button><button id="traceBtn">TRACE</button></nav>
 </div>
 <section class="sheet" id="makeSheet"><div class="sheetHead"><b>MAKE 3</b><div class="grow"></div><button class="close" data-close="makeSheet">×</button></div><div class="sheetBody"><textarea class="prompt" id="prompt" placeholder="gnawa bass × footwork × spectral strings"></textarea><div class="segrow"><button class="seg on" data-engine="ai">OPENAI</button><button class="seg" data-engine="local">LOCAL</button><button class="seg" id="surprise">SURPRISE</button></div><div class="seedRow" id="seedRow"></div><div class="variety"><b>ABSORB</b> <span id="varietySummary">loading variety…</span><div class="chips" id="chips"></div></div><div class="keybox" id="keybox"><div class="keyrow"><input id="key" type="password" autocomplete="off" placeholder="OPENAI API KEY"><button class="topBtn" id="connect">CONNECT</button></div><div class="keymsg" id="keymsg">Key stays in this page only.</div></div><button class="big" id="make3">MAKE 3</button><button class="big secondary" id="local3">LOCAL 3 NOW</button></div></section>
 <section class="sheet" id="soundSheet"><div class="sheetHead"><b>SOUND LIBRARY</b><div class="grow"></div><button class="close" data-close="soundSheet">×</button></div><div class="sheetBody"><div class="libraryTarget" id="libraryTarget">SELECT A TRACK</div><div class="segrow"><button class="seg on" data-kind="midi">MIDI · 128</button><button class="seg" data-kind="drums">DRUMS · 47</button><button class="seg" data-kind="es">EARSKETCH · <span id="esCount">…</span></button></div><input class="search" id="search" placeholder="SEARCH SOUND"><div class="count" id="soundCount">128 MIDI instruments · ALL</div><div class="families" id="families"></div><div class="soundList" id="soundList"></div></div></section>
+<section class="sheet soundLab" id="soundLabSheet">
+  <div class="sheetHead"><b>RADIODRAW / TUNEHOUNDS</b><div class="grow"></div><button class="close" data-close="soundLabSheet">×</button></div>
+  <div class="sheetBody labBody">
+    <div class="labTop">
+      <div class="labObject"><small>SOUND OBJECT</small><b id="labName">NO SAMPLE</b><span id="labRole">select a track</span></div>
+      <div class="labState" id="labState">FOUND → FETCHING → DECODED → READY</div>
+    </div>
+    <div class="radioWrap">
+      <canvas id="radioCanvas"></canvas>
+      <div class="radioModes"><button class="seg on" data-radio="select">SELECT</button><button class="seg" data-radio="draw">DRAW</button><button class="seg" id="clearDraw">CLEAR</button></div>
+    </div>
+    <div class="labChat"><input id="houndPrompt" placeholder="keep the attack, freeze the body / find darker cousins"><button class="topBtn" id="sniffBtn">SNIFF</button></div>
+    <div class="shapeGrid">
+      <label><span>RATE <b id="rateVal">1.00×</b></span><input id="rateCtl" type="range" min="0.25" max="2" step="0.05" value="1"></label>
+      <label><span>TONE <b id="toneVal">0</b></span><input id="toneCtl" type="range" min="-1" max="1" step="0.05" value="0"></label>
+      <label><span>DRIVE <b id="driveVal">0</b></span><input id="driveCtl" type="range" min="0" max="24" step="1" value="0"></label>
+      <label><span>SPACE <b id="spaceVal">0</b></span><input id="spaceCtl" type="range" min="0" max="1" step="0.05" value="0"></label>
+      <label><span>GRAIN <b id="grainVal">0</b></span><input id="grainCtl" type="range" min="0" max="1" step="0.05" value="0"></label>
+      <button class="shapeToggle" id="reverseCtl">REVERSE · OFF</button>
+    </div>
+    <div class="labActions"><button id="auditionBtn">▶ AUDITION</button><button id="bounceBtn">BOUNCE</button><button id="importBtn">IMPORT</button><input id="importFile" type="file" accept="audio/*" hidden></div>
+    <div class="manifest" id="labManifest">No sample loaded. FORAGE or IMPORT one.</div>
+    <div class="houndHead"><b>TUNEHOUNDS</b><span>not one match — several directions</span></div>
+    <div class="houndTray" id="houndTray"></div>
+    <div class="labTrace" id="labTrace"></div>
+  </div>
+</section>
 <script src="es-trace-v82-data.js"></script>
 <script src="es-trace-v82-app-a.js"></script>
 <script src="es-trace-v82-app-b.js"></script>
 <script src="es-trace-v82-app-c.js"></script>
 <script src="es-trace-v83-audio.js"></script>
+<script src="es-trace-v9-soundlab.js"></script>
 </body>
 </html>
