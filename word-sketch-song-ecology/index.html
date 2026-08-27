@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#fffdf0">
+<title>Sketchsong Sound Ecology</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<div id="gate" class="gate"><div class="gateBox"><div class="gateTitle">SOUND ECOLOGY</div><div class="gateRow"><input id="key" type="password" placeholder="OpenAI API key"><button id="check">CHECK</button></div><div class="gateRow"><select id="model"><option>gpt-5.6-terra</option><option>gpt-5.6-luna</option><option>gpt-5.6-sol</option></select><span style="padding:11px;font:850 9px ui-monospace,monospace">MODEL</span></div><div id="gateState" class="gateState">KEY STAYS IN THIS TAB</div></div></div>
+<div id="app"><header class="top"><div class="brand"><span id="stateDot" class="dot"></span><span>SOUND ECOLOGY</span></div><div id="state" class="state">DROP A SOUND OR MAKE A SEED</div><div class="spacer"></div><button id="uploadBtn">＋</button><button id="exportBtn">↓</button></header>
+<main class="stage" id="stage"><div class="creatureHead"><b id="name">NO SOUND YET</b><span id="meta" class="meta">SAMPLE / DESCENDANT / GROOVE</span><button id="addGroove">⊕</button></div><div class="visual"><section class="viz"><label>WAVE</label><small>drag to mark</small><canvas id="wave" width="1000" height="320"></canvas><canvas id="waveInk" class="ink" width="1000" height="320"></canvas></section><section class="viz"><label>SPECTRUM</label><small>draw a correction</small><canvas id="spec" width="1000" height="320"></canvas><canvas id="specInk" class="ink" width="1000" height="320"></canvas></section></div><div id="prov" class="prov"><div class="provLabel">SEDIMENT</div></div><div id="empty" class="empty"><div><b>DROP A SAMPLE<br>OR MAKE A SEED</b><span>audio files work anywhere on the surface</span></div></div></main>
+<section class="rail"><div class="railHead"><b id="railTitle">CREATURES</b><span id="railMeta">0 in ecology</span></div><div id="cards" class="cards"></div></section>
+<nav class="modes"><button data-mode="forage" class="on">FORAGE</button><button data-mode="breed">BREED</button><button data-mode="groove">GROOVE</button><button data-mode="sculpt">SCULPT</button></nav>
+<footer class="transport"><button id="play">▷</button><button id="stop">■</button><input id="scrub" type="range" min="0" max="1" step=".001"><button id="ask" class="ask">ASK</button><button id="loop" class="loop">FORAGE</button></footer></div>
+<input id="file" type="file" accept="audio/*" multiple hidden>
+<aside id="chat" class="drawer chat"><div class="head"><span id="chatTitle">CURRENT SOUND</span><button id="chatClose">×</button></div><div id="thread" class="thread"></div><div class="chatSend"><input id="chatInput" placeholder="talk to this sound"><button id="chatGo">→</button></div></aside>
+<aside id="groove" class="drawer groove"><div class="head"><span>GROOVE CIRCLE</span><button id="grooveClose">×</button></div><div id="slots" class="slots"></div><div id="ideas" class="ideas"></div><div class="grooveActions"><button id="grooveBreed">FIND GROOVES</button><button id="grooveClear">CLEAR CIRCLE</button></div></aside>
+<div id="busy" class="busy"><div class="busyBox"><div id="busyTitle" class="busyTitle">LISTENING</div><div class="busySteps"><span id="bs1">READ</span><span id="bs2">MUTATE</span><span id="bs3">RENDER</span><span id="bs4">LISTEN</span></div></div></div>
+<script src="app1.js"></script>
+<script src="app2.js"></script>
+<script src="app3.js"></script>
+<script src="app4.js"></script></body></html>
