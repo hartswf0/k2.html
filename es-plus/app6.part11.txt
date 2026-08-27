@@ -1,0 +1,226 @@
+
+/* v12: PART BANK + cross-song fusion
+   Harvest committed audible track state from any song, persist it with provenance,
+   select parents across songs, CAST four fusion stones, audition non-destructively,
+   and USE one to create a new executable fusion stone. */
+const PART_BANK_KEY='es.partbank.v1';
+state.partBankSelected=new Set();
+state.fusionStones=[];
+state.fusionPreview=-1;
+state.fusionBase=null;
+state.fusionLogId=null;
+state.fusionTrackNames={};
+
+function partBankRows(){
+  try{const a=JSON.parse(localStorage.getItem(PART_BANK_KEY)||'[]');return Array.isArray(a)?a:[]}catch(_){return[]}
+}
+function writePartBank(a){
+  try{localStorage.setItem(PART_BANK_KEY,JSON.stringify(a.slice(-32)))}catch(e){setTrace('PART BANK','storage full',e.message)}
+}
+function bankUid(){return `bank_${Date.now().toString(36)}_${Math.floor(Math.random()*1e6).toString(36)}`}
+function compactSound(s){
+  if(!s)return null;
+  return{name:s.name||'',path:s.path||'',tempo:s.tempo??null,key:s.key??null,instrument:s.instrument??'',genre:s.genre??'',artist:s.artist??''};
+}
+function compactEventForBank(e){
+  const x={id:e.id,type:e.type,track:e.track,start:+e.start,dur:+e.dur,note:e.note??0,vel:+e.vel,transpose:+(e.transpose||0),role:e.role||'',query:e.query||'',behavior:e.behavior||'',muted:!!e.muted};
+  if(e.sound)x.sound=compactSound(e.sound);
+  if(e.degree!=null)x.degree=e.degree;
+  if(e.family)x.family=e.family;
+  return x;
+}
+function harvestSelectedParts(){
+  if(!state.ir)return setTrace('HARVEST','RUN first','no audible arrangement');
+  if(state.partStonePreview>=0)return setTrace('HARVEST','preview not committed','USE the part stone first');
+  const tracks=selectedArray();
+  if(!tracks.length)return setTrace('HARVEST','select track numbers','nothing selected');
+  const s=current(),rows=partBankRows(),made=[];
+  for(const tr of tracks){
+    const events=state.ir.events.filter(e=>e.track===tr);
+    if(!events.length)continue;
+    const rec={
+      id:bankUid(),savedAt:new Date().toISOString(),
+      parentStoneId:s?.id||null,parentSong:s?.name||'untitled',parentGenre:s?.genre||state.plan?.genre||'hybrid',
+      parentPrompt:s?.source||E.prompt.value||'',promptLogIds:[...(s?.promptLogIds||[])],
+      sourceTrack:tr,trackName:trackName(tr),tempo:state.ir.tempo||state.plan?.tempo||100,
+      key:state.plan?.key||s?.key||'C',mode:state.plan?.mode||s?.mode||'minor',bars:state.ir.bars||state.plan?.bars||8,
+      family:state.ir.family||family(state.plan?.genre||'',state.plan?.palette||[]),
+      patch:cloneValue(trackPatch(tr)),
+      events:events.map(compactEventForBank)
+    };
+    rows.push(rec);made.push(rec);
+  }
+  writePartBank(rows);
+  for(const r of made)state.partBankSelected.add(r.id);
+  renderPartBank();
+  setTrace('HARVEST',made.map(x=>x.trackName).join(' + '),`${made.length} part${made.length===1?'':'s'} saved from ${s?.name||'song'}`);
+  if(E.trackReadout)E.trackReadout.textContent=`HARVESTED ${made.length} · PARTS bank now has ${partBankRows().length}`;
+}
+
+const fusionStyle=document.createElement('style');
+fusionStyle.textContent=`
+.partBankBack{position:fixed;inset:0;background:rgba(17,17,15,.26);z-index:245;display:none;align-items:flex-end;justify-content:center}.partBankBack.open{display:flex}
+.partBankSheet{width:min(680px,calc(100% - 10px));max-height:88vh;margin:0 5px 5px;background:var(--paper);border:1px solid var(--ink);display:grid;grid-template-rows:34px auto minmax(80px,1fr) auto auto;box-shadow:0 -12px 38px rgba(0,0,0,.12)}
+.partBankPrompt{display:grid;grid-template-columns:1fr 74px;border-bottom:1px solid var(--line)}.partBankPrompt input{min-width:0;height:42px;border:0;border-right:1px solid var(--line);padding:0 9px;background:transparent;font:500 9px/1.2 ui-monospace,monospace}.partBankPrompt button{font:900 9px/1 ui-monospace,monospace}
+.partBankList{overflow:auto}.bankRow{min-height:50px;display:grid;grid-template-columns:34px minmax(0,1fr) 48px;border-bottom:1px solid var(--line);align-items:stretch}.bankPick{font:900 11px/1 ui-monospace,monospace;border-right:1px solid var(--line)}.bankPick.on{background:var(--ink);color:var(--paper)}.bankInfo{min-width:0;padding:6px 8px;display:grid;gap:3px}.bankInfo b{font:900 8px/1 ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bankInfo span{font:500 7px/1.2 ui-monospace,monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bankDelete{color:#9b2f18;font:800 8px/1 ui-monospace,monospace;border-left:1px solid var(--line)}
+.fusionRail{display:none;border-top:1px solid var(--line);background:rgba(255,255,255,.38)}.fusionRail.open{display:block}.fusionScroller{display:flex;gap:5px;overflow-x:auto;padding:6px}.fusionChip{flex:0 0 min(190px,46vw);min-width:145px;height:58px;border:1px solid var(--ink);padding:6px;text-align:left;display:grid;grid-template-rows:auto 1fr;gap:3px}.fusionChip b{font:900 8px/1 ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fusionChip span{font:500 7px/1.25 ui-monospace,monospace;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.fusionChip.on{background:var(--ink);color:var(--paper)}.fusionChip.on span{color:#ccc}
+.fusionActions{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line)}.fusionActions button{height:36px;border-right:1px solid var(--line);font:900 8px/1 ui-monospace,monospace}.fusionActions button:last-child{border-right:0}.fusionActions .use{background:var(--yellow)}
+.partBankFooter{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}.partBankFooter button{height:38px;border-right:1px solid var(--line);font:900 8px/1 ui-monospace,monospace}.partBankFooter button:last-child{border-right:0}
+`;
+document.head.appendChild(fusionStyle);
+
+const partsBtn=document.createElement('button');
+partsBtn.id='partsBtn';partsBtn.className='toolBtn';partsBtn.textContent='PARTS 0';
+E.keepBtn.after(partsBtn);
+const harvestBtn=document.createElement('button');
+harvestBtn.id='harvestBtn';harvestBtn.textContent='HARVEST';
+if(auditionBtn?.parentElement)auditionBtn.after(harvestBtn);else if(E.trackAI?.parentElement)E.trackAI.after(harvestBtn);
+if(E.trackPrompt?.parentElement)E.trackPrompt.parentElement.style.gridTemplateColumns='1fr 58px 58px 68px';
+
+const bankBack=document.createElement('div');bankBack.className='partBankBack';bankBack.id='partBankBack';
+bankBack.innerHTML=`<div class="partBankSheet"><div class="trackHead"><span>PART BANK</span><span id="partBankMeta"></span></div><div class="partBankPrompt"><input id="fusionPrompt" placeholder="Optional fusion instruction… e.g. bass is spine, keep vocal phrasing"><button id="fusionCast">CAST 4</button></div><div id="partBankList" class="partBankList"></div><div id="fusionRail" class="fusionRail"><div id="fusionScroller" class="fusionScroller"></div><div class="fusionActions"><button id="fusionOriginal">BACK</button><button id="fusionAudition">▶ FUSION</button><button id="fusionUse" class="use" disabled>USE FUSION</button></div></div><div class="partBankFooter"><button id="partBankClearSel">CLEAR SELECT</button><button id="partBankClose">CLOSE</button></div></div>`;
+document.body.appendChild(bankBack);
+const FB={back:bankBack,meta:$("partBankMeta"),list:$("partBankList"),prompt:$("fusionPrompt"),cast:$("fusionCast"),rail:$("fusionRail"),scroller:$("fusionScroller"),original:$("fusionOriginal"),audition:$("fusionAudition"),use:$("fusionUse"),clear:$("partBankClearSel"),close:$("partBankClose")};
+
+function selectedBankRows(){const ids=state.partBankSelected;return partBankRows().filter(x=>ids.has(x.id))}
+function renderPartBank(){
+  const rows=partBankRows(),valid=new Set(rows.map(x=>x.id));for(const id of [...state.partBankSelected])if(!valid.has(id))state.partBankSelected.delete(id);
+  partsBtn.textContent=`PARTS ${rows.length}`;FB.meta.textContent=`${state.partBankSelected.size} selected · ${new Set(selectedBankRows().map(x=>x.parentSong)).size} songs`;
+  FB.list.innerHTML='';
+  if(!rows.length){FB.list.innerHTML='<div class="logEmpty">Harvest a track from any song, switch songs, harvest another, then fuse them here.</div>';FB.cast.disabled=true;return}
+  for(const r of [...rows].reverse()){
+    const row=document.createElement('div');row.className='bankRow';
+    const pick=document.createElement('button');pick.className='bankPick'+(state.partBankSelected.has(r.id)?' on':'');pick.textContent=state.partBankSelected.has(r.id)?'✓':'+';pick.onclick=()=>{if(state.partBankSelected.has(r.id))state.partBankSelected.delete(r.id);else state.partBankSelected.add(r.id);renderPartBank()};
+    const info=document.createElement('div');info.className='bankInfo';info.innerHTML=`<b>${esc(r.trackName)} · ${esc(r.parentSong)}</b><span>${esc(r.parentGenre)} · ${r.tempo} bpm · ${esc(r.key)} ${esc(r.mode)} · ${r.events.length} events</span>`;
+    const del=document.createElement('button');del.className='bankDelete';del.textContent='DEL';del.onclick=()=>{const next=partBankRows().filter(x=>x.id!==r.id);writePartBank(next);state.partBankSelected.delete(r.id);renderPartBank()};
+    row.append(pick,info,del);FB.list.appendChild(row);
+  }
+  FB.cast.disabled=state.partBankSelected.size<2;
+}
+partsBtn.onclick=()=>{renderPartBank();FB.back.classList.add('open')};
+FB.close.onclick=()=>{restoreFusionBase(false);FB.back.classList.remove('open')};
+FB.back.onclick=e=>{if(e.target===FB.back){restoreFusionBase(false);FB.back.classList.remove('open')}};
+FB.clear.onclick=()=>{state.partBankSelected.clear();clearFusionCandidates();renderPartBank()};
+harvestBtn.onclick=harvestSelectedParts;
+
+function fusionTransformSchema(){return{type:'object',additionalProperties:false,required:['partId','transpose','shift','gain','density','durationScale'],properties:{partId:{type:'string',maxLength:80},transpose:{type:'integer',minimum:-24,maximum:24},shift:{type:'number',minimum:-16,maximum:16},gain:{type:'number',minimum:.1,maximum:1.5},density:{type:'number',minimum:.15,maximum:1},durationScale:{type:'number',minimum:.35,maximum:2.5}}}}
+function fusionSchema(){return{type:'object',additionalProperties:false,required:['stones'],properties:{stones:{type:'array',minItems:4,maxItems:4,items:{type:'object',additionalProperties:false,required:['name','concept','tempo','key','mode','bars','transforms'],properties:{name:{type:'string',maxLength:28},concept:{type:'string',maxLength:120},tempo:{type:'integer',minimum:45,maximum:190},key:{type:'string',enum:Object.keys(ROOTS)},mode:{type:'string',enum:Object.keys(MODES)},bars:{type:'integer',enum:[4,8,12,16,24]},transforms:{type:'array',minItems:2,maxItems:12,items:fusionTransformSchema()}}}}}}}
+function bankContext(r){return{id:r.id,parentSong:r.parentSong,parentGenre:r.parentGenre,track:r.trackName,tempo:r.tempo,key:r.key,mode:r.mode,bars:r.bars,eventCount:r.events.length,types:[...new Set(r.events.map(e=>e.type))],sampleNames:[...new Set(r.events.map(e=>e.sound?.name).filter(Boolean))].slice(0,6)}}
+
+function fusionBaseSnapshot(){return{stoneIndex:state.stoneIndex,code:E.code.value,plan:cloneValue(state.plan),ir:cloneValue(state.ir),selected:new Set(state.selectedTracks),selectedTrack:state.selectedTrack,soloActive:state.soloActive,fusionTrackNames:{...state.fusionTrackNames}}}
+function clearFusionCandidates(){state.fusionStones=[];state.fusionPreview=-1;state.fusionLogId=null;FB.scroller.innerHTML='';FB.rail.classList.remove('open');FB.use.disabled=true}
+function restoreFusionBase(render=true){
+  const b=state.fusionBase;if(!b)return;
+  if(state.playing)stop();
+  state.stoneIndex=b.stoneIndex;E.code.value=b.code;state.plan=cloneValue(b.plan);state.ir=cloneValue(b.ir);state.selectedTracks=new Set(b.selected);state.selectedTrack=b.selectedTrack;state.soloActive=b.soloActive;state.fusionTrackNames={...b.fusionTrackNames};
+  state.fusionPreview=-1;
+  if(render&&state.ir){renderTimeline();drawSpec();updateSelectionUI();refreshSoloUI();updateGutter()}
+  renderFusionCandidates();
+}
+function transformedFusionEvents(parent,tf,newTrack,targetTempo,targetBars,index){
+  const out=[],sourceTempo=Math.max(1,+parent.tempo||targetTempo),tempoScale=targetTempo/sourceTempo,maxBeat=targetBars*4;
+  for(const e0 of parent.events){
+    const density=clamp(+tf.density||1,.15,1),keep=(hash(`${parent.id}|${e0.id}|${index}|fusion-density`)%10000)/10000;if(keep>density)continue;
+    const start=((+e0.start||0)*tempoScale+(+tf.shift||0));if(start<0||start>=maxBeat)continue;
+    const e={...cloneValue(e0),id:`f${index}_${e0.id}_${out.length}`,track:newTrack,start,dur:Math.max(.02,(+e0.dur||.1)*tempoScale*clamp(+tf.durationScale||1,.35,2.5)),vel:clamp((+e0.vel||.5)*clamp(+tf.gain||1,.1,1.5),.01,1),muted:false};
+    const trans=+tf.transpose||0;
+    if(Number.isFinite(+e.note)&&e.type!=='kick'&&e.type!=='snare'&&e.type!=='hat')e.note=+e.note+trans;
+    if(e.type==='sample')e.transpose=(+e.transpose||0)+trans;
+    out.push(e);
+  }
+  return out;
+}
+function compileFusionStone(stone,parents){
+  const byId=new Map(parents.map(x=>[x.id,x])),events=[],names={},used=[];
+  let nextTrack=21,index=0;
+  for(const tf of stone.transforms){
+    const parent=byId.get(tf.partId);if(!parent)continue;
+    const tr=nextTrack++;names[tr]=`${parent.trackName} ← ${parent.parentSong}`;used.push(parent.id);
+    events.push(...transformedFusionEvents(parent,tf,tr,stone.tempo,stone.bars,index++));
+  }
+  if(used.length<2)throw Error('fusion stone did not preserve at least two parents');
+  events.sort((a,b)=>a.start-b.start||a.track-b.track);
+  const plan={genre:'fusion',tempo:stone.tempo,key:stone.key,mode:stone.mode,bars:stone.bars,swing:0,groove:'free_pulse',density:1,palette:[],progression:[1],bass:[0],lead:[0],surprise:stone.concept,trackPatches:{},fusionMode:true,fusionTransforms:cloneValue(stone.transforms)};
+  return{plan,ir:{...plan,family:'fusion',events,length:stone.bars*4},names};
+}
+function fusionCode(stone){
+  const lines=[`# ES+ FUSION ${stone.name}`,`# ${stone.concept}`,`fusionMode(true)`,`tempo(${stone.tempo})`,`key(${JSON.stringify(stone.key)}, ${JSON.stringify(stone.mode)})`,`bars(${stone.bars})`];
+  for(const tf of stone.transforms)lines.push(`fusionPart(${JSON.stringify(tf.partId)}, ${JSON.stringify({transpose:tf.transpose,shift:tf.shift,gain:tf.gain,density:tf.density,durationScale:tf.durationScale})})`);
+  return lines.join('\n');
+}
+
+/* fusion DSL: ordinary songs still use the existing parser/arranger. */
+const parseCodeFusionBase=parseCode;
+parseCode=function(src){
+  const parts=[],clean=[];let fusionMode=false;
+  for(const line0 of src.split('\n')){
+    const line=line0.replace(/#.*$/,'').trim();
+    if(!line){clean.push(line0);continue}
+    let m=line.match(/^fusionMode\((.*)\)$/);if(m){fusionMode=String(m[1]).trim()!=='false';continue}
+    m=line.match(/^fusionPart\((.*)\)$/);if(m){const a=splitArgs(m[1]).map(parseVal);parts.push({partId:String(a[0]),...(typeof a[1]==='object'?a[1]:{})});continue}
+    clean.push(line0);
+  }
+  const p=parseCodeFusionBase(clean.join('\n'));p.fusionMode=fusionMode;p.fusionParts=parts;return p;
+};
+const arrangeFusionBase=arrange;
+arrange=async function(p){
+  if(!p.fusionMode)return arrangeFusionBase(p);
+  const stone=current(),embedded=stone?.fusionSources||[],bank=partBankRows(),all=[...embedded,...bank],seen=new Map();for(const x of all)seen.set(x.id,x);const parents=[...seen.values()];
+  const spec={tempo:p.tempo,key:p.key,mode:p.mode,bars:p.bars,transforms:p.fusionParts||[],name:stone?.name||'Fusion',concept:stone?.hook||stone?.fusionConcept||''};
+  const built=compileFusionStone(spec,parents);state.fusionTrackNames=built.names;return built.ir;
+};
+const trackNameFusionBase=trackName;
+trackName=function(tr){return state.fusionTrackNames?.[tr]||trackNameFusionBase(tr)};
+
+function renderFusionCandidates(){
+  FB.scroller.innerHTML='';
+  state.fusionStones.forEach((s,i)=>{const b=document.createElement('button');b.className='fusionChip'+(i===state.fusionPreview?' on':'');b.innerHTML=`<b>${i+1} · ${esc(s.name)}</b><span>${esc(s.concept)}</span>`;b.onclick=()=>previewFusion(i,true);FB.scroller.appendChild(b)});
+  FB.rail.classList.toggle('open',!!state.fusionStones.length);FB.use.disabled=state.fusionPreview<0;
+}
+async function previewFusion(i,autoPlay=false){
+  const s=state.fusionStones[i];if(!s)return;if(state.playing)stop();
+  try{
+    const built=compileFusionStone(s,selectedBankRows());state.fusionPreview=i;state.plan=cloneValue(built.plan);state.ir=cloneValue(built.ir);state.fusionTrackNames=built.names;state.selectedTracks=new Set(Object.keys(built.names).map(Number));state.selectedTrack=null;state.soloActive=false;
+    renderTimeline();drawSpec();updateSelectionUI();refreshSoloUI();renderFusionCandidates();
+    setTrace('FUSION STONE',`${i+1}/4 ${s.name}`,'parents preserved · preview only');
+    if(autoPlay&&state.ir.events.length)await play();
+  }catch(e){setTrace('FAULT','fusion preview',e.message)}
+}
+FB.original.onclick=()=>{restoreFusionBase(true);setTrace('BACK','source song restored','fusion candidates preserved')};
+FB.audition.onclick=async()=>{if(state.playing){stop();return}if(state.fusionPreview<0)return;await play()};
+
+function updateFusionLogChosen(i,stone,newStone){if(!state.fusionLogId)return;const rows=logRows(),row=rows.find(x=>x.id===state.fusionLogId);if(!row)return;row.chosen={index:i,name:stone.name,at:new Date().toISOString(),newStoneId:newStone.id};row.codeAfter=newStone.savedCode;writeLog(rows);renderLog()}
+FB.use.onclick=async()=>{
+  const i=state.fusionPreview,spec=state.fusionStones[i];if(i<0||!spec)return;
+  if(state.playing)stop();
+  const parents=selectedBankRows(),built=compileFusionStone(spec,parents),id=`fusion_${Date.now().toString(36)}_${Math.floor(Math.random()*1e5).toString(36)}`;
+  const newStone={id,name:spec.name,genre:'Fusion',lineage:parents.map(x=>`${x.trackName} ← ${x.parentSong}`).join(' × '),hook:spec.concept,tempo:spec.tempo,key:spec.key,mode:spec.mode,swing:0,bars:spec.bars,groove:'free_pulse',palette:[],progression:[1],bassMotif:[0],leadMotif:[0],density:1,drawingUse:'orchestration',surprise:'cross-song fusion',kept:false,source:FB.prompt.value||'cross-song fusion',strokes:[],savedCode:fusionCode(spec),fusion:true,fusionConcept:spec.concept,fusionSources:cloneValue(parents),fusionTransforms:cloneValue(spec.transforms),promptLogIds:state.fusionLogId?[state.fusionLogId]:[]};
+  restoreFusionBase(false);state.stones.push(newStone);state.stoneIndex=state.stones.length-1;state.plan=cloneValue(built.plan);state.ir=cloneValue(built.ir);state.fusionTrackNames=built.names;E.prompt.value=newStone.source;E.code.value=newStone.savedCode;state.selectedTracks.clear();state.selectedTrack=null;state.soloActive=false;renderStones();updateGutter();renderTimeline();drawSpec();updateSelectionUI();refreshSoloUI();E.codeState.textContent='matches sound';E.soundState.textContent=`${state.ir.events.length} fused events`;E.playBtn.disabled=!state.ir.events.length;E.mobileCode.disabled=false;E.mobileSound.disabled=false;E.keepBtn.disabled=false;E.exportBtn.disabled=false;
+  updateFusionLogChosen(i,spec,newStone);clearFusionCandidates();state.fusionBase=null;FB.back.classList.remove('open');setTrace('FUSION USED',newStone.name,`${parents.length} parents → new stone`);if(mobile())showMobile('sound');
+};
+
+FB.cast.onclick=async()=>{
+  const parents=selectedBankRows();if(parents.length<2)return setTrace('FUSE','select at least 2 parts','PART BANK');
+  if(!state.connected){showSheet();return}
+  if(state.playing)stop();
+  const prompt=FB.prompt.value.trim()||'Fuse these parent parts into a coherent new piece without erasing what makes each parent recognizable.';
+  state.fusionBase=fusionBaseSnapshot();clearFusionCandidates();FB.cast.disabled=true;FB.cast.textContent='CASTING';
+  try{
+    const d=await apiFetch('/responses',{method:'POST',body:JSON.stringify({model:state.model,
+      instructions:'You are crossing harvested musical parts from different parent songs. Produce FOUR distinct fusion hypotheses. Preserve the identity of every supplied parent: do not replace parts with generic genre equivalents. Reconcile them through target tempo/key and per-parent transpose, phase/shift, gain, density, and duration. Avoid averaging them into blandness. Each stone must include every parent part exactly once in transforms.',
+      input:[{role:'user',content:[{type:'input_text',text:`REQUEST: ${prompt}\nPARENTS: ${JSON.stringify(parents.map(bankContext))}\nReturn exactly four fusion stones. Each transform partId must be one of the supplied ids, and each stone must contain all supplied ids exactly once.`}]}],
+      text:{format:{type:'json_schema',name:'fusion_stones',strict:true,schema:fusionSchema()}}
+    })});
+    const parsed=JSON.parse(outputText(d)),ids=new Set(parents.map(x=>x.id));
+    state.fusionStones=(parsed.stones||[]).slice(0,4).map((s,idx)=>{const seen=new Set(),transforms=[];for(const tf of s.transforms||[]){if(ids.has(tf.partId)&&!seen.has(tf.partId)){seen.add(tf.partId);transforms.push(tf)}}return{id:`fusion_candidate_${Date.now().toString(36)}_${idx}`,...s,transforms}}).filter(s=>s.transforms.length===parents.length);
+    if(state.fusionStones.length!==4)throw Error(`received ${state.fusionStones.length}/4 complete fusion stones`);
+    const row=recordPair({scope:'cross-song-fusion',prompt,targets:parents.map(x=>x.id),parents:parents.map(bankContext),completion:{summary:`4 fusion stones from ${parents.length} harvested parts`,fusionStones:state.fusionStones.map(x=>({name:x.name,concept:x.concept,tempo:x.tempo,key:x.key,mode:x.mode,bars:x.bars,transforms:x.transforms}))}});state.fusionLogId=row.id;
+    renderFusionCandidates();setTrace('4 FUSION STONES',`${parents.length} parts · ${new Set(parents.map(x=>x.parentSong)).size} songs`,'tap one to audition');
+  }catch(e){restoreFusionBase(true);clearFusionCandidates();setTrace('FAULT','fusion parents preserved',e.message)}finally{FB.cast.disabled=state.partBankSelected.size<2;FB.cast.textContent='CAST 4'}
+};
+
+/* Persist fused parents inside KEEP/PROJECT through the normal stone snapshot. */
+const loadStoneFusionBase=loadStone;
+loadStone=async function(s){state.fusionTrackNames={};await loadStoneFusionBase(s)};
+
+renderPartBank();
