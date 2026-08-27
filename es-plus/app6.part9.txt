@@ -1,0 +1,103 @@
+
+/* v10: selected-track solo / audition monitoring
+   SOLO is monitor state only: no RUN, no code rewrite, no export change. */
+state.soloActive=false;
+
+const soloBtn=document.createElement('button');
+soloBtn.id='soloBtn';soloBtn.textContent='SOLO';
+if(X?.anchorBtn?.parentElement)X.anchorBtn.after(soloBtn);
+
+const auditionBtn=document.createElement('button');
+auditionBtn.id='auditionBtn';auditionBtn.textContent='▶ SEL';
+if(E.trackAI?.parentElement)E.trackAI.after(auditionBtn);
+
+const soloHeadBtn=document.createElement('button');
+soloHeadBtn.id='soloHeadBtn';soloHeadBtn.className='headTool';soloHeadBtn.hidden=true;soloHeadBtn.textContent='SOLO';
+if(X?.groupBtn?.parentElement)X.groupBtn.after(soloHeadBtn);
+
+/* adapt the existing sheet grids without adding permanent surface */
+if(X?.anchorBtn?.parentElement)X.anchorBtn.parentElement.style.gridTemplateColumns='repeat(4,1fr)';
+if(E.trackPrompt?.parentElement)E.trackPrompt.parentElement.style.gridTemplateColumns='1fr 62px 62px';
+
+function soloTargets(){
+  const available=new Set(allTracks());
+  return selectedArray().filter(t=>available.has(t));
+}
+function refreshSoloUI(){
+  const targets=soloTargets(),n=targets.length;
+  soloBtn.disabled=!n;
+  auditionBtn.disabled=!n;
+  soloBtn.textContent=state.soloActive?`UNSOLO ${n||''}`.trim():(n>1?`SOLO ${n}`:'SOLO');
+  auditionBtn.textContent=state.playing&&state.soloActive?'■ STOP':'▶ SEL';
+  soloHeadBtn.hidden=!n;
+  soloHeadBtn.textContent=state.soloActive?(n>1?`SOLO ${n} ON`:'SOLO ON'):(n>1?`SOLO ${n}`:'SOLO');
+  if(!state.playing)E.playBtn.textContent=state.soloActive?'PLAY SOLO':'PLAY';
+  if(E.timeline)E.timeline.classList.toggle('soloMode',state.soloActive);
+  for(const row of document.querySelectorAll('.track')){
+    const lab=row.querySelector('.tlabel'),tr=Number(lab?.textContent),inSolo=targets.includes(tr),muted=Number.isFinite(tr)&&!!trackPatch(tr).mute;
+    row.classList.toggle('soloAudible',state.soloActive&&inSolo);
+    if(state.soloActive)row.style.opacity=inSolo?(muted?'.42':'1'):'.18';
+    else row.style.opacity=muted?'.42':'';
+  }
+}
+function setSolo(on){
+  const targets=soloTargets();
+  if(on&&!targets.length)return false;
+  if(state.playing)stop();
+  state.soloActive=!!on;
+  refreshSoloUI();
+  setTrace(state.soloActive?'SOLO':'MIX',state.soloActive?targets.map(t=>`T${t}`).join(' + '):'all audible tracks',state.soloActive?'monitor only · arrangement untouched':'solo released');
+  return true;
+}
+
+soloBtn.onclick=()=>setSolo(!state.soloActive);
+soloHeadBtn.onclick=()=>setSolo(!state.soloActive);
+auditionBtn.onclick=async()=>{
+  if(state.playing){stop();refreshSoloUI();return}
+  if(!state.soloActive&&!setSolo(true))return;
+  await play();refreshSoloUI();
+};
+
+/* selection drives the audition set while SOLO is active */
+const toggleTrackSoloBase=toggleTrack;
+toggleTrack=function(tr){
+  if(state.playing&&state.soloActive)stop();
+  toggleTrackSoloBase(tr);
+  if(state.soloActive&&!soloTargets().length)state.soloActive=false;
+  refreshSoloUI();
+};
+const updateSelectionUISoloBase=updateSelectionUI;
+updateSelectionUI=function(){updateSelectionUISoloBase();if(state.soloActive&&!soloTargets().length)state.soloActive=false;refreshSoloUI()};
+const openSelectionSheetSoloBase=openSelectionSheet;
+openSelectionSheet=function(focusTrack=null){openSelectionSheetSoloBase(focusTrack);refreshSoloUI()};
+
+/* CLEAR SELECT also leaves monitor solo so PLAY cannot point at an empty set */
+X.selectionClear.onclick=()=>{
+  if(state.playing)stop();
+  state.selectedTracks.clear();state.selectedTrack=null;state.soloActive=false;
+  updateSelectionUI();E.trackBack.classList.remove('open');refreshSoloUI();
+};
+
+/* PLAY hears only the current selected set when SOLO is active.
+   The full IR is restored immediately; MIDI/WAV/PROJECT never inherit monitor solo. */
+const playSoloBase=play;
+play=async function(){
+  if(!state.soloActive)return playSoloBase();
+  if(state.playing)return playSoloBase();
+  const targets=new Set(soloTargets());
+  if(!targets.size){state.soloActive=false;refreshSoloUI();return playSoloBase()}
+  const real=state.ir;
+  if(!real)return;
+  state.ir={...real,events:real.events.filter(e=>targets.has(e.track))};
+  try{return await playSoloBase()}finally{state.ir=real;refreshSoloUI()}
+};
+E.playBtn.onclick=play;
+
+const stopSoloBase=stop;
+stop=function(){stopSoloBase();refreshSoloUI()};
+
+/* keep solo visual state after any legitimate rebuild/tune without making solo part of the build */
+const renderTimelineSoloBase=renderTimeline;
+renderTimeline=function(){renderTimelineSoloBase();refreshSoloUI()};
+
+refreshSoloUI();
