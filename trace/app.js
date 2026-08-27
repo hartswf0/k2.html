@@ -1,7 +1,12 @@
 "use strict";
 (async()=>{
-  const version="8.2";
-  const files=["core.js","ai.js","audio.js","ui.js","variety-core.js","variety-ai.js","variety-tags.js","variety-audio.js","variety-ui.js","variety-v8-base.js","variety-v8.js","variety-v8-fixes.js","mobile-hotfix.js"];
+  const version="8.3";
+  const files=[
+    "core.js","ai.js","audio.js","ui.js",
+    "variety-core.js","variety-ai.js","variety-tags.js","variety-audio.js","variety-ui.js",
+    "variety-v8-base.js","variety-v8-runtime.js","variety-v8-fixes.js","variety-v8-flow.js","variety-v8-boot.js",
+    "mobile-hotfix.js"
+  ];
   for(const src of files){
     await new Promise((resolve,reject)=>{
       const s=document.createElement("script");s.src=`${src}?v=${version}`;s.onload=resolve;
