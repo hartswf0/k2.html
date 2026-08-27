@@ -1,6 +1,6 @@
 "use strict";
 (async()=>{
-  const version="7.1";
+  const version="7.2";
   const files=["core.js","ai.js","audio.js","ui.js","variety-core.js","variety-ai.js","variety-audio.js","variety-ui.js","mobile-hotfix.js"];
   for(const src of files){
     await new Promise((resolve,reject)=>{
