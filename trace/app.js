@@ -1,10 +1,10 @@
 "use strict";
 (async()=>{
-  const version="8.5";
+  const version="8.6";
   const files=[
     "core.js","ai.js","audio.js","ui.js",
     "variety-core.js","variety-ai.js","variety-tags.js","variety-audio.js","variety-ui.js",
-    "variety-v8-base.js","variety-v8-runtime.js","variety-v8-fixes.js","variety-v8-flow.js","variety-v8-finish.js","variety-v8-layering.js","variety-v8-boot.js",
+    "variety-v8-base.js","variety-v8-runtime.js","variety-v8-fixes.js","variety-v8-flow.js","variety-v8-finish.js","variety-v8-layering.js","variety-v8-layering-guard.js","variety-v8-boot.js",
     "mobile-hotfix.js"
   ];
   for(const src of files){
