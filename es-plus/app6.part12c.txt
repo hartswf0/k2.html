@@ -1,0 +1,41 @@
+/* ---------- executable region code ---------- */
+const parseCodeRegionBase=parseCode;
+parseCode=function(src){
+  const base=[],regions=[];
+  for(const raw of src.split('\n')){
+    const line=raw.replace(/#.*$/,'').trim(),m=line.match(/^regionTrack\((.*)\)$/);
+    if(!m){base.push(raw);continue}
+    const a=splitArgs(m[1]).map(parseVal),track=Math.round(+a[0]),start=+a[1],end=+a[2],patch=typeof a[3]==='object'&&a[3]?a[3]:{};
+    if(Number.isFinite(track)&&Number.isFinite(start)&&Number.isFinite(end)&&end>start)regions.push({track,start,end,...patch});
+  }
+  const p=parseCodeRegionBase(base.join('\n'));p.regionPatches=regions;return p;
+};
+function regionPatchFactor(p,t){const gs=Number(p.gainStart??1),ge=Number(p.gainEnd??gs),ds=Number(p.densityStart??1),de=Number(p.densityEnd??ds),gain=gs+(ge-gs)*t,density=ds+(de-ds)*t;return{gain:clamp(gain,0,1.6),density:clamp(density,.02,1)}}
+const applyPatchesRegionBase=applyPatches;
+applyPatches=function(events,p){
+  const out=applyPatchesRegionBase(events,p),regions=p.regionPatches||[];if(!regions.length)return out;const next=[];
+  for(const e0 of out){let e={...e0},keep=true;
+    for(const rp of regions){if(rp.track!==e.track||e.start<rp.start||e.start>=rp.end)continue;const t=clamp((e.start-rp.start)/Math.max(.001,rp.end-rp.start),0,1),f=regionPatchFactor(rp,t),coin=(hash(`${e.id}|${rp.track}|${rp.start}|${rp.end}|region-density`)%10000)/10000;if(coin>f.density){keep=false;break}e.vel=clamp(e.vel*f.gain,0,1);e.dur=Math.max(.02,e.dur*clamp(+(rp.durationScale??1),.15,4));e.start=Math.max(0,e.start+(+rp.shift||0));const trans=+rp.transpose||0;if(e.note&&e.type!=='kick'&&e.type!=='snare'&&e.type!=='hat')e.note+=trans;if(e.type==='sample'){e.transpose=(+e.transpose||0)+trans;if(rp.query){e.query=String(rp.query);const s=resolveSound(e.role||trackName(e.track),e.query,p.genre,e.sound?.name||'');if(s)e.sound=s}}e.regionApplied={start:rp.start,end:rp.end}}
+    if(keep)next.push(e)
+  }
+  next.sort((a,b)=>a.start-b.start||a.track-b.track);return next;
+};
+function findRegionLine(lines,tr,start,end){
+  return lines.findIndex(line=>{const m=line.trim().match(/^regionTrack\((.*)\)$/);if(!m)return false;try{const a=splitArgs(m[1]).map(parseVal);return Math.round(+a[0])===tr&&Math.abs(+a[1]-start)<.001&&Math.abs(+a[2]-end)<.001}catch(_){return false}})
+}
+function regionCandidateCode(baseCode,stone){
+  const lines=baseCode.split('\n'),r=state.regionSelection;if(!r)return baseCode;
+  for(const x of stone.patches||[]){const tr=Math.round(+x.track);if(!state.regionStoneTargets.includes(tr)||state.anchorTracks.has(tr))continue;const patch={...x};delete patch.track;const line=`regionTrack(${tr}, ${r.start}, ${r.end}, ${JSON.stringify(patch)})`,idx=findRegionLine(lines,tr,r.start,r.end);if(idx>=0)lines[idx]=line;else lines.push(line)}
+  return lines.join('\n');
+}
+
+/* ---------- region audition ---------- */
+async function auditionRegion(){
+  const r=state.regionSelection,real=state.ir;if(!r||!real)return;if(state.playing)stop();const targets=new Set(regionTargets()),events=[];
+  for(const e0 of real.events){if(e0.muted||!targets.has(e0.track))continue;const a=Math.max(r.start,e0.start),b=Math.min(r.end,e0.start+Math.max(.02,e0.dur));if(b<=a)continue;events.push({...e0,start:a-r.start,dur:b-a})}
+  if(!events.length){setTrace('REGION','silent selection','no audible events');return}
+  const temp={...real,events,length:r.end-r.start},prevSolo=state.soloActive;state.ir=temp;state.soloActive=false;
+  try{await play()}finally{state.ir=real;state.soloActive=prevSolo;refreshSoloUI();drawSpec()}
+}
+regionAuditionBtn.onclick=auditionRegion;
+
