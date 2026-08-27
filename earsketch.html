@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<title>ES+ / Variety Engine</title>
+<title>ES+ / Track Workshop</title>
 <link rel="stylesheet" href="es-plus/style.css">
 <style>
 @media(max-width:720px){
@@ -14,23 +14,32 @@
   #soundPane>.body.soundBody{display:grid!important;grid-template-rows:minmax(170px,.7fr) minmax(90px,.3fr)!important;min-width:0!important;min-height:0!important}
   #sourcePane>.body.sourceBody{display:grid!important;min-width:0!important;min-height:0!important}
 }
+.toolBtn{height:24px;padding:0 8px;border-left:1px solid var(--line);font:700 8px/1 ui-monospace,monospace;background:transparent}
+.trackBack,.exportBack{position:fixed;inset:0;background:rgba(17,17,15,.24);z-index:220;display:none;align-items:flex-end;justify-content:center}.trackBack.open,.exportBack.open{display:flex}
+.trackSheet,.exportSheet{width:min(620px,calc(100% - 12px));margin:0 6px 6px;background:var(--paper);border:1px solid var(--ink);box-shadow:0 -10px 35px rgba(0,0,0,.1)}
+.trackHead{height:34px;display:flex;align-items:center;padding:0 9px;border-bottom:1px solid var(--line);font-weight:900;font-size:9px}.trackHead span:last-child{margin-left:auto;color:var(--muted);font-weight:500}
+.trackPrompt{display:grid;grid-template-columns:1fr 72px;border-bottom:1px solid var(--line)}.trackPrompt input{height:45px;border:0;border-right:1px solid var(--line);padding:0 9px;background:transparent;min-width:0}.trackPrompt button{font-weight:900;font-size:9px}
+.trackOps{display:grid;grid-template-columns:repeat(5,1fr)}.trackOps button{height:40px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:8px;font-weight:900}.trackOps button:nth-child(5n){border-right:0}.trackOps button.danger{color:#9b2f18}
+.trackReadout{padding:7px 9px;font-size:8px;color:var(--muted);min-height:31px}.trackClose{width:100%;height:40px;background:var(--ink);color:var(--paper);font-weight:900;font-size:9px}
+.exportSheet{padding:0}.exportGrid{display:grid;grid-template-columns:repeat(3,1fr)}.exportGrid button{height:54px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:9px;font-weight:900}.exportGrid button:last-child{border-right:0}.exportNote{padding:8px 9px;color:var(--muted);font-size:8px}.exportClose{width:100%;height:38px;background:var(--ink);color:var(--paper);font-weight:900}
+.track.selected .tlabel,.tlabel.selected{background:#111;color:#fff}.tlabel{cursor:grab;touch-action:none}.tlabel:active{cursor:grabbing}.clip{touch-action:none}
 </style>
 </head><body>
 <div class="app">
 <header class="top"><div class="brand">ES+</div><button id="apiBtn" class="api"><span id="apiDot" class="dot"></span><span id="apiText">API</span></button><div class="grow"></div><button id="runBtn" class="cmd" disabled>RUN</button><button id="playBtn" class="cmd play" disabled>PLAY</button></header>
-<div id="trace" class="trace"><strong>START</strong>&nbsp; describe something → MAKE</div>
+<div id="trace" class="trace"><strong>START</strong>&nbsp; describe or draw → MAKE</div>
 <main id="workspace" class="workspace">
-<section id="sourcePane" class="pane" data-pane="source" style="flex-basis:100%"><div class="head">SOURCE<span id="sourceState" class="state">ready</span><button class="minBtn" data-min="source">−</button></div><div class="body sourceBody"><div class="compose"><textarea id="prompt" class="prompt" placeholder="Describe a sound, motion, place, game, feeling…"></textarea><div class="composeBar"><button id="drawBtn">DRAW</button><button id="clearBtn">CLEAR</button><button id="makeBtn" class="make">MAKE</button></div></div><div id="sketchWrap" class="sketchWrap" hidden><div class="sketchHint">optional drawing</div><canvas id="sketch" class="sketch"></canvas><button id="clearInk" class="clearInk">×</button></div></div></section>
+<section id="sourcePane" class="pane" data-pane="source" style="flex-basis:100%"><div class="head">SOURCE<span id="sourceState" class="state">ready</span><button class="minBtn" data-min="source">−</button></div><div class="body sourceBody"><div class="compose"><textarea id="prompt" class="prompt" placeholder="Describe a sound, motion, place, game, feeling…"></textarea><div class="composeBar"><button id="drawBtn">DRAW</button><button id="clearBtn">CLEAR</button><button id="makeBtn" class="make">MAKE</button></div></div><div id="sketchWrap" class="sketchWrap" hidden><div class="sketchHint">draw rhythm / contour / energy</div><canvas id="sketch" class="sketch"></canvas><button id="clearInk" class="clearInk">×</button></div></div></section>
 <div class="grip" data-grip="0" hidden></div>
 <section id="codePane" class="pane min" data-pane="code"><div class="head">CODE<span id="codeState" class="state">empty</span><button class="minBtn" data-min="code">+</button></div><div class="body codeBody"><div id="gutter" class="gutter"></div><textarea id="code" class="code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea></div></section>
 <div class="grip" data-grip="1" hidden></div>
-<section id="soundPane" class="pane min" data-pane="sound"><div class="head">SOUND<span id="soundState" class="state">empty</span><button class="minBtn" data-min="sound">+</button></div><div class="body soundBody"><div class="timelineWrap"><div id="timeline" class="timeline"><div class="empty">MAKE → RUN → PLAY</div></div></div><div class="specWrap"><canvas id="spec" class="spec"></canvas><div class="specLabel">result</div></div></div></section>
+<section id="soundPane" class="pane min" data-pane="sound"><div class="head">SOUND<span id="soundState" class="state">empty</span><button class="minBtn" data-min="sound">+</button></div><div class="body soundBody"><div class="timelineWrap"><div id="timeline" class="timeline"><div class="empty">MAKE → RUN → PLAY</div></div></div><div class="specWrap"><canvas id="spec" class="spec"></canvas><div class="specLabel">result · tap track number to edit</div></div></div></section>
 </main>
-<footer class="rail"><span class="railLabel">STONES</span><div id="stones" style="display:flex;gap:5px;min-width:0;overflow:auto"></div><button id="keepBtn" class="keep" disabled>KEEP</button></footer>
+<footer class="rail"><span class="railLabel">STONES</span><div id="stones" style="display:flex;gap:5px;min-width:0;overflow:auto"></div><button id="keepBtn" class="keep" disabled>KEEP</button><button id="exportBtn" class="toolBtn" disabled>EXPORT</button></footer>
 <nav class="mobileNav"><button class="on" data-mobile="source">SOURCE</button><button id="mobileCode" data-mobile="code" disabled>CODE</button><button id="mobileSound" data-mobile="sound" disabled>SOUND</button></nav>
 </div>
 <div id="sheetBack" class="sheetBack"><div class="sheet"><div class="sheetRow"><input id="keyInput" type="password" placeholder="OPENAI API KEY" autocomplete="off"><input id="modelInput" value="gpt-5.6-terra" aria-label="model"></div><div class="sheetRow"><input id="routeInput" value="https://api.openai.com/v1" aria-label="API route"><button id="connectBtn" class="primary">CONNECT</button></div><div class="sheetStatus"><span id="sheetDot" class="dot"></span><span id="sheetStatus">not checked</span></div><div class="sheetActions"><button id="forgetBtn">FORGET KEY</button><button id="closeSheet">CLOSE</button></div></div></div>
-<script>
-(function(){function fault(msg){var t=document.getElementById('trace');if(t)t.textContent='FAULT → '+String(msg).slice(0,160)}window.addEventListener('error',function(e){fault(e.message||'runtime error')});window.addEventListener('unhandledrejection',function(e){fault((e.reason&&e.reason.message)||e.reason||'promise failed')})})();
-</script>
-<script src="es-plus/app5.js?v=5"></script></body></html>
+<div id="trackBack" class="trackBack"><div class="trackSheet"><div class="trackHead"><span id="trackTitle">TRACK</span><span id="trackMeta"></span></div><div class="trackPrompt"><input id="trackPrompt" placeholder="Change only this track… e.g. darker, half as busy, wah guitar"><button id="trackAI">TUNE</button></div><div class="trackOps"><button data-track-op="left">← ¼</button><button data-track-op="right">¼ →</button><button data-track-op="down">−1</button><button data-track-op="up">+1</button><button data-track-op="octdown">−12</button><button data-track-op="octup">+12</button><button data-track-op="swap">SWAP</button><button data-track-op="copy">COPY</button><button data-track-op="mute">MUTE</button><button data-track-op="delete" class="danger">DELETE</button></div><div id="trackReadout" class="trackReadout"></div><button id="trackClose" class="trackClose">DONE</button></div></div>
+<div id="exportBack" class="exportBack"><div class="exportSheet"><div class="trackHead"><span>EXPORT</span><span id="exportMeta"></span></div><div class="exportGrid"><button id="midiExport">MIDI</button><button id="wavExport">WAV</button><button id="projectExport">PROJECT</button></div><div class="exportNote">MIDI carries notes, drums and sample-trigger tracks. WAV renders the browser arrangement. PROJECT is the portable source + drawing + code snapshot. MP3 is not encoded in-browser yet.</div><button id="exportClose" class="exportClose">CLOSE</button></div></div>
+<script src="es-plus/app6-loader.js?v=6"></script>
+</body></html>
