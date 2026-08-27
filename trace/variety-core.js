@@ -13,7 +13,7 @@ const V7_KINDS=new Set(["synth","lead","bass","drum","electric-piano","organ","g
 const V7_TRACK_PALETTE=Object.freeze([
   [1,"LEAD","lead","sawtooth"],
   [2,"BASS","bass","triangle"],
-  [3,"KIT","drum","noise"],
+  [3,"KIT","drum","sine"],
   [4,"KEYS","electric-piano","sine"],
   [5,"ORGAN","organ","sine"],
   [6,"GUITAR","guitar","triangle"],
@@ -21,7 +21,7 @@ const V7_TRACK_PALETTE=Object.freeze([
   [8,"REEDS","reed","square"],
   [9,"STRINGS","strings","sawtooth"],
   [10,"MALLETS","mallet","sine"],
-  [11,"PERC","percussion","noise"],
+  [11,"PERC","percussion","sine"],
   [12,"TEXTURE","texture","sine"]
 ]);
 const V7_DISTANT_STONES=Object.freeze([
@@ -30,7 +30,7 @@ const V7_DISTANT_STONES=Object.freeze([
   "dub poetry","no wave","footwork","juke","broken beat","plunderphonics","field recording","sound collage",
   "kora","oud","marimba","vibraphone","hurdy gurdy","steel band","afro-cuban jazz","spiritual jazz",
   "krautrock","library music","minimal synth","drumless","ritual ambient","turntablism","chopped and screwed"
-]);
+ ]);
 const V7_COMMON_TAGS=`psychedelic soul|southern soul|afrobeat|afro-jazz|spiritual jazz|free jazz|modal jazz|hard bop|ethio-jazz|gnawa|highlife|mbalax|soukous|gamelan|qawwali|joik|tuvan throat singing|kora|oud|marimba|vibraphone|prepared piano|field recording|sound collage|musique concrete|acousmatic|spectralism|microtonal|plunderphonics|turntablism|dub poetry|no wave|footwork|juke|broken beat|drumless|krautrock|minimal synth|ritual ambient|ambient dub|dub techno|acid jazz|jazz-funk|jazz fusion|avant-garde jazz|country soul|country rock|appalachian folk|nashville sound|honky tonk|outlaw country|bluegrass|western swing|psychedelic folk|folk rock|jam band|roots rock|funk|p-funk|deep funk|motown|neo-soul|gospel|rhythm and blues|quiet storm|boogie|disco|house|acid house|deep house|techno|detroit techno|jungle|drum and bass|breakbeat|breakcore|garage|uk garage|grime|drill|boom bap|g-funk|cloud rap|trap|phonk|reggaeton|dancehall|roots reggae|ska|rocksteady|cumbia|salsa|samba|bossa nova|tango|flamenco|fado|bolero|carnatic|hindustani|arabic classical|persian classical|klezmer|balkan brass band|celtic folk|afro-cuban jazz|latin jazz|chiptune|vaporwave|hyperpop|industrial|noise|harsh noise|electroacoustic|minimalism|serialism|twelve-tone|aleatory|free improvisation|polyrhythm|uncommon time signatures`.split("|");
 let v7Tags=[];
 let v7TagPromise=null;
