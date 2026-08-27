@@ -7,14 +7,13 @@
 <title>ES+ / Variety Engine</title>
 <link rel="stylesheet" href="es-plus/style.css">
 <style>
-/* Mobile invariant: desktop minimization may hide a pane, never rewrite its internal surface. */
+/* Mobile is a separate surface: desktop minimization never controls internals. */
 @media(max-width:720px){
-  .pane.min>.body{display:grid!important}
-  .pane.min>.codeBody,.codeBody{display:grid!important;grid-template-columns:38px minmax(0,1fr)!important;direction:ltr;min-width:0;overflow:hidden}
-  .codeBody>.gutter{grid-column:1;grid-row:1;min-width:0;direction:ltr}
-  .codeBody>.code{grid-column:2;grid-row:1;min-width:0;max-width:100%;direction:ltr;writing-mode:horizontal-tb}
-  .pane.min>.soundBody,.soundBody{display:grid!important;grid-template-rows:minmax(170px,.7fr) minmax(90px,.3fr)!important;min-width:0}
-  .pane.min>.sourceBody,.sourceBody{display:grid!important}
+  #codePane>.body.codeBody{display:block!important;position:relative!important;min-width:0!important;min-height:0!important;overflow:hidden!important}
+  #codePane .gutter{display:none!important}
+  #codePane .code{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:0!important;max-width:none!important;margin:0!important;padding:12px 14px!important;font-size:13px!important;line-height:1.45!important;white-space:pre!important;overflow:auto!important;direction:ltr!important;writing-mode:horizontal-tb!important}
+  #soundPane>.body.soundBody{display:grid!important;grid-template-rows:minmax(170px,.7fr) minmax(90px,.3fr)!important;min-width:0!important;min-height:0!important}
+  #sourcePane>.body.sourceBody{display:grid!important;min-width:0!important;min-height:0!important}
 }
 </style>
 </head><body>
