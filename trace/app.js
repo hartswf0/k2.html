@@ -1,10 +1,10 @@
 "use strict";
 (async()=>{
-  const version="7.2";
-  const files=["core.js","ai.js","audio.js","ui.js","variety-core.js","variety-ai.js","variety-audio.js","variety-ui.js","mobile-hotfix.js"];
+  const version="8.0";
+  const files=["core.js","ai.js","audio.js","ui.js","variety-core.js","variety-ai.js","variety-audio.js","variety-ui.js","variety-v8.js","variety-v8-fixes.js","mobile-hotfix.js"];
   for(const src of files){
     await new Promise((resolve,reject)=>{
-      const s=document.createElement("script"); s.src=`${src}?v=${version}`; s.onload=resolve;
+      const s=document.createElement("script");s.src=`${src}?v=${version}`;s.onload=resolve;
       s.onerror=()=>reject(new Error("TRACE failed to load "+src));
       document.head.appendChild(s);
     });
