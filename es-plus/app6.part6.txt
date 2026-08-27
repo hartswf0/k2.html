@@ -1,0 +1,6 @@
+document.querySelectorAll("[data-mobile]").forEach(b=>b.onclick=()=>{if(!b.disabled)showMobile(b.dataset.mobile)});function showMobile(name){if(!mobile())return;document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("mobileOn",p.dataset.pane===name));document.querySelectorAll("[data-mobile]").forEach(b=>b.classList.toggle("on",b.dataset.mobile===name));if(name==="source")setTimeout(fitSketch,0);if(name==="sound")setTimeout(drawSpec,0)}
+window.addEventListener("resize",()=>{if(mobile())showMobile(document.querySelector("[data-mobile].on")?.dataset.mobile||"source");else setWidths();fitSketch();drawSpec()});
+
+/* init */
+E.sketchWrap.hidden=true;if(mobile())showMobile("source");else setWidths();updateGutter();restoreKept();if(!state.stones.length)setTrace("START","describe or draw","MAKE");
+})();
