@@ -1,6 +1,6 @@
 "use strict";
 (async()=>{
-  const files=["core.js","ai.js","audio.js","ui.js"];
+  const files=["core.js","ai.js","audio.js","ui.js","mobile-hotfix.js"];
   for(const src of files){
     await new Promise((resolve,reject)=>{
       const s=document.createElement("script"); s.src=src; s.onload=resolve;
