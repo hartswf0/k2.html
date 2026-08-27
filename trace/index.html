@@ -41,6 +41,6 @@
 
 <div class="modalBack" id="aiModal"><div class="modal"><h2>AI</h2><p class="notice">DEMO is fully local. PROXY is the safer public deployment. DIRECT keeps a key only in this tab.</p><label>MODE<select id="aiMode"><option value="demo">DEMO · LOCAL</option><option value="proxy">PROXY</option><option value="direct">DIRECT · SESSION KEY</option></select></label><label>MODEL<input id="modelInput" value="gpt-5.6-terra"></label><label>ENDPOINT<input id="endpointInput" value="/api/trace-ai"></label><label>SESSION KEY<input id="keyInput" type="password" autocomplete="off" placeholder="sk-…"></label><div class="modalRow"><button class="btn signal" id="saveAiBtn">USE</button><button class="btn" data-close="aiModal">CLOSE</button></div></div></div>
 <div class="modalBack" id="modelModal"><div class="modal wide"><h2>VISIBLE MODEL CONTEXT</h2><label>COMPOSER<textarea id="composerPromptView" rows="8" readonly></textarea></label><label>OBSERVER<textarea id="observerPromptView" rows="8" readonly></textarea></label><label>THIS TURN<textarea id="contextView" rows="8" readonly></textarea></label><div class="modalRow"><button class="btn" data-close="modelModal">CLOSE</button></div></div></div>
-<script src="app.js" defer></script>
+<script src="app.js?v=7.1" defer></script>
 </body>
 </html>
