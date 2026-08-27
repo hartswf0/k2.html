@@ -5,7 +5,7 @@ const root=path.resolve(path.dirname(new URL(import.meta.url).pathname));
 const read=f=>fs.readFileSync(path.join(root,f),"utf8");
 const assert=(ok,msg)=>{if(!ok)throw new Error(`TRACE SMOKE · ${msg}`)};
 
-const app=read("app.js"),index=read("index.html"),finish=read("variety-v8-finish.js"),mobile=read("mobile-hotfix.js"),base=read("variety-v8-base.js"),flow=read("variety-v8-flow.js"),runtime=read("variety-v8-runtime.js");
+const app=read("app.js"),index=read("index.html"),finish=read("variety-v8-finish.js"),mobile=read("mobile-hotfix.js"),base=read("variety-v8-base.js"),flow=read("variety-v8-flow.js"),fixes=read("variety-v8-fixes.js"),runtime=read("variety-v8-runtime.js");
 
 assert(/const version="8\.4"/.test(app),"app is not v8.4");
 assert(/app\.js\?v=8\.4/.test(index),"index cache-bust is not v8.4");
@@ -24,7 +24,8 @@ const dup=ids.filter((x,i)=>ids.indexOf(x)!==i);assert(!dup.length,`duplicate DO
 assert(/position:fixed/.test(mobile)&&/\.transport/.test(mobile),"mobile transport is not fixed/reachable");
 assert(/\.trailDrawer/.test(mobile)&&/overflow-x:auto/.test(mobile),"mobile run trail is not horizontally reachable");
 assert(/TRACE_V7_BASE=Object\.freeze/.test(base),"explicit v7 compatibility seam missing");
-assert(/ROOT/.test(flow)&&/CROSS/.test(flow)&&/WILD/.test(flow),"three candidate paths missing");
+assert(/variants=\[root,v8PlanVariant\(text,root,1\),v8PlanVariant\(text,root,2\)\]/.test(flow),"three candidate paths missing");
+assert(/\["ROOT","CROSS","WILD"\]/.test(fixes),"branch labels missing");
 assert(/instrument\(\$\{lastTrack\}/.test(finish),"executable instrument patch missing");
 assert(/boundRepeats/.test(finish)&&/boundPlan/.test(finish),"scope-bound release gate missing");
 assert(/TRACE_RELEASE_SELF_TEST/.test(finish),"browser startup self-test missing");
