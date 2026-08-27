@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#fffdf0">
+<title>Sketchsong Band</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="gate" class="gate"><div class="gateBox"><div class="gateTitle">SKETCHSONG / BAND</div><div class="gateRow"><input id="key" type="password" placeholder="OpenAI API key"><button id="check">CHECK</button></div><div class="gateRow"><select id="model"><option>gpt-5.6-terra</option><option>gpt-5.6-luna</option><option>gpt-5.6-sol</option></select><span style="padding:11px;font:850 8px ui-monospace,monospace">MODEL</span></div><div id="gateState" class="gateState">KEY STAYS IN THIS TAB</div></div></div>
+
+<div id="app">
+<header class="top"><div class="brand"><span id="dot" class="dot"></span><span>BAND</span></div><div id="state" class="state">DESCRIBE A WORLD</div><div class="spacer"></div><button id="wholeAsk">?</button><button id="exportBtn">↓</button></header>
+
+<main id="band" class="screen on">
+ <section class="promptBox"><textarea id="prompt" placeholder="southern psychedelic soul under a storm radio"></textarea><div id="seedRail" class="seedRail"><span>WORD</span><span>VARIETY</span><span>THEORY</span><span>ARRANGE</span><span>LISTEN</span></div></section>
+ <div class="bandHead"><b id="title">NO BAND YET</b><span id="tempo" class="tempo"></span><button id="rerollBand">ARRANGE</button></div>
+ <div id="lanes" class="lanes"></div>
+ <div id="theory" class="theory"></div>
+</main>
+
+<main id="micro" class="screen">
+ <div class="microHead"><button id="back">←</button><b id="microName">TRACK</b><span id="microMeta"></span></div>
+ <div class="soundBody"><canvas id="body" width="1200" height="700"></canvas><canvas id="anno" width="1200" height="700"></canvas><span class="axis time">TIME →</span><span class="axis freq">FREQUENCY →</span></div>
+ <section class="children"><div class="childrenHead"><b>CHILDREN</b><span>tap to audition · USE sends it back</span></div><div id="cards" class="cards"></div></section>
+ <div id="cause" class="cause"><span class="label">CAUSE</span></div>
+</main>
+
+<footer class="actions"><button id="play">▷</button><button id="ask">ASK</button><button id="more" class="more">MORE</button><button id="add">＋</button></footer>
+</div>
+
+<input id="file" type="file" accept="audio/*" class="hidden">
+<aside id="chat" class="sheet chat"><div class="sheetHead"><span id="chatTitle">ASK THE BAND</span><button data-close="chat">×</button></div><div id="thread" class="thread"></div><div class="chatInput"><input id="chatInput" placeholder="ask this object"><button id="chatSend">→</button></div></aside>
+<aside id="addSheet" class="sheet"><div class="sheetHead">ADD TO THIS OBJECT<button data-close="addSheet">×</button></div><div class="addGrid"><button id="upload">SAMPLE</button><button id="newTrack">NEW TRACK</button><button id="seedTrack">SYNTH SEED</button><button id="clearTrack">RESET TRACK</button></div></aside>
+<div id="busy" class="busy"><div class="busyBox"><div id="busyTitle" class="busyTitle">LISTENING</div><div class="busySteps"><span id="bs0">SOURCE</span><span id="bs1">THEORY</span><span id="bs2">BAND</span><span id="bs3">LISTEN</span></div></div></div>
+
+<script src="app.js"></script>
+</body>
+</html>
