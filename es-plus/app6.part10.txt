@@ -1,0 +1,280 @@
+
+/* v11: part stones — branch before committing selected-track rewrites
+   TUNE and FIT OTHERS generate four non-destructive candidate patch sets.
+   Tap a stone to solo-audition it. USE commits only the chosen candidate. */
+
+state.partStones=[];
+state.partStoneTargets=[];
+state.partStonePreview=-1;
+state.partStoneChosen=-1;
+state.partStoneBase=null;
+state.partStoneLogId=null;
+
+/* richer local track grammar for part-level alternatives */
+const applyPatchesPartStoneBase=applyPatches;
+applyPatches=function(events,p){
+  const out=applyPatchesPartStoneBase(events,p),next=[];
+  for(const e0 of out){
+    const patch=p.trackPatches?.[String(e0.track)]||{};
+    const density=patch.density==null?1:clamp(+patch.density,.08,1);
+    if(density<.999){
+      const keep=(hash(`${e0.id}|${e0.track}|${e0.start}|part-density`)%10000)/10000;
+      if(keep>density)continue;
+    }
+    const e={...e0};
+    if(patch.durationScale!=null)e.dur=Math.max(.02,e.dur*clamp(+patch.durationScale,.2,3));
+    next.push(e);
+  }
+  return next;
+};
+
+const partStyle=document.createElement('style');
+partStyle.textContent=`
+.partStoneRail{display:none;border-bottom:1px solid var(--line);background:rgba(255,255,255,.32)}
+.partStoneRail.open{display:block}
+.partStoneHead{height:25px;display:flex;align-items:center;padding:0 9px;font:800 8px/1 ui-monospace,monospace;border-bottom:1px solid var(--line)}
+.partStoneHead span:last-child{margin-left:auto;color:var(--muted);font-weight:500}
+.partStoneScroller{display:flex;gap:5px;overflow-x:auto;padding:6px;scrollbar-width:none}
+.partStoneScroller::-webkit-scrollbar{display:none}
+.partStoneChip{flex:0 0 min(178px,43vw);min-width:138px;height:54px;border:1px solid var(--ink);border-radius:3px;background:transparent;padding:6px 7px;text-align:left;display:grid;grid-template-rows:auto 1fr;gap:3px}
+.partStoneChip b{font:900 8px/1.1 ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partStoneChip span{font:500 7px/1.25 ui-monospace,monospace;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.partStoneChip.on{background:var(--ink);color:var(--paper)}
+.partStoneChip.on span{color:#ccc}
+.partStoneChip.used{box-shadow:inset 0 0 0 2px var(--yellow)}
+.partStoneActions{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line)}
+.partStoneActions button{height:34px;border-right:1px solid var(--line);font:800 8px/1 ui-monospace,monospace}
+.partStoneActions button:last-child{border-right:0}
+.partStoneActions .use{background:var(--yellow)}
+`;
+document.head.appendChild(partStyle);
+
+const partRail=document.createElement('div');
+partRail.id='partStoneRail';partRail.className='partStoneRail';
+partRail.innerHTML='<div class="partStoneHead"><span>PART STONES</span><span id="partStoneMeta"></span></div><div id="partStoneScroller" class="partStoneScroller"></div><div class="partStoneActions"><button id="partOriginal">ORIGINAL</button><button id="partAudition">▶ SELECTED</button><button id="partUse" class="use" disabled>USE THIS</button></div>';
+E.trackPrompt.parentElement.after(partRail);
+const PS={rail:partRail,meta:$("partStoneMeta"),scroller:$("partStoneScroller"),original:$("partOriginal"),audition:$("partAudition"),use:$("partUse")};
+
+function cloneValue(x){return x==null?x:structuredClone(x)}
+function partPatchSchema(){
+  return{type:'object',additionalProperties:false,
+    required:['track','shift','transpose','gain','mute','delete','query','behavior','density','durationScale'],
+    properties:{
+      track:{type:'integer',minimum:1,maximum:64},
+      shift:{type:'number',minimum:-16,maximum:16},
+      transpose:{type:'integer',minimum:-24,maximum:24},
+      gain:{type:'number',minimum:.05,maximum:1.5},
+      mute:{type:'boolean'},
+      delete:{type:'boolean'},
+      query:{type:'string',maxLength:60},
+      behavior:{type:'string',enum:['','loop','one_shot','chop','punctuate']},
+      density:{type:'number',minimum:.08,maximum:1},
+      durationScale:{type:'number',minimum:.2,maximum:3}
+    }
+  }
+}
+function partStoneSetSchema(){
+  return{type:'object',additionalProperties:false,required:['stones'],properties:{stones:{
+    type:'array',minItems:4,maxItems:4,items:{type:'object',additionalProperties:false,
+      required:['name','concept','patches'],
+      properties:{
+        name:{type:'string',maxLength:28},
+        concept:{type:'string',maxLength:110},
+        patches:{type:'array',minItems:1,maxItems:24,items:partPatchSchema()}
+      }
+    }
+  }}}
+}
+
+const previewCompletionPartBase=previewCompletion;
+previewCompletion=function(c){
+  if(Array.isArray(c?.partStones))return c.partStones.map((x,i)=>`${i+1} ${x.name}`).join(' · ');
+  return previewCompletionPartBase(c);
+};
+
+function partBaseSnapshot(){
+  return{code:E.code.value,plan:cloneValue(state.plan),ir:cloneValue(state.ir),soloActive:state.soloActive};
+}
+function clearPartStones({restore=false,hide=true}={}){
+  if(restore&&state.partStoneBase)restorePartOriginal(false);
+  state.partStones=[];state.partStoneTargets=[];state.partStonePreview=-1;state.partStoneChosen=-1;state.partStoneBase=null;state.partStoneLogId=null;
+  if(hide)PS.rail.classList.remove('open');
+  PS.scroller.innerHTML='';PS.use.disabled=true;PS.meta.textContent='';
+}
+function renderPartStones(){
+  PS.scroller.innerHTML='';
+  state.partStones.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.className='partStoneChip'+(i===state.partStonePreview?' on':'')+(i===state.partStoneChosen?' used':'');
+    b.innerHTML=`<b>${i+1} · ${esc(s.name)}</b><span>${esc(s.concept)}</span>`;
+    b.onclick=()=>previewPartStone(i,true);
+    PS.scroller.appendChild(b);
+  });
+  PS.meta.textContent=state.partStones.length?`${state.partStones.length} alternatives · ${state.partStoneTargets.map(t=>`T${t}`).join('+')}`:'';
+  PS.use.disabled=state.partStonePreview<0;
+  PS.rail.classList.toggle('open',!!state.partStones.length);
+}
+
+function candidateCode(baseCode,stone){
+  const lines=baseCode.split('\n'),targets=new Set(state.partStoneTargets),anchors=state.anchorTracks;
+  for(const x of stone.patches||[]){
+    const tr=Math.round(+x.track);
+    if(!targets.has(tr)||anchors.has(tr))continue;
+    const patch={...x};delete patch.track;patchLine(lines,tr,patch);
+  }
+  return lines.join('\n');
+}
+async function compilePartStone(stone){
+  if(stone.previewIR&&stone.previewPlan&&stone.previewCode)return stone;
+  const code=candidateCode(state.partStoneBase.code,stone),plan=parseCode(code),ir=await arrange(plan);
+  stone.previewCode=code;stone.previewPlan=cloneValue(plan);stone.previewIR=cloneValue(ir);
+  return stone;
+}
+function showPartPreview(stone,index){
+  state.partStonePreview=index;
+  state.plan=cloneValue(stone.previewPlan);
+  state.ir=cloneValue(stone.previewIR);
+  state.selectedTracks=new Set(state.partStoneTargets);
+  state.selectedTrack=state.partStoneTargets[0]??null;
+  state.soloActive=true;
+  renderTimeline();drawSpec();updateSelectionUI();renderPartStones();refreshSoloUI();
+  E.codeState.textContent='preview · code unchanged';
+  E.trackReadout.textContent=`PREVIEW ${index+1} · ${stone.name} — ${stone.concept}`;
+  setTrace('PART STONE',`${index+1}/4 ${stone.name}`,'preview only · USE to commit');
+}
+async function previewPartStone(index,autoPlay=false){
+  const stone=state.partStones[index];if(!stone||!state.partStoneBase)return;
+  if(state.playing)stop();
+  try{
+    await compilePartStone(stone);showPartPreview(stone,index);
+    if(autoPlay&&state.ir?.events.some(e=>state.partStoneTargets.includes(e.track)&&!e.muted))await play();
+  }catch(e){E.trackReadout.textContent=e.message;setTrace('FAULT','part stone preserved',e.message)}
+}
+function restorePartOriginal(autoPlay=false){
+  const b=state.partStoneBase;if(!b)return;
+  if(state.playing)stop();
+  state.plan=cloneValue(b.plan);state.ir=cloneValue(b.ir);state.partStonePreview=-1;
+  state.selectedTracks=new Set(state.partStoneTargets);
+  state.selectedTrack=state.partStoneTargets[0]??null;
+  state.soloActive=!!state.partStoneTargets.length;
+  renderTimeline();drawSpec();updateSelectionUI();renderPartStones();refreshSoloUI();
+  E.codeState.textContent='matches sound';
+  E.trackReadout.textContent='ORIGINAL · no candidate committed';
+  setTrace('ORIGINAL',state.partStoneTargets.map(t=>`T${t}`).join(' + '),'comparison restored');
+  if(autoPlay&&state.ir?.events.some(e=>state.partStoneTargets.includes(e.track)&&!e.muted))play();
+}
+PS.original.onclick=()=>restorePartOriginal(true);
+PS.audition.onclick=async()=>{
+  if(state.playing){stop();refreshSoloUI();return}
+  if(state.partStonePreview<0){restorePartOriginal(false)}
+  state.soloActive=true;refreshSoloUI();await play();
+};
+
+function updatePartChoiceLog(index,stone){
+  if(!state.partStoneLogId)return;
+  const rows=logRows(),row=rows.find(x=>x.id===state.partStoneLogId);
+  if(!row)return;
+  row.chosen={index,name:stone.name,concept:stone.concept,at:new Date().toISOString()};
+  row.codeAfter=stone.previewCode;
+  writeLog(rows);renderLog();
+}
+PS.use.onclick=async()=>{
+  const i=state.partStonePreview,stone=state.partStones[i];if(i<0||!stone)return;
+  if(state.playing)stop();
+  await compilePartStone(stone);
+  E.code.value=stone.previewCode;state.plan=cloneValue(stone.previewPlan);state.ir=cloneValue(stone.previewIR);
+  state.dirty=false;state.partStoneChosen=i;updateGutter();renderTimeline();drawSpec();updateSelectionUI();renderPartStones();
+  E.codeState.textContent='matches sound';E.soundState.textContent=`${state.ir.events.filter(e=>!e.muted).length} audible events`;
+  const s=current();if(s)s.savedCode=E.code.value;
+  updatePartChoiceLog(i,stone);
+  E.trackReadout.textContent=`USED ${i+1} · ${stone.name}`;
+  setTrace('USE PART STONE',`${i+1}/4 ${stone.name}`,'written to code');
+};
+
+async function generatePartStones(targets,request,scope='part-stones'){
+  targets=[...new Set(targets.map(Number))].filter(t=>Number.isFinite(t)&&!state.anchorTracks.has(t));
+  if(!targets.length){E.trackReadout.textContent='no editable target tracks';return}
+  if(!state.ir){E.trackReadout.textContent='RUN the song first';return}
+  if(!state.connected){showSheet();return}
+  if(state.playing)stop();
+  const anchors=[...state.anchorTracks].filter(t=>allTracks().includes(t));
+  const prompt=request.trim()||'Give me four strong, different ways to improve these selected parts while keeping the rest of the song coherent.';
+  state.partStoneBase=partBaseSnapshot();state.partStoneTargets=targets;state.partStonePreview=-1;state.partStoneChosen=-1;state.partStones=[];
+  E.trackAI.disabled=true;E.trackAI.textContent='CAST 4';E.trackReadout.textContent='casting 4 part stones…';PS.rail.classList.remove('open');
+  try{
+    const d=await apiFetch('/responses',{method:'POST',body:JSON.stringify({
+      model:state.model,
+      instructions:'You are producing four alternative edits for a selected subset of a multitrack arrangement. INVARIANT tracks are immutable and must never be patched. OTHER tracks are context only and must never be patched. Every candidate must patch the TARGET tracks only, and every candidate should be audibly distinct while still satisfying the request. Use timing shift, transpose, gain, density, note duration, sample-material query, and sample behavior as appropriate. Do not make four cosmetic parameter nudges: offer four different musical hypotheses.',
+      input:[{role:'user',content:[{type:'input_text',text:
+`SONG ${state.plan?.genre||''} | ${state.plan?.tempo||''} bpm | ${state.plan?.key||''} ${state.plan?.mode||''}
+REQUEST: ${prompt}
+INVARIANTS: ${JSON.stringify(anchors.map(trackContext))}
+TARGETS: ${JSON.stringify(targets.map(trackContext))}
+OTHER TRACKS (context only): ${JSON.stringify(allTracks().filter(t=>!targets.includes(t)&&!anchors.includes(t)).map(trackContext))}
+Return exactly FOUR named PART STONES. Each stone is one coherent alternative for the same request.`
+      }]}],
+      text:{format:{type:'json_schema',name:'part_stones',strict:true,schema:partStoneSetSchema()}}
+    })});
+    const parsed=JSON.parse(outputText(d)),targetSet=new Set(targets);
+    state.partStones=(parsed.stones||[]).slice(0,4).map((s,i)=>({
+      id:`part_${Date.now().toString(36)}_${i}`,
+      name:s.name,concept:s.concept,
+      patches:(s.patches||[]).filter(x=>targetSet.has(Number(x.track))&&!state.anchorTracks.has(Number(x.track)))
+    })).filter(s=>s.patches.length);
+    if(state.partStones.length!==4)throw Error(`received ${state.partStones.length}/4 usable part stones`);
+    const compact=state.partStones.map(s=>({id:s.id,name:s.name,concept:s.concept,patches:s.patches}));
+    const row=recordPair({scope,prompt,targets,anchors,stoneId:current()?.id,completion:{summary:`4 part stones for ${targets.map(t=>`T${t}`).join('+')}`,partStones:compact}});
+    state.partStoneLogId=row.id;
+    renderPartStones();
+    E.trackReadout.textContent='4 PART STONES · tap one to audition · USE commits only that one';
+    setTrace('4 PART STONES',targets.map(t=>`T${t}`).join(' + '),'tap to audition');
+  }catch(e){
+    restorePartOriginal(false);clearPartStones({restore:false,hide:true});
+    E.trackReadout.textContent=e.message;setTrace('FAULT','part prompt preserved',e.message);
+  }finally{
+    E.trackAI.disabled=false;E.trackAI.textContent=targets.length>1?`TUNE ${targets.length}`:'TUNE';
+  }
+}
+
+/* TUNE and FIT OTHERS now branch instead of immediately committing one completion */
+E.trackAI.onclick=()=>generatePartStones(editableSelected(),E.trackPrompt.value,'part-stones');
+X.fitOthersBtn.onclick=()=>{
+  const anchors=[...state.anchorTracks];
+  if(!anchors.length){E.trackReadout.textContent='select a track, mark INVARIANT, then FIT OTHERS';return}
+  const targets=allTracks().filter(t=>!state.anchorTracks.has(t));
+  state.selectedTracks=new Set(targets);updateSelectionUI();
+  const ask=E.trackPrompt.value.trim()||'Give me four different ensemble solutions for every non-invariant track so the arrangement fits the invariant track(s) naturally. Preserve the invariants exactly. Each solution should have its own pocket, register hierarchy and material strategy.';
+  generatePartStones(targets,ask,'fit-to-invariant-part-stones');
+};
+
+/* Manual edits invalidate a candidate comparison because its base state has changed. */
+const applyPatchBatchPartStoneEditBase=applyPatchBatch;
+applyPatchBatch=async function(patches){
+  if(state.partStonePreview>=0)restorePartOriginal(false);
+  if(state.partStones.length)clearPartStones({restore:false,hide:true});
+  return applyPatchBatchPartStoneEditBase(patches);
+};
+const mixerMutePartStoneBase=mixerMuteButton?.onclick;
+if(mixerMuteButton&&mixerMutePartStoneBase)mixerMuteButton.onclick=async()=>{
+  if(state.partStonePreview>=0)restorePartOriginal(false);
+  if(state.partStones.length)clearPartStones({restore:false,hide:true});
+  return mixerMutePartStoneBase();
+};
+
+/* Leaving the editor never commits a preview. */
+const trackClosePartStoneBase=E.trackClose.onclick;
+E.trackClose.onclick=()=>{
+  if(state.partStonePreview>=0)restorePartOriginal(false);
+  trackClosePartStoneBase?.();
+};
+const trackBackPartStoneBase=E.trackBack.onclick;
+E.trackBack.onclick=e=>{
+  if(e.target===E.trackBack&&state.partStonePreview>=0)restorePartOriginal(false);
+  trackBackPartStoneBase?.(e);
+};
+
+const loadStonePartStoneBase=loadStone;
+loadStone=async function(s){
+  clearPartStones({restore:false,hide:true});
+  return loadStonePartStoneBase(s);
+};
