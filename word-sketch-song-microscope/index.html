@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#fffdf0">
+<title>Sketchsong Microscope</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="gate" class="gate"><div class="gateBox"><div class="gateTitle">SKETCHSONG / MICROSCOPE</div><div class="gateRow"><input id="apiKey" type="password" placeholder="OpenAI API key" autocomplete="off"><button id="checkKey">CHECK</button></div><div class="gateRow"><select id="model"><option>gpt-5.6-terra</option><option>gpt-5.6-luna</option><option>gpt-5.6-sol</option></select><span style="padding:11px;font:850 8px ui-monospace,monospace">MODEL</span></div><div id="gateState" class="gateState">KEY STAYS IN THIS TAB</div></div></div>
+<div id="app"><header class="top"><div class="brand"><span id="dot" class="dot"></span><span>MICROSCOPE</span></div><div id="state" class="state">ADD A SOUND</div><div class="spacer"></div><button id="lineageBtn" title="Lineage">⌁</button><button id="exportBtn" title="Export">↓</button></header>
+<main class="object"><div class="objectHead"><b id="objectName">NO SOUND</b><span id="objectKind" class="kind">SOUND</span><span id="objectMeta" class="meta">0 parents</span></div><div class="body"><canvas id="bodyCanvas" width="1200" height="700"></canvas><canvas id="annoCanvas" class="anno" width="1200" height="700"></canvas><span class="axis time">TIME →</span><span class="axis freq">FREQUENCY →</span><div id="markLabel" class="markLabel">MARKED</div><div id="dropHint" class="dropHint"><div><b>ONE SOUND<br>IN YOUR HANDS</b><span>drop audio anywhere or press +</span><button id="seedBtn">MAKE A SEED</button></div></div></div><div id="cause" class="cause"><div class="causeLabel">CAUSE</div></div></main>
+<section class="children"><div class="childrenHead"><b id="childrenTitle">CHILDREN</b><span>tap to hear · long press to keep</span></div><div id="cards" class="cards"></div></section><footer class="actions"><button id="play">▷</button><button id="ask">ASK</button><button id="more" class="more">MORE</button><button id="add">＋</button></footer></div>
+<div id="selection" class="selection"></div><input id="file" type="file" accept="audio/*" multiple class="hidden">
+<aside id="addSheet" class="sheet"><div class="sheetHead">BRING SOMETHING IN<button data-close="addSheet">×</button></div><div class="addGrid"><button id="fileBtn">FILE</button><button id="recordBtn">SEED</button><button id="keptBtn">KEPT</button><button id="clearSelectBtn">CLEAR SELECT</button></div></aside>
+<aside id="chatSheet" class="sheet chat"><div class="sheetHead"><span id="chatTitle">ASK THIS SOUND</span><button data-close="chatSheet">×</button></div><div id="thread" class="thread"></div><div class="chatInput"><input id="chatInput" placeholder="ask what is happening"><button id="chatSend">→</button></div></aside>
+<aside id="lineageSheet" class="sheet lineage"><div class="sheetHead">LINEAGE / SEDIMENT<button data-close="lineageSheet">×</button></div><div id="tree" class="lineageCanvas"></div></aside>
+<div id="busy" class="busy"><div class="busyBox"><div id="busyTitle" class="busyTitle">LISTENING</div><div class="busySteps"><span id="bs0">READ</span><span id="bs1">MUTATE</span><span id="bs2">RENDER</span><span id="bs3">LISTEN</span></div></div></div>
+<script src="app.js"></script>
+</body></html>
