@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="color-scheme" content="light">
+<title>ES/TRACE v10 — Groove Chat</title>
+<link rel="stylesheet" href="es-trace-v10.css">
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">ES/TRACE<small>GROOVE CHAT · TUNEHOUNDS</small></div>
+    <div class="grow"></div>
+    <button class="topBtn" id="aiBtn">AI</button>
+  </header>
+
+  <main class="stage">
+    <section class="soundPair">
+      <button class="soundSlot active" data-slot="A">
+        <span class="slotLetter">A</span>
+        <span class="slotText"><b id="slotAName">SEED KICK</b><small id="slotAState">LOCAL · READY</small></span>
+      </button>
+      <div class="relation">↔</div>
+      <button class="soundSlot" data-slot="B">
+        <span class="slotLetter">B</span>
+        <span class="slotText"><b id="slotBName">EMPTY</b><small id="slotBState">ADD ONLY IF USEFUL</small></span>
+      </button>
+    </section>
+
+    <section class="grooveField">
+      <div class="grooveHead">
+        <div>
+          <b id="grooveName">GROOVE 01</b>
+          <small id="grooveMeta">2 bars · 5 events · 69% silence</small>
+        </div>
+        <div class="grow"></div>
+        <button class="mini" id="lessBtn">LESS</button>
+        <button class="mini" id="moreBtn">+1</button>
+      </div>
+
+      <canvas id="grooveCanvas" aria-label="Groove waveform and event field"></canvas>
+      <canvas id="spectrumCanvas" aria-label="Spectrogram"></canvas>
+
+      <div class="metrics" id="metrics"></div>
+
+      <div class="chat">
+        <input id="chatInput" autocomplete="off" placeholder="more empty before the second hit…">
+        <button id="chatGo">DO</button>
+      </div>
+    </section>
+
+    <section class="population" id="population">
+      <div class="sectionHead"><b>CHILDREN</b><span>listen before keeping</span></div>
+      <div class="children" id="children"></div>
+      <div class="evolveActions">
+        <button id="mutateBtn">MUTATE 4</button>
+        <button id="keepBtn" disabled>KEEP</button>
+        <button id="breedBtn" disabled>BREED</button>
+        <button id="killBtn" disabled>KILL</button>
+      </div>
+    </section>
+
+    <section class="sediment">
+      <div class="sectionHead"><b>SEDIMENT</b><span id="sedimentCount">0 kept</span></div>
+      <div class="sedimentStrip" id="sedimentStrip"></div>
+    </section>
+  </main>
+
+  <div class="status">
+    <span class="pulse" id="pulse"></span>
+    <b id="statusKey">READY</b>
+    <span id="statusText">one sound first</span>
+    <span class="grow"></span>
+    <span id="catalogCount">ES …</span>
+  </div>
+
+  <nav class="dock">
+    <button id="playBtn" class="primary">▶ LISTEN</button>
+    <button id="mutateDock">MUTATE</button>
+    <button id="forageBtn">FORAGE</button>
+  </nav>
+</div>
+
+<section class="sheet" id="forageSheet">
+  <div class="sheetHead"><b>TUNEHOUNDS</b><span id="forageTarget">A</span><div class="grow"></div><button class="close" data-close="forageSheet">×</button></div>
+  <div class="sheetBody">
+    <div class="houndTabs">
+      <button class="on" data-hound="kin">KIN</button>
+      <button data-hound="structure">STRUCTURE</button>
+      <button data-hound="lineage">LINEAGE</button>
+      <button data-hound="alien">ALIEN</button>
+      <button data-hound="morph">MORPH</button>
+    </div>
+    <div class="houndPrompt" id="houndPrompt">Find useful relatives without filling the groove.</div>
+    <div class="searchRow">
+      <input id="soundSearch" placeholder="search sound / folder / instrument">
+      <button id="importBtn">IMPORT</button>
+      <input id="fileInput" type="file" accept="audio/*" hidden>
+    </div>
+    <div class="candidateCount" id="candidateCount">catalog loading…</div>
+    <div class="candidateList" id="candidateList"></div>
+  </div>
+</section>
+
+<section class="sheet" id="sculptSheet">
+  <div class="sheetHead"><b>RADIODRAW</b><span id="sculptTarget">A</span><div class="grow"></div><button class="close" data-close="sculptSheet">×</button></div>
+  <div class="sheetBody">
+    <canvas id="sampleCanvas" class="sampleCanvas"></canvas>
+    <div class="shapeGrid">
+      <label>START<input type="range" id="shapeStart" min="0" max="95" value="0"></label>
+      <label>END<input type="range" id="shapeEnd" min="5" max="100" value="100"></label>
+      <label>RATE<input type="range" id="shapeRate" min="50" max="200" value="100"></label>
+      <label>GAIN<input type="range" id="shapeGain" min="10" max="160" value="100"></label>
+    </div>
+    <div class="shapeActions">
+      <button id="reverseBtn">REVERSE</button>
+      <button id="auditionBtn">▶ AUDITION</button>
+      <button id="bounceBtn">BOUNCE</button>
+    </div>
+    <div class="shapeTrace" id="shapeTrace">original sound object</div>
+  </div>
+</section>
+
+<section class="sheet" id="aiSheet">
+  <div class="sheetHead"><b>OPENAI</b><div class="grow"></div><button class="close" data-close="aiSheet">×</button></div>
+  <div class="sheetBody">
+    <div class="keyRow"><input id="apiKey" type="password" autocomplete="off" placeholder="OPENAI API KEY"><button id="connectBtn">CONNECT</button></div>
+    <div class="apiMsg" id="apiMsg">Optional. Local recursive groove evolution works without AI.</div>
+    <div class="txTabs">
+      <button class="on" data-tx="result">RESULT</button>
+      <button data-tx="response">RESPONSE</button>
+      <button data-tx="request">REQUEST</button>
+    </div>
+    <pre id="txBody">no transaction yet</pre>
+  </div>
+</section>
+
+<script src="es-trace-v10.js"></script>
+</body>
+</html>
