@@ -1,0 +1,22 @@
+const fs=require('node:fs');
+const html=fs.readFileSync(__dirname+'/pond-a-choice-returns.html','utf8');
+const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);const root={};new Function('globalThis',scripts[0])(root);
+console.log((function testRipple(C){
+const checks=[],ok=(x,n)=>{if(!x)throw Error(n);checks.push(n)},reject=(fn,n)=>{let fail=false;try{fn()}catch{fail=true}ok(fail,n)};
+const s=C.session();s.silence();let a=s.snapshot();
+ok(a.composition.tracks[0].bars[3].length===0,'Silence is stored');
+const p=C.passage(a.composition,{start:0,end:3});p.tracks[0].bars[3]=C.starter().tracks[0].bars[3];reject(()=>s.propose(p),'Candidate cannot resurrect protected drums');
+s.mutate('Other lyric',c=>c.lyrics[0].text='Morning');ok(s.snapshot().decision.active,'Unrelated edits preserve the decision');
+s.answer();ok(s.snapshot().candidate.effect.cause===s.snapshot().decision.id,'Response cites decision');
+s.commit();a=s.snapshot();ok(a.effects.length===1,'Commit records response before/after');
+ok(a.composition.lyrics[0].text==='Morning','Response preserves unrelated lyrics');
+const twin=s.without();ok(twin.tracks[0].bars[3].length>0&&C.equal(twin.tracks[1].bars[4],C.starter().tracks[1].bars[4]),'Counterfactual removes cause and response');
+ok(twin.lyrics[0].text==='Morning','Counterfactual preserves unrelated edits');
+const restored=C.session(a.composition,s.exportState());ok(restored.snapshot().effects.length===1,'Reload preserves effects');ok(C.equal(restored.without(),twin),'Reload preserves counterfactual');
+s.undo();ok(s.snapshot().decision.active&&!s.snapshot().effects.length,'Undo response preserves silence');
+s.answer();s.restore();reject(()=>s.commit(),'Restoration invalidates pending response');
+s.undo();ok(s.snapshot().decision.active,'Undo restoration restores silence');
+s.mutate('Extend',c=>{c.bars=16;c.tracks.forEach(t=>{while(t.bars.length<16)t.bars.push([])});while(c.lyrics.length<16)c.lyrics.push({text:'',locked:false})});ok(s.snapshot().decision.active,'Length change preserves constraint');
+s.answer();s.commit();s.mutate('Later bass edit',c=>c.tracks[1].bars[4][0].pitch++);reject(()=>s.without(),'Diverged bass cannot be presented as isolated counterfactual');
+return checks;
+})(root.PondCore).join('\n'));
