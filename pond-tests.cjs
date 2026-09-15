@@ -1,0 +1,20 @@
+require('./pond-core.js');
+console.log((function runCoreTests(C){
+ const results=[];const ok=(x,n)=>{if(!x)throw Error(n);results.push(n)},reject=(f,n)=>{let failed=false;try{f()}catch{failed=true}ok(failed,n)};
+ const c=C.starter(),s={start:2,end:3},p=C.passage(c,s);p.tracks[0].bars[0][0].velocity=.3;p.lyrics[0]='A new morning';const valid=C.proposal(p,c,s),next=C.apply(c,valid);
+ ok(c.lyrics[2].text===''&&c.tracks[0].bars[2][0].velocity===.8,'Proposal does not mutate original');
+ ok(next.lyrics[2].text==='A new morning','Selected lyrics change');
+ ok(c.tracks.every((t,ti)=>t.bars.every((bar,i)=>i>=2&&i<=3||C.equal(bar,next.tracks[ti].bars[i]))),'Outside music preserved');
+ ok(c.lyrics.every((l,i)=>i>=2&&i<=3||C.equal(l,next.lyrics[i])),'Outside lyrics preserved');
+ const locked=C.clone(c);locked.tracks[0].locked=true;reject(()=>C.proposal(p,locked,s),'Locked track change rejected');
+ locked.lyrics[2].locked=true;const lp=C.passage(locked,s);lp.lyrics[0]='bad';reject(()=>C.proposal(lp,locked,s),'Locked lyric change rejected');
+ const cross=C.passage(c,s);cross.tracks[0].bars[0][0].duration=5;reject(()=>C.proposal(cross,c,s),'Cross-boundary note rejected');
+ reject(()=>C.proposal(p,c,{start:1,end:3}),'Wrong selection rejected');
+ reject(()=>C.proposal(p,c,s,'lyrics'),'Music protected in lyrics scope');
+ reject(()=>C.proposal(p,c,s,'music'),'Lyrics protected in music scope');
+ const state=C.session(c);state.select(2,3);state.propose(p);state.commit();ok(state.snapshot().composition.lyrics[2].text==='A new morning','Commit applies candidate');state.undo();ok(C.equal(c,state.snapshot().composition),'Undo restores composition');
+ state.select(2,3);state.propose(p);state.select(0,1);reject(()=>state.commit(),'Selection change invalidates candidate');
+ const base=state.snapshot();state.mutate('tempo',c=>c.tempo=110);reject(()=>state.propose(C.passage(base.composition,base.selection),'both',base.revision,base.selection),'Stale request rejected');
+ state.mutate('extend',c=>{c.bars=32;c.tracks.forEach(t=>{while(t.bars.length<32)t.bars.push([])});while(c.lyrics.length<32)c.lyrics.push({text:'',locked:false})});state.select(30,31);const end=C.passage(state.snapshot().composition,{start:30,end:31});end.lyrics[1]='Last bar';state.propose(end);state.commit();ok(state.snapshot().composition.lyrics[31].text==='Last bar','Thirty-two-bar modification preserves passage operations');
+ return results;
+})(globalThis.PondCore).join('\n'));

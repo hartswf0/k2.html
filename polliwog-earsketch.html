@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>ES+ / Music & Lyrics</title>
+<style>:root{--paper:#fffef7;--wash:#f7f4ea;--ink:#10100e;--muted:#787268;--line:#d5d0c4;--line2:#a9a296;--mint:#dcefe5;--yellow:#f2df70;--orange:#d85e25;--blue:#dfeaf2;--rail:32px}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font:12px/1.25 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}button,input,textarea{font:inherit;color:inherit}button{border:0;background:none;cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,canvas:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}[hidden]{display:none!important}
+.app{height:100dvh;display:grid;grid-template-rows:36px 25px minmax(0,1fr) 34px;background:var(--paper)}
+.top{display:flex;align-items:center;border-bottom:1px solid var(--ink);background:var(--paper)}.brand{height:35px;display:flex;align-items:center;padding:0 10px;border-right:1px solid var(--ink);font-size:15px;font-weight:950;letter-spacing:-.06em}.api{height:35px;display:flex;align-items:center;gap:6px;padding:0 8px;border-right:1px solid var(--line);font-size:8px;color:var(--muted);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dot{width:7px;height:7px;border-radius:50%;background:var(--line2);flex:0 0 auto}.dot.ok{background:#0b704f}.dot.bad{background:var(--orange)}.grow{flex:1}.cmd{height:35px;min-width:52px;padding:0 9px;border-left:1px solid var(--line);font-size:9px;font-weight:950}.cmd.play{background:var(--yellow)}.cmd:disabled{opacity:.25;cursor:default}
+.trace{height:25px;display:flex;align-items:center;padding:0 8px;border-bottom:1px solid var(--line);background:var(--wash);font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.trace strong{color:var(--ink)}
+.workspace{min-height:0;display:flex;overflow:hidden}.pane{min-width:0;min-height:0;display:grid;grid-template-rows:27px minmax(0,1fr);background:var(--paper);flex:1 1 0}.pane.min{flex:0 0 var(--rail)!important}.pane.min .body{display:none}.pane.min .head{height:100%;writing-mode:vertical-rl;transform:rotate(180deg);border-bottom:0;justify-content:flex-start;padding-top:7px}.pane.min .minBtn{transform:rotate(90deg);margin:0 0 5px}.head{height:27px;display:flex;align-items:center;padding:0 7px;border-bottom:1px solid var(--line);font-size:8px;font-weight:950;letter-spacing:.08em;white-space:nowrap;overflow:hidden}.head .state{margin-left:auto;color:var(--muted);font-size:7px;font-weight:500;letter-spacing:0;overflow:hidden;text-overflow:ellipsis}.minBtn{width:19px;height:19px;margin-left:4px;font-size:11px;font-weight:950}.grip{flex:0 0 7px;cursor:col-resize;background:var(--wash);border-left:1px solid var(--line);border-right:1px solid var(--line);position:relative}.grip:after{content:"";position:absolute;left:2px;top:50%;width:2px;height:34px;background:var(--line2);transform:translateY(-50%)}
+.sourceBody{min-height:0;padding:9px;display:grid;grid-template-rows:minmax(150px,1fr) auto;gap:8px}.compose{min-height:0;border:1px solid var(--ink);background:#fff;display:grid;grid-template-rows:minmax(0,1fr) 44px}.prompt{width:100%;height:100%;border:0;outline:0;resize:none;padding:13px;background:#fff;font-size:16px;line-height:1.35}.composeBar{display:flex;align-items:center;border-top:1px solid var(--line)}.composeBar button{height:43px;padding:0 12px;border-right:1px solid var(--line);font-size:9px;font-weight:950}.composeBar .make{margin-left:auto;border-right:0;border-left:1px solid var(--ink);min-width:86px;background:var(--ink);color:var(--paper);font-size:10px}.composeBar .make.busy{background:var(--orange)}.sketchWrap{height:190px;position:relative;border:1px solid var(--line);background:#fff}.sketch{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}.sketchHint{position:absolute;left:6px;top:5px;font-size:7px;color:var(--muted);pointer-events:none}.clearInk{position:absolute;right:5px;top:5px;width:24px;height:24px;border:1px solid var(--line);background:rgba(255,254,247,.94);font-weight:950}
+.codeBody{min-height:0;display:grid;grid-template-columns:34px minmax(0,1fr);background:#fff}.gutter{padding:8px 0;text-align:right;overflow:hidden;border-right:1px solid var(--line);background:var(--wash);color:#999286;user-select:none}.ln{height:18px;padding-right:5px;border-left:2px solid transparent}.ln.hit{color:#0b704f;font-weight:950}.ln.cursor{background:#ece8dc;color:var(--ink)}.ln.playing{background:var(--mint);border-left-color:#0b704f;color:#0b704f;font-weight:950}.code{width:100%;height:100%;resize:none;border:0;outline:0;background:#fff;padding:8px 9px;line-height:18px;tab-size:4;white-space:pre;overflow:auto;font-size:11px}
+.soundBody{min-height:0;display:grid;grid-template-rows:minmax(170px,.72fr) minmax(90px,.28fr)}.timelineWrap{min-height:0;overflow:auto;background:var(--wash);border-bottom:1px solid var(--line)}.timeline{position:relative;padding-top:24px;min-width:max(100%,calc(42px + var(--bars,8) * 36px))}.ruler{position:absolute;left:42px;right:0;top:0;height:24px;border-bottom:1px solid var(--line);background:#f2efe5}.mnum{position:absolute;top:7px;font-size:7px;color:var(--muted)}.track{height:42px;display:grid;grid-template-columns:42px minmax(0,1fr);border-bottom:1px solid var(--line)}.tlabel{display:grid;place-items:center;border-right:1px solid var(--line);font-size:7px;font-weight:950}.lane{position:relative;background-image:linear-gradient(to right,rgba(0,0,0,.08) 1px,transparent 1px);background-size:calc(100% / var(--bars)) 100%}.clip{position:absolute;top:7px;height:28px;border:1px solid #56665f;background:#dfeae5;border-radius:2px;overflow:hidden;text-align:left;padding:3px 4px;min-width:3px}.clip.symbolic{background:var(--blue)}.clip.texture{background:#eee7d9}.clip b{display:block;font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.clip span{display:block;font-size:6px;color:#59615d;white-space:nowrap}.clip.link{outline:2px solid var(--orange);z-index:3}.clip.playing{background:var(--yellow);outline:1px solid var(--ink);z-index:4}.playhead{position:absolute;top:24px;bottom:0;width:1px;background:var(--orange);z-index:8;display:none}.empty{padding:16px;color:var(--muted);font-size:9px}.specWrap{min-height:0;position:relative;background:#fff}.spec{display:block;width:100%;height:100%}.specLabel{position:absolute;left:6px;top:5px;font-size:7px;color:var(--muted)}
+.rail{display:flex;align-items:center;gap:5px;padding:0 8px;border-top:1px solid var(--ink);background:var(--paper);min-width:0}.railLabel{font-size:7px;color:var(--muted);margin-right:2px}.stoneDot{height:18px;min-width:18px;padding:0 6px;border:1px solid var(--ink);border-radius:10px;font-size:6px;background:var(--paper);max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stoneDot.on{background:var(--ink);color:var(--paper)}.stoneDot.kept{box-shadow:0 0 0 2px var(--mint)}.keep{margin-left:auto;height:24px;padding:0 8px;border-left:1px solid var(--line);font-size:7px;font-weight:950}.keep.on{background:var(--mint);color:#0b704f}
+.sheetBack{position:fixed;inset:0;background:rgba(17,17,15,.22);z-index:100;display:none;align-items:flex-end;justify-content:center}.sheetBack.open{display:flex}.sheet{width:min(520px,100%);background:var(--paper);border:1px solid var(--ink);margin:0 8px 8px}.sheetRow{display:grid;grid-template-columns:1fr 130px;border-bottom:1px solid var(--line)}.sheet input{height:46px;border:0;border-right:1px solid var(--line);padding:0 9px;background:transparent;min-width:0}.sheet button{height:46px;font-weight:950;font-size:9px}.sheet button.primary{background:var(--ink);color:var(--paper)}.sheetStatus{height:31px;display:flex;align-items:center;gap:6px;padding:0 9px;font-size:8px;color:var(--muted)}.sheetActions{display:flex;border-top:1px solid var(--line)}.sheetActions button{flex:1;border-right:1px solid var(--line)}.sheetActions button:last-child{border-right:0}.mobileNav{display:none}
+@media(max-width:720px){.app{grid-template-rows:36px 25px minmax(0,1fr) 34px 39px}.api{max-width:98px}.cmd{min-width:48px;padding:0 7px}.workspace{display:block;position:relative}.pane{position:absolute;inset:0;display:none!important;border:0!important}.pane.mobileOn{display:grid!important}.pane.min{flex:none!important}.pane.min .body{display:block!important}.pane.min .head{height:27px;writing-mode:horizontal-tb;transform:none;border-bottom:1px solid var(--line);padding:0 7px}.minBtn,.grip{display:none!important}.sourceBody{padding:8px;grid-template-rows:minmax(170px,1fr) auto}.sketchWrap{height:210px}.prompt{font-size:17px}.codeBody{display:grid!important;grid-template-columns:34px minmax(0,1fr)!important}.code{font-size:12px}.soundBody{display:grid!important;grid-template-rows:minmax(170px,.7fr) minmax(90px,.3fr)!important}.timeline{min-width:max(100%,calc(42px + var(--bars,8) * 34px))}.mobileNav{display:flex;border-top:1px solid var(--ink);background:var(--paper)}.mobileNav button{flex:1;border-right:1px solid var(--line);font-size:8px;font-weight:950}.mobileNav button:last-child{border-right:0}.mobileNav button.on{background:var(--ink);color:var(--paper)}.mobileNav button:disabled{opacity:.28}}
+
+[hidden]{display:none!important}#lyricsPanel{position:fixed;right:0;top:0;bottom:0;width:390px;z-index:180;background:var(--paper);border-left:1px solid var(--ink);padding:12px;display:flex;flex-direction:column;gap:10px;font:12px/1.4 ui-monospace,monospace}#lyricsPanel label{font-weight:800;font-size:10px}.lyricHead{display:flex;justify-content:space-between;align-items:center}.lyricHead button{font-size:24px;padding:0 10px}#lyricBrief,#lyricDraft{border:1px solid var(--line);padding:12px;resize:none;background:#fff;color:#111;font:14px/1.5 ui-monospace,monospace;min-width:0}#lyricBrief{height:110px;flex-shrink:0}#lyricDraft{flex:1;min-height:90px}.lyricActions{display:flex;gap:5px;flex-wrap:wrap}.lyricActions button{padding:10px 8px;border:1px solid var(--line);font-size:10px;font-weight:bold}#generateLyrics,#useLyrics{background:var(--ink);color:var(--paper)}#lyricStatus{font-size:11px;color:var(--muted)}body.lyricsOpen>.app{width:calc(100% - 390px)}#samplerOverlay{position:fixed;inset:0;z-index:190;background:#050706;display:flex;flex-direction:column}#samplerClose{padding:12px;color:#fff;background:#111;text-align:right}#samplerFrame{border:0;width:100%;flex:1;min-height:0}@media(max-width:800px){#lyricsPanel{width:100%;padding-bottom:calc(12px + env(safe-area-inset-bottom))}body.lyricsOpen>.app{width:100%}}
+</style>
+<style>
+@media(max-width:720px){
+  #codePane>.body.codeBody{display:block!important;position:relative!important;min-width:0!important;min-height:0!important;overflow:hidden!important}
+  #codePane .gutter{display:none!important}
+  #codePane .code{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:0!important;max-width:none!important;margin:0!important;padding:12px 14px!important;font-size:13px!important;line-height:1.45!important;white-space:pre!important;overflow:auto!important;direction:ltr!important;writing-mode:horizontal-tb!important}
+  #soundPane>.body.soundBody{display:grid!important;grid-template-rows:minmax(170px,.7fr) minmax(90px,.3fr)!important;min-width:0!important;min-height:0!important}
+  #sourcePane>.body.sourceBody{display:grid!important;min-width:0!important;min-height:0!important}
+}
+.toolBtn,.headTool{height:24px;padding:0 8px;border-left:1px solid var(--line);font:700 8px/1 ui-monospace,monospace;background:transparent}.headTool{margin-left:6px;height:26px}.headTool[hidden]{display:none!important}
+.trackBack,.exportBack,.logBack{position:fixed;inset:0;background:rgba(17,17,15,.24);z-index:220;display:none;align-items:flex-end;justify-content:center}.trackBack.open,.exportBack.open,.logBack.open{display:flex}
+.trackSheet,.exportSheet,.logSheet{width:min(620px,calc(100% - 12px));margin:0 6px 6px;background:var(--paper);border:1px solid var(--ink);box-shadow:0 -10px 35px rgba(0,0,0,.1)}
+.trackHead{height:34px;display:flex;align-items:center;padding:0 9px;border-bottom:1px solid var(--line);font-weight:900;font-size:9px}.trackHead span:last-child{margin-left:auto;color:var(--muted);font-weight:500}
+.trackPrompt{display:grid;grid-template-columns:1fr 72px;border-bottom:1px solid var(--line)}.trackPrompt input{height:45px;border:0;border-right:1px solid var(--line);padding:0 9px;background:transparent;min-width:0}.trackPrompt button{font-weight:900;font-size:9px}
+.selectOps{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)}.selectOps button{height:38px;border-right:1px solid var(--line);font-size:8px;font-weight:900}.selectOps button:last-child{border-right:0}.selectOps button.on{background:var(--ink);color:var(--paper)}
+.trackOps{display:grid;grid-template-columns:repeat(5,1fr)}.trackOps button{height:40px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:8px;font-weight:900}.trackOps button:nth-child(5n){border-right:0}.trackOps button.danger{color:#9b2f18}
+.trackReadout{padding:7px 9px;font-size:8px;color:var(--muted);min-height:31px}.trackClose{width:100%;height:40px;background:var(--ink);color:var(--paper);font-weight:900;font-size:9px}
+.exportSheet{padding:0}.exportGrid{display:grid;grid-template-columns:repeat(3,1fr)}.exportGrid button{height:54px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:9px;font-weight:900}.exportGrid button:last-child{border-right:0}.exportNote{padding:8px 9px;color:var(--muted);font-size:8px}.exportClose{width:100%;height:38px;background:var(--ink);color:var(--paper);font-weight:900}
+.logList{max-height:min(58vh,520px);overflow:auto}.logItem{padding:9px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:72px 1fr;gap:8px;font-size:8px}.logWhen{color:var(--muted)}.logPair{min-width:0}.logPair b{display:block;font-size:8px;margin-bottom:3px}.logPair .p,.logPair .c{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.logPair .c{color:var(--muted);margin-top:3px}.logActions{display:grid;grid-template-columns:1fr 1fr 1fr}.logActions button{height:40px;border-right:1px solid var(--line);font-size:8px;font-weight:900}.logActions button:last-child{border-right:0}.logEmpty{padding:18px;color:var(--muted);font-size:8px}
+.track.selected .tlabel,.tlabel.selected{background:#111;color:#fff}.track.anchor .tlabel,.tlabel.anchor{background:var(--yellow)!important;color:var(--ink)!important;box-shadow:inset 0 0 0 2px var(--ink)}.tlabel{cursor:pointer;touch-action:none}.clip{touch-action:none}
+</style>
+<style>
+:root{--paper:#f8f9fb;--wash:#edf0f4;--ink:#192330;--muted:#657487;--line:#ccd3dc;--line2:#9aa8b8;--yellow:#8ed7ac;--mint:#dcefe5;--blue:#dce9fa}
+.top{background:#233348;color:#fff;border-color:#192330}.brand{letter-spacing:-.02em;font-size:18px;border:0}.brandSub{font-size:9px;letter-spacing:.12em;margin-left:8px;color:#c5d1df}.api{color:#c5d1df;border-color:#4a596b}.cmd{font-size:11px;min-width:64px;border-color:#4a596b}.cmd.play{background:#8ed7ac;color:#12251a}.trace{font-size:10px;height:28px}.app{grid-template-rows:44px 28px minmax(0,1fr) 38px}.top,.brand,.api,.cmd{height:44px}
+.head{font-size:10px;height:32px;background:#e7ecf2;color:#334358;border-color:#b9c4d0}.pane{grid-template-rows:32px minmax(0,1fr)}.head .state{font-size:9px}.sourceBody{padding:12px}.prompt{font-size:13px;line-height:1.55}.compose{border:1px solid #b8c3cf}.code{font-size:12px;line-height:20px;background:#fcfdff}.ln{height:20px}.gutter{background:#eef2f7}.soundBody{grid-template-rows:minmax(170px,.82fr) minmax(80px,.18fr)}.timelineWrap{background:#e9eef4}.ruler{background:#dce4ee}.track{height:64px}.tlabel{font-size:10px;background:#e0e7ef}.clip{top:10px;height:43px;border-radius:3px;background:#b5d5c6;border-color:#6c9b86}.clip.symbolic{background:#afc9ee;border-color:#658bbb}.clip.texture{background:#dbbfdf}.clip b{font-size:9px}.clip span{font-size:8px}.mnum{font-size:9px}.stoneDot{border-radius:3px;font-size:9px;height:25px;max-width:160px}.railLabel{font-size:9px}.empty{font-size:12px}.specLabel{font-size:9px}
+#sourcePane{position:relative}#lyricsPanel{position:absolute;inset:32px 0 0;width:auto;z-index:10;border:0;background:#f8f9fb;padding:12px;gap:8px}body.lyricsOpen>.app{width:100%}body.lyricsOpen #sourcePane>.sourceBody{visibility:hidden}#lyricBrief{height:85px;font-size:12px}#lyricDraft{font-size:13px}#lyricStatus{font-size:10px}.lyricHead{font-size:11px}.lyricActions button{font-size:9px;padding:9px 6px}#lyricsBtn[aria-expanded=true]{background:#476489}.sheetBack{z-index:250}
+@media(max-width:720px){.app{grid-template-rows:44px 28px minmax(0,1fr) 38px 44px}.brandSub{display:none}.cmd{min-width:49px;font-size:10px}.api{max-width:88px}.pane.min .head{height:32px}.mobileNav button{font-size:11px}.rail{overflow:auto}.track{height:68px}#lyricsPanel{width:auto;padding-bottom:12px}.sourceBody{padding:10px}.prompt{font-size:14px}.railLabel{display:none}}
+</style><style>@media(max-width:720px){#sourcePane{position:absolute}}.track:nth-of-type(3n) .clip{background:#adc5e7}.track:nth-of-type(3n + 1) .clip{background:#cab7dd}</style></head><body>
+<div class="app">
+<header class="top"><div class="brand">ES+ <span class="brandSub">STUDIO</span></div><button id="apiBtn" class="api"><span id="apiDot" class="dot"></span><span id="apiText">API</span></button><div class="grow"></div><button id="runBtn" class="cmd" disabled>RUN</button><button id="playBtn" class="cmd play" disabled>PLAY</button></header>
+<div id="trace" class="trace"><strong>START</strong>&nbsp; describe or draw → MAKE</div>
+<main id="workspace" class="workspace">
+<section id="sourcePane" class="pane" data-pane="source" style="flex-basis:100%"><div class="head">SOURCE<span id="sourceState" class="state">ready</span><button class="minBtn" data-min="source">−</button></div><div class="body sourceBody"><div class="compose"><textarea id="prompt" class="prompt" placeholder="Describe a sound, motion, place, game, feeling…"></textarea><div class="composeBar"><button id="drawBtn">DRAW</button><button id="clearBtn">CLEAR</button><button id="makeBtn" class="make">MAKE</button></div></div><div id="sketchWrap" class="sketchWrap" hidden><div class="sketchHint">draw rhythm / contour / energy</div><canvas id="sketch" class="sketch"></canvas><button id="clearInk" class="clearInk">×</button></div></div></section>
+<div class="grip" data-grip="0" hidden></div>
+<section id="codePane" class="pane min" data-pane="code"><div class="head">CODE<span id="codeState" class="state">empty</span><button class="minBtn" data-min="code">+</button></div><div class="body codeBody"><div id="gutter" class="gutter"></div><textarea id="code" class="code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea></div></section>
+<div class="grip" data-grip="1" hidden></div>
+<section id="soundPane" class="pane min" data-pane="sound"><div class="head">SOUND<span id="soundState" class="state">empty</span><button id="groupBtn" class="headTool" hidden>EDIT 0</button><button class="minBtn" data-min="sound">+</button></div><div class="body soundBody"><div class="timelineWrap"><div id="timeline" class="timeline"><div class="empty">MAKE → RUN → PLAY</div></div></div><div class="specWrap"><canvas id="spec" class="spec"></canvas><div class="specLabel">result · tap track numbers to select · tap clip to edit</div></div></div></section>
+</main>
+<footer class="rail"><span class="railLabel">ARRANGEMENTS</span><div id="stones" style="display:flex;gap:5px;min-width:0;overflow:auto"></div><button id="keepBtn" class="keep" disabled>KEEP</button><button id="logBtn" class="toolBtn">LOG</button><button id="exportBtn" class="toolBtn" disabled>EXPORT</button></footer>
+<nav class="mobileNav"><button class="on" data-mobile="source">SOURCE</button><button id="mobileCode" data-mobile="code" disabled>CODE</button><button id="mobileSound" data-mobile="sound" disabled>SOUND</button></nav>
+</div>
+<div id="sheetBack" class="sheetBack"><div class="sheet"><div class="sheetRow"><input id="keyInput" type="password" placeholder="OPENAI API KEY" autocomplete="off"><input id="modelInput" value="gpt-5.6-terra" aria-label="model"></div><div class="sheetRow"><input id="routeInput" value="https://api.openai.com/v1" aria-label="API route"><button id="connectBtn" class="primary">CONNECT</button></div><div class="sheetStatus"><span id="sheetDot" class="dot"></span><span id="sheetStatus">not checked</span></div><div class="sheetActions"><button id="forgetBtn">FORGET KEY</button><button id="closeSheet">CLOSE</button></div></div></div>
+<div id="trackBack" class="trackBack"><div class="trackSheet"><div class="trackHead"><span id="trackTitle">TRACK</span><span id="trackMeta"></span></div><div class="trackPrompt"><input id="trackPrompt" placeholder="Change selected tracks together…"><button id="trackAI">TUNE</button></div><div class="selectOps"><button id="anchorBtn">INVARIANT</button><button id="fitOthersBtn">FIT OTHERS</button><button id="selectionClear">CLEAR SELECT</button></div><div class="trackOps"><button data-track-op="left">← ¼</button><button data-track-op="right">¼ →</button><button data-track-op="down">−1</button><button data-track-op="up">+1</button><button data-track-op="octdown">−12</button><button data-track-op="octup">+12</button><button data-track-op="swap">SWAP</button><button data-track-op="copy">COPY</button><button data-track-op="mute">MUTE</button><button data-track-op="delete" class="danger">DELETE</button></div><div id="trackReadout" class="trackReadout"></div><button id="trackClose" class="trackClose">DONE</button></div></div>
+<div id="exportBack" class="exportBack"><div class="exportSheet"><div class="trackHead"><span>EXPORT</span><span id="exportMeta"></span></div><div class="exportGrid"><button id="midiExport">MIDI</button><button id="wavExport">WAV</button><button id="projectExport">PROJECT</button></div><div class="exportNote">MIDI carries notes, drums and sample-trigger tracks. WAV renders the browser arrangement. PROJECT carries source, drawing, code, prompt log and invariants. MP3 is not encoded in-browser yet.</div><button id="exportClose" class="exportClose">CLOSE</button></div></div>
+<div id="logBack" class="logBack"><div class="logSheet"><div class="trackHead"><span>PROMPT / COMPLETION LOG</span><span id="logMeta"></span></div><div id="logList" class="logList"><div class="logEmpty">No prompts yet.</div></div><div class="logActions"><button id="logExport">DOWNLOAD JSONL</button><button id="logClear">CLEAR LOG</button><button id="logClose">CLOSE</button></div></div></div>
+<script>(()=>{"use strict";
+const $=id=>document.getElementById(id);
+const IDS=["apiBtn","apiDot","apiText","runBtn","playBtn","trace","sourcePane","codePane","soundPane","sourceState","codeState","soundState","prompt","drawBtn","clearBtn","makeBtn","sketchWrap","sketch","clearInk","gutter","code","timeline","spec","stones","keepBtn","exportBtn","mobileCode","mobileSound","sheetBack","keyInput","modelInput","routeInput","connectBtn","sheetDot","sheetStatus","forgetBtn","closeSheet","workspace","trackBack","trackTitle","trackMeta","trackPrompt","trackAI","trackReadout","trackClose","exportBack","exportMeta","midiExport","wavExport","projectExport","exportClose"];
+const E=Object.fromEntries(IDS.map(id=>[id,$(id)]));
+const ROOTS={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
+const MODES={major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10],dorian:[0,2,3,5,7,9,10],mixolydian:[0,2,4,5,7,9,10],phrygian:[0,1,3,5,7,8,10],pentatonic:[0,2,4,7,9]};
+const GROOVES=["backbeat","shuffle","broken","halftime","motorik","clave","garage","triplet","afro_lilt","dub_space","free_pulse"];
+const ROLES=["DRUMS","PERCUSSION","BASS","GUITAR","KEYS","VOCAL","BRASS","STRINGS","SYNTH","WORLD","TEXTURE","FX"];
+const BEHAVIORS=["loop","one_shot","chop","punctuate"];
+const STATIC="https://earsketch.gatech.edu/backend-static",KEEP_KEY="es.kept.v2";
+const state={key:sessionStorage.getItem("es.key")||"",model:sessionStorage.getItem("es.model")||"gpt-5.6-terra",route:sessionStorage.getItem("es.route")||"https://api.openai.com/v1",connected:false,pending:false,busy:false,strokes:[],drawing:null,stones:[],stoneIndex:-1,plan:null,ir:null,dirty:true,catalog:null,catalogPromise:null,catalogError:null,buffers:new Map(),usedSounds:new Set(),audio:null,master:null,nodes:[],raf:0,playing:false,widths:[34,32,34],selectedTrack:null};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),mobile=()=>matchMedia("(max-width:720px)").matches,current=()=>state.stones[state.stoneIndex]||null;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
+const seeded=seed=>{let x=seed||123456789;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return((x>>>0)%100000)/100000}};
+const uid=()=>`stone_${Date.now().toString(36)}_${Math.floor(Math.random()*1e6).toString(36)}`;
+function setTrace(a,b="",c=""){E.trace.innerHTML=`<strong>${esc(a)}</strong>${b?`&nbsp; → &nbsp;${esc(b)}`:""}${c?`&nbsp; → &nbsp;${esc(c)}`:""}`}
+window.addEventListener("error",ev=>setTrace("FAULT","runtime",ev.message||"error"));window.addEventListener("unhandledrejection",ev=>setTrace("FAULT","runtime",String(ev.reason?.message||ev.reason||"promise")));
+
+/* API */
+function showSheet(){E.keyInput.value=state.key;E.modelInput.value=state.model;E.routeInput.value=state.route;E.sheetBack.classList.add("open")}
+function hideSheet(){E.sheetBack.classList.remove("open")}
+E.apiBtn.onclick=showSheet;E.closeSheet.onclick=hideSheet;E.sheetBack.onclick=e=>{if(e.target===E.sheetBack)hideSheet()};
+E.forgetBtn.onclick=()=>{state.key="";state.connected=false;sessionStorage.removeItem("es.key");E.apiDot.className="dot";E.apiText.textContent="API";E.keyInput.value=""};
+async function apiFetch(path,opt={}){const headers={...(opt.headers||{}),Authorization:`Bearer ${state.key}`};if(opt.body)headers["Content-Type"]="application/json";const r=await fetch(`${state.route.replace(/\/$/,"")}${path}`,{...opt,headers});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error?.message||`${r.status} ${r.statusText}`);return d}
+async function connect(){state.key=E.keyInput.value.trim();state.model=E.modelInput.value.trim()||"gpt-5.6-terra";state.route=E.routeInput.value.trim()||"https://api.openai.com/v1";if(!state.key){E.sheetDot.className="dot bad";E.sheetStatus.textContent="key required";return}E.connectBtn.disabled=true;E.sheetStatus.textContent="checking…";try{await apiFetch(`/models/${encodeURIComponent(state.model)}`);state.connected=true;sessionStorage.setItem("es.key",state.key);sessionStorage.setItem("es.model",state.model);sessionStorage.setItem("es.route",state.route);E.sheetDot.className="dot ok";E.sheetStatus.textContent="connected";E.apiDot.className="dot ok";E.apiText.textContent=state.model;setTimeout(hideSheet,100);if(state.pending){state.pending=false;setTimeout(make,120)}}catch(e){E.sheetDot.className="dot bad";E.sheetStatus.textContent=e.message}finally{E.connectBtn.disabled=false}}
+E.connectBtn.onclick=connect;(async()=>{if(!state.key)return;try{await apiFetch(`/models/${encodeURIComponent(state.model)}`);state.connected=true;E.apiDot.className="dot ok";E.apiText.textContent=state.model}catch(_){E.apiDot.className="dot bad"}})();
+
+/* EarSketch catalog */
+async function loadCatalog(){if(state.catalog)return state.catalog;if(state.catalogPromise)return state.catalogPromise;state.catalogPromise=(async()=>{const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),7000);try{const r=await fetch(`${STATIC}/audio-standard_4.json`,{signal:ctl.signal,cache:"force-cache"});if(!r.ok)throw Error(`catalog ${r.status}`);const d=await r.json();state.catalog=Array.isArray(d)?d.filter(x=>x&&x.name&&x.path):[];setTrace("READY",`${state.catalog.length} EarSketch sounds`,`describe or draw`);return state.catalog}catch(e){state.catalogError=e;state.catalog=[];setTrace("READY","catalog unavailable","synth fallback");return []}finally{clearTimeout(timer)}})();return state.catalogPromise}
+loadCatalog();
+function words(s){return String(s).toLowerCase().split(/[^a-z0-9]+/).filter(x=>x.length>2)}
+function hay(s){return`${s.name||""} ${s.genreGroup||""} ${s.genre||""} ${s.instrument||""} ${s.folder||""} ${s.artist||""}`.toLowerCase()}
+function resolveSound(role,query,genre,exclude=""){const cat=state.catalog||[];if(!cat.length)return null;const qs=words(`${query} ${role} ${genre}`);let best=null,scoreBest=-1e9;for(const s of cat){if(s.name===exclude)continue;const h=hay(s);let score=0;for(const w of qs)if(h.includes(w))score+=w.length>5?4:2;if(String(s.instrument||"").toUpperCase().includes(role))score+=5;if(state.usedSounds.has(s.name))score-=4;if(s.tempo)score+=1;score+=(hash(s.name+query)%100)/500;if(score>scoreBest){best=s;scoreBest=score}}return best||cat[hash(query+genre)%cat.length]||null}
+
+/* drawing compiler */
+function fitSketch(){const r=E.sketch.getBoundingClientRect(),d=Math.max(1,devicePixelRatio||1);if(r.width<1||r.height<1)return;E.sketch.width=Math.round(r.width*d);E.sketch.height=Math.round(r.height*d);const c=E.sketch.getContext("2d");c.setTransform(d,0,0,d,0,0);redraw()}
+function redraw(){const c=E.sketch.getContext("2d"),r=E.sketch.getBoundingClientRect();c.clearRect(0,0,r.width,r.height);c.fillStyle="#fff";c.fillRect(0,0,r.width,r.height);c.strokeStyle="#111";c.lineWidth=2;c.lineCap="round";c.lineJoin="round";for(const s of state.strokes){if(s.length<2)continue;c.beginPath();c.moveTo(s[0].x,s[0].y);for(const p of s.slice(1))c.lineTo(p.x,p.y);c.stroke()}}
+function pt(e){const r=E.sketch.getBoundingClientRect();return{x:clamp(e.clientX-r.left,0,r.width),y:clamp(e.clientY-r.top,0,r.height)}}
+E.sketch.onpointerdown=e=>{E.sketch.setPointerCapture(e.pointerId);state.drawing=[pt(e)];state.strokes.push(state.drawing);redraw();reportDrawing()};
+E.sketch.onpointermove=e=>{if(!state.drawing)return;const p=pt(e),q=state.drawing.at(-1);if(Math.hypot(p.x-q.x,p.y-q.y)>2){state.drawing.push(p);redraw();reportDrawing()}};E.sketch.onpointerup=E.sketch.onpointercancel=()=>{state.drawing=null;reportDrawing()};
+E.clearInk.onclick=()=>{state.strokes=[];redraw();reportDrawing()};E.drawBtn.onclick=()=>{E.sketchWrap.hidden=!E.sketchWrap.hidden;E.drawBtn.textContent=E.sketchWrap.hidden?"DRAW":"HIDE";if(!E.sketchWrap.hidden)setTimeout(fitSketch,0)};E.clearBtn.onclick=()=>{E.prompt.value="";state.strokes=[];redraw();setTrace("START","describe or draw","MAKE");E.prompt.focus()};
+function drawingDNA(){const r=E.sketch.getBoundingClientRect(),W=Math.max(1,r.width),H=Math.max(1,r.height),pts=state.strokes.flat();if(!pts.length)return{active:false,strokes:0,rhythm:Array(16).fill(0),contour:Array(8).fill(0),energy:[.65,.65,.65,.65],blank:[false,false,false,false],partBias:0};const bins=Array.from({length:16},()=>[]),q=Array.from({length:4},()=>[]);for(const p of pts){bins[clamp(Math.floor(p.x/W*16),0,15)].push(p);q[clamp(Math.floor(p.x/W*4),0,3)].push(p)}const mx=Math.max(1,...bins.map(b=>b.length)),qm=Math.max(1,...q.map(b=>b.length));const rhythm=bins.map(b=>b.length/mx>.14?1:0),contour=[];for(let i=0;i<8;i++){const pair=[...bins[i*2],...bins[i*2+1]],y=pair.length?pair.reduce((a,p)=>a+p.y,0)/pair.length:H/2;contour.push(clamp(Math.round((1-y/H)*10)-5,-5,5))}return{active:true,strokes:state.strokes.length,rhythm,contour,energy:q.map(b=>clamp(.2+.8*b.length/qm,.2,1)),blank:q.map(b=>b.length===0),partBias:clamp(state.strokes.length-2,-2,4)}}
+function reportDrawing(){const d=drawingDNA();if(!d.active)return setTrace("SOURCE","drawing empty","type or draw");setTrace(`${d.strokes} strokes`,`${d.rhythm.reduce((a,b)=>a+b,0)}/16 rhythm`,`contour ${d.contour.join(" ")}`)}
+
+function sketchImage(){if(!state.strokes.length)return null;const r=E.sketch.getBoundingClientRect(),c=document.createElement("canvas");c.width=Math.max(320,Math.round(r.width*1.4));c.height=Math.max(240,Math.round(r.height*1.4));const x=c.getContext("2d"),sx=c.width/r.width,sy=c.height/r.height;x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.strokeStyle="#111";x.lineWidth=3;x.lineCap="round";x.lineJoin="round";for(const s of state.strokes){if(s.length<2)continue;x.beginPath();x.moveTo(s[0].x*sx,s[0].y*sy);for(const p of s.slice(1))x.lineTo(p.x*sx,p.y*sy);x.stroke()}return c.toDataURL("image/png")}
+
+/* AI stones */
+function stoneSchema(){const pal={type:"object",additionalProperties:false,required:["role","query","behavior","level"],properties:{role:{type:"string",enum:ROLES},query:{type:"string",maxLength:48},behavior:{type:"string",enum:BEHAVIORS},level:{type:"number",minimum:.15,maximum:.95}}};const stone={type:"object",additionalProperties:false,required:["name","genre","lineage","hook","tempo","key","mode","swing","bars","groove","palette","progression","bassMotif","leadMotif","density","drawingUse","surprise"],properties:{name:{type:"string",maxLength:28},genre:{type:"string",maxLength:42},lineage:{type:"string",maxLength:80},hook:{type:"string",maxLength:90},tempo:{type:"integer",minimum:50,maximum:170},key:{type:"string",enum:Object.keys(ROOTS)},mode:{type:"string",enum:Object.keys(MODES)},swing:{type:"number",minimum:0,maximum:.35},bars:{type:"integer",enum:[8,12,16]},groove:{type:"string",enum:GROOVES},palette:{type:"array",minItems:4,maxItems:8,items:pal},progression:{type:"array",minItems:2,maxItems:8,items:{type:"integer",minimum:1,maximum:7}},bassMotif:{type:"array",minItems:3,maxItems:8,items:{type:"integer",minimum:-7,maximum:12}},leadMotif:{type:"array",minItems:4,maxItems:12,items:{type:"integer",minimum:-7,maximum:12}},density:{type:"number",minimum:.2,maximum:.95},drawingUse:{type:"string",enum:["rhythm","contour","energy","orchestration","all"]},surprise:{type:"string",maxLength:90}}};return{type:"object",additionalProperties:false,required:["stones"],properties:{stones:{type:"array",minItems:4,maxItems:4,items:stone}}}}
+function outputText(d){if(typeof d.output_text==="string")return d.output_text;return(d.output||[]).flatMap(i=>i.content||[]).filter(c=>c.type==="output_text").map(c=>c.text||"").join("")}
+function debt(){try{return JSON.parse(localStorage.getItem("es.genreDebt")||"[]").slice(-8)}catch(_){return[]}}
+function remember(s){const a=debt();a.push({genre:s.genre,groove:s.groove,roles:s.palette.map(p=>p.role),queries:s.palette.map(p=>p.query),key:s.key,mode:s.mode});localStorage.setItem("es.genreDebt",JSON.stringify(a.slice(-8)))}
+function normalize(s){return{id:uid(),...s,tempo:clamp(Math.round(s.tempo),50,170),bars:[8,12,16].includes(s.bars)?s.bars:12,palette:s.palette.slice(0,8),kept:false,drawing:drawingDNA(),savedCode:null,source:E.prompt.value,strokes:structuredClone(state.strokes)}}
+async function make(){if(state.busy)return;const text=E.prompt.value.trim(),draw=drawingDNA();if(!text&&!draw.active){E.prompt.focus();setTrace("START","describe or draw","MAKE");return}if(!state.connected){state.pending=true;showSheet();return}state.busy=true;E.makeBtn.disabled=true;E.makeBtn.textContent="WORKING";E.sourceState.textContent="thinking";setTrace("CAST","4 incompatible stones","different materials");const content=[{type:"input_text",text:`SOURCE:\n${text||"(drawing only)"}\n\nDRAWING DNA:\n${JSON.stringify(draw)}\n\nRECENTLY USED — depart from these:\n${JSON.stringify(debt())}\n\nCreate FOUR musically incompatible but buildable stones. Genre must change instrumentation, production logic, groove, register and source material. For every palette entry write a concrete EarSketch catalogue search. Use 4–8 roles. Do not give all stones the same band. Give coherent hooks and phrase-level development. Return schema only.`}];const img=sketchImage();if(img)content.push({type:"input_image",image_url:img,detail:"low"});try{const d=await apiFetch("/responses",{method:"POST",body:JSON.stringify({model:state.model,instructions:"You are a record digger, arranger and instrument builder. Different genres use different musical materials.",input:[{role:"user",content}],text:{format:{type:"json_schema",name:"es_material_stones",strict:true,schema:stoneSchema()}}})});const parsed=JSON.parse(outputText(d));state.stones=parsed.stones.map(normalize);state.stoneIndex=0;renderStones();await loadStone(current());remember(current());expandAll();await run();setTrace(current().genre,current().palette.map(p=>p.role).join(" + "),current().hook)}catch(e){E.sourceState.textContent="retry";setTrace("FAULT","source preserved",e.message)}finally{state.busy=false;E.makeBtn.disabled=false;E.makeBtn.textContent="MAKE"}}
+E.makeBtn.onclick=make;
+
+/* persistent KEEP */
+function keptRecords(){try{return JSON.parse(localStorage.getItem(KEEP_KEY)||"[]")}catch(_){return[]}}
+function writeKept(a){localStorage.setItem(KEEP_KEY,JSON.stringify(a.slice(-40)))}
+function snapshotStone(s){return{...structuredClone(s),kept:true,savedCode:E.code.value,source:E.prompt.value,strokes:structuredClone(state.strokes),savedAt:Date.now()}}
+function saveCurrent(){const s=current();if(!s)return;let a=keptRecords().filter(x=>x.id!==s.id);s.kept=true;const snap=snapshotStone(s);Object.assign(s,snap);a.push(snap);writeKept(a);setTrace("KEEP","saved in this browser","EXPORT PROJECT to carry it");renderStones()}
+E.keepBtn.onclick=saveCurrent;
+function restoreKept(){const a=keptRecords();if(!a.length)return;state.stones=a.map(x=>({...x,kept:true}));state.stoneIndex=state.stones.length-1;const s=current();E.prompt.value=s.source||"";state.strokes=structuredClone(s.strokes||[]);renderStones();loadStone(s).then(()=>{if(s.savedCode)E.code.value=s.savedCode;E.runBtn.disabled=false;E.mobileCode.disabled=false;updateGutter();setTrace("KEEP",`${a.length} saved in this browser`,s.name)})}
+
+/* code DSL */
+function stoneCode(s){const d=s.drawing||drawingDNA(),lines=[`# ES+ ${s.name}`,`# ${s.genre} | ${s.lineage}`,`# ${s.hook}`,`genre(${JSON.stringify(s.genre)})`,`tempo(${s.tempo})`,`key(${JSON.stringify(s.key)}, ${JSON.stringify(s.mode)})`,`groove(${JSON.stringify(s.groove)}, ${Number(s.swing).toFixed(2)})`,`bars(${s.bars})`,`density(${Number(s.density).toFixed(2)})`];for(const p of s.palette)lines.push(`palette(${JSON.stringify(p.role)}, ${JSON.stringify(p.query)}, ${JSON.stringify(p.behavior)}, ${Number(p.level).toFixed(2)})`);lines.push(`progression(${JSON.stringify(s.progression)})`,`bass(${JSON.stringify(s.bassMotif)})`,`lead(${JSON.stringify(s.leadMotif)})`);if(d.active)lines.push(`drawRhythm(${JSON.stringify(d.rhythm.join(""))})`,`drawContour(${JSON.stringify(d.contour)})`,`drawEnergy(${JSON.stringify(d.energy.map(x=>+x.toFixed(2)))})`,`drawBlank(${JSON.stringify(d.blank)})`);lines.push(`surprise(${JSON.stringify(s.surprise)})`);return lines.join("\n")}
+async function loadStone(s){if(!s)return;E.code.value=s.savedCode||stoneCode(s);state.plan=null;state.ir=null;state.dirty=true;E.codeState.textContent="ready";E.soundState.textContent="not run";E.runBtn.disabled=false;E.playBtn.disabled=true;E.mobileCode.disabled=false;E.keepBtn.disabled=false;E.exportBtn.disabled=false;E.timeline.innerHTML='<div class="empty">RUN to arrange it.</div>';updateGutter()}
+function renderStones(){E.stones.innerHTML="";state.stones.forEach((s,i)=>{const b=document.createElement("button");b.className="stoneDot"+(i===state.stoneIndex?" on":"")+(s.kept?" kept":"");b.textContent=`${i+1} ${s.name}`;b.title=`${s.genre} — ${s.hook}`;b.onclick=async()=>{state.stoneIndex=i;E.prompt.value=s.source??E.prompt.value;state.strokes=structuredClone(s.strokes||state.strokes);renderStones();await loadStone(s);remember(s);await run();if(mobile())showMobile("sound")};E.stones.appendChild(b)});E.keepBtn.classList.toggle("on",!!current()?.kept)}
+function splitArgs(t){const o=[];let c="",q=null,d=0;for(let i=0;i<t.length;i++){const x=t[i];if((x==='"'||x==="'")&&t[i-1]!=="\\")q=q===x?null:(q||x);if(!q&&(x==="["||x==="("||x==="{"))d++;if(!q&&(x==="]"||x===")"||x==="}"))d--;if(!q&&d===0&&x===","){o.push(c.trim());c="";continue}c+=x}if(c.trim())o.push(c.trim());return o}
+function parseVal(s){s=s.trim();if(/^".*"$/.test(s)||/^'.*'$/.test(s))return s.slice(1,-1);if(/^-?\d+(\.\d+)?$/.test(s))return Number(s);if(s==="true")return true;if(s==="false")return false;try{return JSON.parse(s)}catch(_){return s}}
+
+function parseCode(src){const p={genre:"hybrid",tempo:100,key:"C",mode:"minor",swing:0,bars:8,groove:"backbeat",density:.65,palette:[],progression:[1,4,6,5],bass:[0,0,3,5],lead:[0,2,4,7,5],surprise:"",drawRhythm:null,drawContour:null,drawEnergy:null,drawBlank:null,trackPatches:{}};for(const line0 of src.split("\n")){const line=line0.replace(/#.*$/,"").trim();if(!line)continue;const m=line.match(/^([A-Za-z_]\w*)\((.*)\)$/);if(!m)throw Error(`cannot read: ${line.slice(0,28)}`);const a=splitArgs(m[2]).map(parseVal);switch(m[1]){case"genre":p.genre=String(a[0]);break;case"tempo":p.tempo=clamp(+a[0],40,220);break;case"key":p.key=String(a[0]);p.mode=String(a[1]);break;case"groove":p.groove=String(a[0]);p.swing=clamp(+a[1]||0,0,.45);break;case"bars":p.bars=clamp(Math.round(+a[0]),2,32);break;case"density":p.density=clamp(+a[0],.05,1);break;case"palette":p.palette.push({role:String(a[0]),query:String(a[1]),behavior:String(a[2]),level:clamp(+a[3],.05,1)});break;case"progression":p.progression=Array.isArray(a[0])?a[0]:p.progression;break;case"bass":p.bass=Array.isArray(a[0])?a[0]:p.bass;break;case"lead":p.lead=Array.isArray(a[0])?a[0]:p.lead;break;case"drawRhythm":p.drawRhythm=String(a[0]).split("").map(x=>x==="1"?1:0);break;case"drawContour":p.drawContour=Array.isArray(a[0])?a[0]:null;break;case"drawEnergy":p.drawEnergy=Array.isArray(a[0])?a[0]:null;break;case"drawBlank":p.drawBlank=Array.isArray(a[0])?a[0]:null;break;case"surprise":p.surprise=String(a[0]||"");break;case"track":p.trackPatches[String(Math.round(+a[0]))]={...(p.trackPatches[String(Math.round(+a[0]))]||{}),...(typeof a[1]==="object"?a[1]:{})};break;default:throw Error(`unknown ${m[1]}()`)} }return p}
+function setTrackPatch(track,patch){const src=E.code.value.split("\n"),re=new RegExp(`^\\s*track\\(\\s*${track}\\s*,`),idx=src.findIndex(x=>re.test(x));let old={};if(idx>=0){try{old=parseVal(splitArgs(src[idx].match(/^\s*track\((.*)\)\s*$/)[1])[1])||{}}catch(_){old={}}}const merged={...old,...patch};if(merged.delete===false)delete merged.delete;if(merged.mute===false)delete merged.mute;const line=`track(${track}, ${JSON.stringify(merged)})`;if(idx>=0)src[idx]=line;else src.push(line);E.code.value=src.join("\n");E.codeState.textContent="changed";state.dirty=true;updateGutter();run()}
+
+/* arranger */
+function family(genre,palette=[]){const s=(genre+" "+palette.map(p=>p.query).join(" ")).toLowerCase();if(/dub|reggae/.test(s))return"dub";if(/gospel|soul|funk|r&b|motown/.test(s))return"soul";if(/techno|house|garage|electro|club/.test(s))return"electronic";if(/ambient|drone|electroacoustic|field/.test(s))return"ambient";if(/gamelan|bali|java|gong/.test(s))return"gamelan";if(/afro|mbira|kora|gnawa|morocc|oud|world|latin|samba/.test(s))return"world";if(/rock|psych|guitar|punk|surf/.test(s))return"rock";if(/jazz|bebop|swing/.test(s))return"jazz";if(/hip.?hop|trap|boom.?bap/.test(s))return"hiphop";return"hybrid"}
+function degreeMidi(p,deg,oct=4){const mode=MODES[p.mode]||MODES.minor,root=ROOTS[p.key]??0,d=Math.max(1,Math.round(deg))-1,scale=mode[d%mode.length]+12*Math.floor(d/mode.length);return 12*(oct+1)+root+scale}
+function drawingGate(p,step){return!p.drawRhythm?.length?1:(p.drawRhythm[step%p.drawRhythm.length]?1:.28)}
+function sectionEnergy(p,bar){if(p.drawEnergy?.length)return clamp(+p.drawEnergy[Math.floor(bar/p.bars*p.drawEnergy.length)]||.5,.15,1);return .55+.3*Math.sin((bar+1)/p.bars*Math.PI)}
+function blankSection(p,bar){return p.drawBlank?.length?!!p.drawBlank[Math.floor(bar/p.bars*p.drawBlank.length)]:false}
+function drumPattern(g){const K={backbeat:[[0,8],[4,12],[2,6,10,14]],shuffle:[[0,7,10],[4,12],[2,5,8,11,14]],broken:[[0,6,11],[4,13],[2,7,10,15]],halftime:[[0,10],[8],[2,6,10,14]],motorik:[[0,4,8,12],[4,12],[2,6,10,14]],clave:[[0,6,10],[4,12],[0,3,6,10,12]],garage:[[0,7,10],[4,12],[2,6,10,14]],triplet:[[0,8],[5,13],[0,3,6,9,12,15]],afro_lilt:[[0,6,10,14],[4,12],[1,4,7,10,13]],dub_space:[[0,10],[12],[3,7,11,15]],free_pulse:[[0,9],[5,13],[1,6,12]]};return K[g]||K.backbeat}
+async function resolvePlanPalette(p){await loadCatalog();p.palette=p.palette.map((x,i)=>{const patch=p.trackPatches[String(7+i)]||{},query=patch.query||x.query,role=patch.role||x.role,soundName=patch.soundName;let sound=soundName?(state.catalog||[]).find(s=>s.name===soundName):null;if(!sound)sound=resolveSound(role,query,p.genre);if(sound)state.usedSounds.add(sound.name);return{...x,query,role,sound}})}
+function applyPatches(events,p){const out=[];for(const e0 of events){const patch=p.trackPatches[String(e0.track)]||{};if(patch.delete||patch.mute)continue;const e={...e0,start:Math.max(0,e0.start+(+patch.shift||0)),vel:clamp(e0.vel*(patch.gain==null?1:+patch.gain),0,1)};if(Number.isFinite(+patch.transpose)&&e.note)e.note+=+patch.transpose;if(e.type==="sample"){e.transpose=+patch.transpose||0;if(patch.query)e.query=patch.query;if(patch.soundName){const s=(state.catalog||[]).find(x=>x.name===patch.soundName);if(s)e.sound=s}}out.push(e)}for(const [trk,patch] of Object.entries(p.trackPatches)){if(!patch.copyTo)continue;const src=Number(trk),dst=Number(patch.copyTo),shift=+patch.copyShift||0,trans=+patch.copyTranspose||0;for(const e0 of out.filter(e=>e.track===src)){const e={...e0,id:`${e0.id}c${dst}`,track:dst,start:Math.max(0,e0.start+shift)};if(e.note)e.note+=trans;if(e.type==="sample")e.transpose=(e.transpose||0)+trans;out.push(e)}}out.sort((a,b)=>a.start-b.start||a.track-b.track);return out}
+async function arrange(p){await resolvePlanPalette(p);const events=[],fam=family(p.genre,p.palette),seed=hash(JSON.stringify({...p,trackPatches:undefined})),r=seeded(seed),dr=drumPattern(p.groove),add=(type,track,start,dur,note=0,vel=.7,meta={})=>events.push({id:`e${events.length+1}`,type,track,start,dur,note,vel,...meta});for(let bar=0;bar<p.bars;bar++){const base=bar*4,en=sectionEnergy(p,bar),blank=blankSection(p,bar);if(blank&&bar%2===1)continue;dr[0].forEach(st=>{if(r()<p.density*en*drawingGate(p,st))add("kick",1,base+st/4,.12,36,.8*en)});dr[1].forEach(st=>{if(r()<Math.min(1,.7+p.density*.3))add("snare",2,base+st/4,.1,38,.68*en)});dr[2].forEach(st=>{if(r()<p.density*en*drawingGate(p,st))add("hat",3,base+st/4,.05,42,.3+.3*en)});const deg=p.progression[bar%p.progression.length]||1;add("chord",5,base,.9,degreeMidi(p,deg,4),.36*en,{degree:deg,family:fam});const bm=p.bass.length?p.bass:[0];for(let i=0;i<4;i++){const st=i*4;if(r()<(.55+p.density*.35)*drawingGate(p,st))add("bass",4,base+i,.55,degreeMidi(p,deg,2)+(bm[(bar*2+i)%bm.length]||0),.55*en,{family:fam})}const lm=p.lead.length?p.lead:[0,2,4,5],cont=p.drawContour?.length?p.drawContour:null;for(let i=0;i<4;i++){const st=i*4;if(r()<p.density*.52*en*drawingGate(p,st))add("lead",6,base+i+.25,.35,degreeMidi(p,1,5)+(lm[(bar*3+i)%lm.length]||0)+(cont?cont[(bar+i)%cont.length]:0),.38*en,{family:fam})}}p.palette.forEach((x,idx)=>{const patch=p.trackPatches[String(7+idx)]||{},behavior=patch.behavior||x.behavior,every=behavior==="loop"?4:behavior==="punctuate"?3:behavior==="chop"?2:Math.max(4,p.bars);for(let bar=idx%2;bar<p.bars;bar+=every)add("sample",7+idx,bar*4,behavior==="one_shot"?.8:3.8,0,x.level,{paletteIndex:idx,role:x.role,query:x.query,behavior,sound:x.sound})});if(p.drawRhythm)for(let st=0;st<16;st++)if(p.drawRhythm[st])add("draw",20,st/4,.04,72+(p.drawContour?.[st%8]||0),.22);return{...p,family:fam,events:applyPatches(events,p),length:p.bars*4}}
+async function run(){stop();try{state.plan=parseCode(E.code.value);state.ir=await arrange(state.plan);state.dirty=false;renderTimeline();drawSpec();E.codeState.textContent="matches sound";E.soundState.textContent=`${state.ir.events.length} events · ${state.ir.family}`;E.playBtn.disabled=!state.ir.events.length;E.mobileSound.disabled=false;E.exportBtn.disabled=false;if(mobile())showMobile("sound")}catch(e){E.codeState.textContent="fix";setTrace("FAULT","code preserved",e.message)}}
+E.runBtn.onclick=run;
+
+/* timeline + track direct manipulation */
+function trackName(tr){if(tr===1)return"KICK";if(tr===2)return"SNARE";if(tr===3)return"HAT";if(tr===4)return"BASS";if(tr===5)return"CHORDS";if(tr===6)return"LEAD";if(tr===20)return"DRAW";const p=state.plan?.palette?.[tr-7];return p?.role||`TRACK ${tr}`}
+
+function renderTimeline(){const ir=state.ir,bars=ir.bars,width=Math.max(mobile()?innerWidth:620,bars*(mobile()?54:75));E.timeline.style.minWidth=`${width}px`;E.timeline.innerHTML="";E.timeline.style.setProperty("--measures",bars);const ruler=document.createElement("div");ruler.className="ruler";for(let b=0;b<=bars;b++){const s=document.createElement("span");s.className="mnum";s.textContent=b+1;s.style.left=`${b/bars*100}%`;ruler.appendChild(s)}E.timeline.appendChild(ruler);const ph=document.createElement("div");ph.className="playhead";E.timeline.appendChild(ph);for(const tr of [...new Set(ir.events.map(e=>e.track))].sort((a,b)=>a-b)){const row=document.createElement("div");row.className="track"+(tr===state.selectedTrack?" selected":"");const lab=document.createElement("div");lab.className="tlabel";lab.textContent=tr;lab.title=trackName(tr);lab.onclick=()=>openTrack(tr);let sx=0;lab.onpointerdown=ev=>{sx=ev.clientX;lab.setPointerCapture(ev.pointerId)};lab.onpointerup=ev=>{const dx=ev.clientX-sx;if(Math.abs(dx)>18){const beat=Math.round(dx/45*4)/4;setTrackPatch(tr,{shift:(state.plan?.trackPatches?.[String(tr)]?.shift||0)+beat})}};const lane=document.createElement("div");lane.className="lane";for(const e of ir.events.filter(x=>x.track===tr)){const c=document.createElement("button");c.className="clip";c.dataset.id=e.id;c.style.left=`${e.start/ir.length*100}%`;c.style.width=`${Math.max(.45,e.dur/ir.length*100)}%`;c.innerHTML=`<b>${esc(e.type==="sample"?(e.role||"sample"):e.type)}</b><span>${esc(e.type==="sample"?(e.sound?.name||e.query||"sample"):trackName(tr))}</span>`;c.onclick=()=>openTrack(tr);lane.appendChild(c)}row.append(lab,lane);E.timeline.appendChild(row)}}
+function drawSpec(){const r=E.spec.getBoundingClientRect(),d=Math.max(1,devicePixelRatio||1);if(r.width<1||r.height<1)return;E.spec.width=Math.round(r.width*d);E.spec.height=Math.round(r.height*d);const c=E.spec.getContext("2d");c.setTransform(d,0,0,d,0,0);c.fillStyle="#fff";c.fillRect(0,0,r.width,r.height);if(!state.ir)return;c.strokeStyle="#ebe7dc";for(let x=0;x<r.width;x+=32){c.beginPath();c.moveTo(x,0);c.lineTo(x,r.height);c.stroke()}for(const e of state.ir.events){const x=e.start/state.ir.length*r.width,w=Math.max(2,e.dur/state.ir.length*r.width),y=e.type==="bass"?r.height*.78:e.type==="kick"?r.height*.88:e.type==="lead"?r.height*.28:e.type==="chord"?r.height*.48:e.type==="sample"?r.height*.38:r.height*.65;c.fillStyle=e.type==="sample"?"rgba(20,80,65,.38)":"rgba(17,17,15,.26)";c.fillRect(x,y,w,4+(hash(e.type)%9))}}
+
+/* track sheet */
+function trackPatch(tr){return state.plan?.trackPatches?.[String(tr)]||{}}
+function openTrack(tr){state.selectedTrack=tr;E.trackTitle.textContent=`${tr} · ${trackName(tr)}`;const p=trackPatch(tr);E.trackMeta.textContent=`shift ${p.shift||0} · tune ${p.transpose||0} · gain ${p.gain??1}`;E.trackReadout.textContent=p.query?`sound: ${p.query}`:(p.soundName?`sound: ${p.soundName}`:"tap/drag the track or describe a change");E.trackPrompt.value="";E.trackBack.classList.add("open");renderTimeline()}
+function closeTrack(){E.trackBack.classList.remove("open")}
+E.trackClose.onclick=closeTrack;E.trackBack.onclick=e=>{if(e.target===E.trackBack)closeTrack()};
+function nextSampleName(tr){const idx=tr-7,p=state.plan?.palette?.[idx];if(!p||!state.catalog?.length)return null;const currentName=p.sound?.name||"",s=resolveSound(p.role,p.query,state.plan.genre,currentName);return s?.name||null}
+document.querySelectorAll("[data-track-op]").forEach(b=>b.onclick=()=>{const tr=state.selectedTrack;if(tr==null)return;const p=trackPatch(tr),op=b.dataset.trackOp;if(op==="left")setTrackPatch(tr,{shift:(+p.shift||0)-.25});if(op==="right")setTrackPatch(tr,{shift:(+p.shift||0)+.25});if(op==="down")setTrackPatch(tr,{transpose:(+p.transpose||0)-1});if(op==="up")setTrackPatch(tr,{transpose:(+p.transpose||0)+1});if(op==="octdown")setTrackPatch(tr,{transpose:(+p.transpose||0)-12});if(op==="octup")setTrackPatch(tr,{transpose:(+p.transpose||0)+12});if(op==="mute")setTrackPatch(tr,{mute:!p.mute});if(op==="delete")setTrackPatch(tr,{delete:true});if(op==="copy"){const max=Math.max(...state.ir.events.map(e=>e.track),20)+1;setTrackPatch(tr,{copyTo:max,copyShift:0,copyTranspose:0})}if(op==="swap"){const n=nextSampleName(tr);if(n)setTrackPatch(tr,{soundName:n});else setTrace("TRACK","swap needs sample track","use TUNE prompt")};setTimeout(()=>{if(E.trackBack.classList.contains("open"))openTrack(tr)},80)});
+function trackAISchema(){return{type:"object",additionalProperties:false,required:["shift","transpose","gain","mute","delete","query","behavior"],properties:{shift:{type:"number",minimum:-16,maximum:16},transpose:{type:"integer",minimum:-24,maximum:24},gain:{type:"number",minimum:.05,maximum:1.5},mute:{type:"boolean"},delete:{type:"boolean"},query:{type:"string",maxLength:60},behavior:{type:"string",enum:["","loop","one_shot","chop","punctuate"]}}}}
+E.trackAI.onclick=async()=>{const tr=state.selectedTrack,ask=E.trackPrompt.value.trim();if(tr==null||!ask)return;if(!state.connected){showSheet();return}E.trackAI.disabled=true;E.trackReadout.textContent="tuning this track…";try{const events=state.ir?.events.filter(e=>e.track===tr).slice(0,12)||[],d=await apiFetch("/responses",{method:"POST",body:JSON.stringify({model:state.model,instructions:"Modify only the selected musical track. Return a conservative deterministic patch. query changes the EarSketch source-material search for sample tracks; leave query empty for synthetic tracks unless the user asks to swap material.",input:[{role:"user",content:[{type:"input_text",text:`TRACK ${tr} ${trackName(tr)}\nGENRE ${state.plan.genre}\nCURRENT PATCH ${JSON.stringify(trackPatch(tr))}\nEVENTS ${JSON.stringify(events.map(e=>({type:e.type,start:e.start,note:e.note,role:e.role,query:e.query})))}\nREQUEST ${ask}`}]}],text:{format:{type:"json_schema",name:"track_patch",strict:true,schema:trackAISchema()}}})});const patch=JSON.parse(outputText(d));const clean={shift:patch.shift,transpose:patch.transpose,gain:patch.gain,mute:patch.mute,delete:patch.delete};if(patch.query)clean.query=patch.query;if(patch.behavior)clean.behavior=patch.behavior;setTrackPatch(tr,clean);E.trackReadout.textContent=`applied: ${ask}`;E.trackPrompt.value=""}catch(e){E.trackReadout.textContent=e.message}finally{E.trackAI.disabled=false}};
+
+/* playback */
+function ctx(){if(!state.audio){state.audio=new(window.AudioContext||window.webkitAudioContext)();const comp=state.audio.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=4;comp.connect(state.audio.destination);state.master=comp}if(state.audio.state==="suspended")state.audio.resume();return state.audio}
+async function bufferFor(sound){if(!sound?.path)return null;if(state.buffers.has(sound.name))return state.buffers.get(sound.name);const promise=(async()=>{const c=ctx(),ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),6000);try{const r=await fetch(`${STATIC}/${sound.path}`,{signal:ctl.signal});if(!r.ok)throw Error("audio");const a=await r.arrayBuffer();return await c.decodeAudioData(a.slice(0))}catch(_){return null}finally{clearTimeout(timer)}})();state.buffers.set(sound.name,promise);return promise}
+function oscVoice(when,note,dur,vel,fam,kind){const c=ctx(),g=c.createGain(),f=c.createBiquadFilter(),o=c.createOscillator();let wave="triangle",cut=2200,attack=.008,release=.18;if(fam==="electronic"){wave=kind==="bass"?"sawtooth":"square";cut=kind==="bass"?650:3600}else if(fam==="ambient"){wave="sine";cut=1600;attack=.18;release=1.2}else if(fam==="gamelan"){wave="sine";cut=7000;release=.5}else if(fam==="world"){wave="triangle";cut=3800;release=.28}else if(fam==="rock"){wave="sawtooth";cut=2400;release=.22}else if(fam==="hiphop"){wave=kind==="bass"?"sine":"square";cut=kind==="bass"?500:1800}else if(fam==="dub"){wave=kind==="bass"?"sine":"triangle";cut=kind==="bass"?420:1600;release=.5}else if(fam==="soul"){wave=kind==="chord"?"triangle":"sine";cut=2600;release=.35}else if(fam==="jazz"){wave="triangle";cut=2100;release=.3}o.type=wave;o.frequency.value=440*Math.pow(2,(note-69)/12);f.type="lowpass";f.frequency.value=cut;g.gain.setValueAtTime(.0001,when);g.gain.linearRampToValueAtTime(Math.max(.001,vel*.14),when+attack);g.gain.exponentialRampToValueAtTime(.0001,when+Math.max(attack+.03,dur+release));o.connect(f);f.connect(g);g.connect(state.master);o.start(when);o.stop(when+dur+release+.05);state.nodes.push(o)}
+function noiseHit(when,dur,vel,type){const c=ctx(),b=c.createBuffer(1,Math.max(1,Math.floor(c.sampleRate*dur)),c.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;const s=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();s.buffer=b;f.type=type==="hat"?"highpass":"bandpass";f.frequency.value=type==="hat"?6500:1700;g.gain.setValueAtTime(vel*.18,when);g.gain.exponentialRampToValueAtTime(.0001,when+dur);s.connect(f);f.connect(g);g.connect(state.master);s.start(when);s.stop(when+dur+.02);state.nodes.push(s)}
+function kick(when,vel){const c=ctx(),o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(120,when);o.frequency.exponentialRampToValueAtTime(42,when+.14);g.gain.setValueAtTime(vel*.28,when);g.gain.exponentialRampToValueAtTime(.0001,when+.22);o.connect(g);g.connect(state.master);o.start(when);o.stop(when+.24);state.nodes.push(o)}
+
+async function scheduleSample(e,when,spb){const b=await bufferFor(e.sound);if(!b)return false;const c=ctx(),src=c.createBufferSource(),g=c.createGain(),sourceTempo=Number(e.sound?.tempo)>20?Number(e.sound.tempo):null;src.buffer=b;src.playbackRate.value=(sourceTempo?state.ir.tempo/sourceTempo:1)*Math.pow(2,(e.transpose||0)/12);g.gain.value=clamp(e.vel*.65,.04,.7);src.connect(g);g.connect(state.master);src.start(Math.max(c.currentTime+.01,when),0,Math.min(b.duration,Math.max(.15,e.dur*spb*src.playbackRate.value)));state.nodes.push(src);return true}
+async function play(){if(!state.ir)return;if(state.playing){stop();return}stop();const c=ctx(),ir=state.ir,spb=60/ir.tempo,start=c.currentTime+.12;state.playing=true;E.playBtn.textContent="STOP";for(const e of ir.events){const when=start+e.start*spb;if(e.type==="kick")kick(when,e.vel);else if(e.type==="snare")noiseHit(when,.12,e.vel,"snare");else if(e.type==="hat")noiseHit(when,.05,e.vel,"hat");else if(e.type==="bass")oscVoice(when,e.note,e.dur*spb,e.vel,ir.family,"bass");else if(e.type==="lead"||e.type==="draw")oscVoice(when,e.note,e.dur*spb,e.vel,ir.family,"lead");else if(e.type==="chord")for(const n of[e.note,e.note+4,e.note+7])oscVoice(when,n,e.dur*spb,e.vel*.7,ir.family,"chord");else if(e.type==="sample")scheduleSample(e,when,spb)}const total=ir.length*spb+.5,tick=()=>{if(!state.playing)return;const sec=c.currentTime-start;if(sec>=total){stop();return}const beat=sec/spb,ph=document.querySelector(".playhead");if(ph){ph.style.display="block";ph.style.left=`calc(48px + (100% - 48px) * ${beat/ir.length})`}const ids=new Set(ir.events.filter(e=>beat>=e.start&&beat<e.start+e.dur).map(e=>e.id));document.querySelectorAll(".clip").forEach(x=>x.classList.toggle("playing",ids.has(x.dataset.id)));state.raf=requestAnimationFrame(tick)};state.raf=requestAnimationFrame(tick)}
+function stop(){cancelAnimationFrame(state.raf);for(const n of state.nodes){try{n.stop()}catch(_){}}state.nodes=[];state.playing=false;E.playBtn.textContent="PLAY";document.querySelectorAll(".clip.playing").forEach(x=>x.classList.remove("playing"));const p=document.querySelector(".playhead");if(p)p.style.display="none"}
+E.playBtn.onclick=play;
+
+/* export */
+const be16=n=>[(n>>8)&255,n&255],be32=n=>[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255];
+function vlq(n){let b=[n&127];while(n>>=7)b.unshift((n&127)|128);return b}
+function strBytes(s){return Array.from(new TextEncoder().encode(s))}
+function midiTrack(events,name,tempo,ppq=480){const out=[0,255,3,...vlq(strBytes(name).length),...strBytes(name)];if(name==="META"){const us=Math.round(60000000/tempo);out.push(0,255,81,3,(us>>16)&255,(us>>8)&255,us&255)}let last=0;const ev=[];for(const e of events){const on=Math.max(0,Math.round(e.start*ppq)),off=Math.max(on+20,Math.round((e.start+e.dur)*ppq)),notes=e.type==="chord"?[e.note,e.note+4,e.note+7]:[e.note??(e.type==="kick"?36:e.type==="snare"?38:e.type==="hat"?42:60)];for(const n of notes){ev.push({t:on,b:[0x90,clamp(Math.round(n),0,127),clamp(Math.round(e.vel*110),1,127)]},{t:off,b:[0x80,clamp(Math.round(n),0,127),0]})}}ev.sort((a,b)=>a.t-b.t||a.b[0]-b.b[0]);for(const x of ev){out.push(...vlq(x.t-last),...x.b);last=x.t}out.push(0,255,47,0);return[0x4d,0x54,0x72,0x6b,...be32(out.length),...out]}
+function midiBytes(){if(!state.ir)throw Error("RUN first");const ppq=480,tracks=[midiTrack([],"META",state.ir.tempo,ppq)];for(const tr of [...new Set(state.ir.events.map(e=>e.track))].sort((a,b)=>a-b))tracks.push(midiTrack(state.ir.events.filter(e=>e.track===tr),`${tr} ${trackName(tr)}`,state.ir.tempo,ppq));return new Uint8Array([0x4d,0x54,0x68,0x64,0,0,0,6,0,1,...be16(tracks.length),...be16(ppq),...tracks.flat()])}
+function downloadBlob(blob,name){const a=document.createElement("a"),u=URL.createObjectURL(blob);a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+E.midiExport.onclick=()=>{try{downloadBlob(new Blob([midiBytes()],{type:"audio/midi"}),`${current()?.name||"es"}.mid`);setTrace("EXPORT","MIDI","downloaded")}catch(e){setTrace("EXPORT","MIDI",e.message)}};
+function wavEncode(buf){const ch=buf.numberOfChannels,sr=buf.sampleRate,n=buf.length,ab=new ArrayBuffer(44+n*ch*2),v=new DataView(ab),w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,"RIFF");v.setUint32(4,36+n*ch*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);v.setUint32(24,sr,true);v.setUint32(28,sr*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*ch*2,true);let o=44;for(let i=0;i<n;i++)for(let c=0;c<ch;c++){const x=clamp(buf.getChannelData(c)[i],-1,1);v.setInt16(o,x<0?x*32768:x*32767,true);o+=2}return ab}
+function offlineOsc(c,dest,e,spb){const when=e.start*spb,dur=e.dur*spb,g=c.createGain(),o=c.createOscillator();o.type=e.type==="bass"?"sine":"triangle";o.frequency.value=440*Math.pow(2,((e.note||60)-69)/12);g.gain.setValueAtTime(.0001,when);g.gain.linearRampToValueAtTime(Math.max(.001,e.vel*.13),when+.006);g.gain.exponentialRampToValueAtTime(.0001,when+Math.max(.04,dur+.18));o.connect(g);g.connect(dest);o.start(when);o.stop(when+dur+.25)}
+async function exportWav(){if(!state.ir)return setTrace("EXPORT","WAV","RUN first");E.wavExport.disabled=true;E.wavExport.textContent="RENDER";try{const ir=state.ir,spb=60/ir.tempo,dur=ir.length*spb+2,sr=44100,c=new OfflineAudioContext(2,Math.ceil(dur*sr),sr),comp=c.createDynamicsCompressor();comp.connect(c.destination);const sampleBuffers=new Map();for(const e of ir.events.filter(e=>e.type==="sample"&&e.sound)){if(!sampleBuffers.has(e.sound.name))sampleBuffers.set(e.sound.name,await bufferFor(e.sound))}for(const e of ir.events){const when=e.start*spb;if(e.type==="sample"&&e.sound&&sampleBuffers.get(e.sound.name)){const src=c.createBufferSource(),g=c.createGain(),b=sampleBuffers.get(e.sound.name),sourceTempo=Number(e.sound.tempo)>20?Number(e.sound.tempo):null;src.buffer=b;src.playbackRate.value=(sourceTempo?ir.tempo/sourceTempo:1)*Math.pow(2,(e.transpose||0)/12);g.gain.value=clamp(e.vel*.65,.04,.7);src.connect(g);g.connect(comp);src.start(when,0,Math.min(b.duration,Math.max(.15,e.dur*spb*src.playbackRate.value)))}else if(e.type==="kick"){const o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(120,when);o.frequency.exponentialRampToValueAtTime(42,when+.14);g.gain.setValueAtTime(e.vel*.25,when);g.gain.exponentialRampToValueAtTime(.0001,when+.22);o.connect(g);g.connect(comp);o.start(when);o.stop(when+.24)}else if(e.type==="snare"||e.type==="hat"){const b=c.createBuffer(1,Math.floor(sr*.12),sr),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;const src=c.createBufferSource(),g=c.createGain();src.buffer=b;g.gain.setValueAtTime(e.vel*.12,when);g.gain.exponentialRampToValueAtTime(.0001,when+.1);src.connect(g);g.connect(comp);src.start(when);src.stop(when+.12)}else if(e.type==="chord"){for(const n of[e.note,e.note+4,e.note+7])offlineOsc(c,comp,{...e,note:n,vel:e.vel*.7},spb)}else offlineOsc(c,comp,e,spb)}const rendered=await c.startRendering();downloadBlob(new Blob([wavEncode(rendered)],{type:"audio/wav"}),`${current()?.name||"es"}.wav`);setTrace("EXPORT","WAV","downloaded")}catch(e){setTrace("EXPORT","WAV",e.message)}finally{E.wavExport.disabled=false;E.wavExport.textContent="WAV"}}
+E.wavExport.onclick=exportWav;
+E.projectExport.onclick=()=>{const s=current();if(!s)return;const project={version:1,savedAt:new Date().toISOString(),source:E.prompt.value,strokes:state.strokes,stone:s,code:E.code.value,plan:state.plan};downloadBlob(new Blob([JSON.stringify(project,null,2)],{type:"application/json"}),`${s.name||"es"}.es-project.json`);setTrace("EXPORT","PROJECT","portable snapshot")};
+E.exportBtn.onclick=()=>{E.exportMeta.textContent=current()?.name||"";E.exportBack.classList.add("open")};E.exportClose.onclick=()=>E.exportBack.classList.remove("open");E.exportBack.onclick=e=>{if(e.target===E.exportBack)E.exportBack.classList.remove("open")};
+
+/* code + layout */
+function updateGutter(){const n=E.code.value.split("\n").length;E.gutter.innerHTML="";for(let i=1;i<=n;i++){const d=document.createElement("div");d.className="ln";d.textContent=i;E.gutter.appendChild(d)}E.gutter.scrollTop=E.code.scrollTop}
+E.code.oninput=()=>{state.dirty=true;E.codeState.textContent="changed";E.playBtn.disabled=true;updateGutter()};E.code.onscroll=()=>E.gutter.scrollTop=E.code.scrollTop;E.code.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();run()}if(e.key==="Tab"){e.preventDefault();E.code.setRangeText("    ",E.code.selectionStart,E.code.selectionEnd,"end")}};
+function expandAll(){if(mobile()){showMobile("code");return}[E.sourcePane,E.codePane,E.soundPane].forEach(p=>p.classList.remove("min"));document.querySelectorAll(".minBtn").forEach(b=>b.textContent="−");setWidths()}
+function setWidths(){if(mobile())return;const P=[E.sourcePane,E.codePane,E.soundPane],vis=P.map(p=>!p.classList.contains("min")),sum=state.widths.reduce((a,x,i)=>a+(vis[i]?x:0),0)||1;P.forEach((p,i)=>p.style.flex=vis[i]?`0 0 ${state.widths[i]/sum*100}%`:"0 0 34px");document.querySelectorAll(".grip").forEach((g,i)=>g.hidden=!(vis[i]&&vis[i+1]))}
+document.querySelectorAll("[data-min]").forEach(b=>b.onclick=()=>{if(mobile())return;const p={source:E.sourcePane,code:E.codePane,sound:E.soundPane}[b.dataset.min];p.classList.toggle("min");b.textContent=p.classList.contains("min")?"+":"−";setWidths()});
+
+document.querySelectorAll("[data-mobile]").forEach(b=>b.onclick=()=>{if(!b.disabled)showMobile(b.dataset.mobile)});function showMobile(name){if(!mobile())return;document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("mobileOn",p.dataset.pane===name));document.querySelectorAll("[data-mobile]").forEach(b=>b.classList.toggle("on",b.dataset.mobile===name));if(name==="source")setTimeout(fitSketch,0);if(name==="sound")setTimeout(drawSpec,0)}
+window.addEventListener("resize",()=>{if(mobile())showMobile(document.querySelector("[data-mobile].on")?.dataset.mobile||"source");else setWidths();fitSketch();drawSpec()});
+
+/* prompt/completion ledger + multi-track invariant editing */
+const LOG_KEY="es.promptlog.v1";
+state.selectedTracks=new Set();state.anchorTracks=new Set();
+const X={groupBtn:$("groupBtn"),anchorBtn:$("anchorBtn"),fitOthersBtn:$("fitOthersBtn"),selectionClear:$("selectionClear"),logBtn:$("logBtn"),logBack:$("logBack"),logList:$("logList"),logMeta:$("logMeta"),logExport:$("logExport"),logClear:$("logClear"),logClose:$("logClose")};
+function logRows(){try{const a=JSON.parse(localStorage.getItem(LOG_KEY)||"[]");return Array.isArray(a)?a:[]}catch(_){return[]}}
+function writeLog(a){try{localStorage.setItem(LOG_KEY,JSON.stringify(a.slice(-80)))}catch(_){}}
+function recordPair(entry){const row={id:`p_${Date.now().toString(36)}_${Math.floor(Math.random()*1e6).toString(36)}`,at:new Date().toISOString(),model:state.model,...entry},a=logRows();a.push(row);writeLog(a);const s=current();if(s){s.promptLogIds=[...(s.promptLogIds||[]),row.id]}renderLog();return row}
+function previewCompletion(c){if(!c)return"";if(c.summary)return c.summary;if(Array.isArray(c.stones))return c.stones.map(x=>`${x.name} / ${x.genre}`).join(" · ");if(Array.isArray(c.patches))return c.patches.map(x=>`T${x.track}`).join(" + ")+" patched";return JSON.stringify(c).slice(0,140)}
+function renderLog(){if(!X.logList)return;const a=logRows();X.logMeta.textContent=`${a.length} pairs`;X.logList.innerHTML="";if(!a.length){X.logList.innerHTML='<div class="logEmpty">No prompts yet.</div>';return}for(const r of [...a].reverse()){const d=document.createElement("div");d.className="logItem";const when=document.createElement("div");when.className="logWhen";const dt=new Date(r.at);when.textContent=`${dt.toLocaleDateString()}\n${dt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`;const pair=document.createElement("div");pair.className="logPair";const targets=r.targets?.length?` · ${r.targets.map(x=>`T${x}`).join("+")}`:"";pair.innerHTML=`<b>${esc(String(r.scope||"PROMPT").toUpperCase()+targets)}</b><div class="p">${esc(r.prompt||"(drawing only)")}</div><div class="c">→ ${esc(previewCompletion(r.completion))}</div>`;d.append(when,pair);X.logList.appendChild(d)}}
+X.logBtn.onclick=()=>{renderLog();X.logBack.classList.add("open")};X.logClose.onclick=()=>X.logBack.classList.remove("open");X.logBack.onclick=e=>{if(e.target===X.logBack)X.logBack.classList.remove("open")};
+X.logExport.onclick=()=>{const rows=logRows(),txt=rows.map(x=>JSON.stringify(x)).join("\n");downloadBlob(new Blob([txt],{type:"application/x-ndjson"}),`es-prompt-log-${new Date().toISOString().slice(0,10)}.jsonl`);setTrace("LOG",`${rows.length} prompt/completion pairs`,"downloaded")};
+X.logClear.onclick=()=>{if(confirm("Clear the prompt/completion log on this browser?")){localStorage.removeItem(LOG_KEY);renderLog();setTrace("LOG","cleared","kept songs unchanged")}};
+
+/* record whole-song MAKE pairs */
+const makeBase=make;make=async function(){const before=state.stones.map(s=>s.id).join("|"),prompt=E.prompt.value.trim(),draw=structuredClone(drawingDNA()),sourceAtStart=E.prompt.value;await makeBase();const after=state.stones.map(s=>s.id).join("|");if(after&&after!==before){const compact=state.stones.map(s=>({id:s.id,name:s.name,genre:s.genre,lineage:s.lineage,hook:s.hook,tempo:s.tempo,key:s.key,mode:s.mode,groove:s.groove,palette:s.palette,progression:s.progression,bassMotif:s.bassMotif,leadMotif:s.leadMotif,density:s.density,drawingUse:s.drawingUse,surprise:s.surprise})),row=recordPair({scope:"song",prompt:prompt||"(drawing only)",source:sourceAtStart,drawing:draw,completion:{stones:compact}});for(const s of state.stones)s.promptLogIds=[...(s.promptLogIds||[]),row.id]}};E.makeBtn.onclick=make;
+
+function allTracks(){return state.ir?[...new Set(state.ir.events.map(e=>e.track))].sort((a,b)=>a-b):[]}
+function selectedArray(){return [...state.selectedTracks].sort((a,b)=>a-b)}
+function editableSelected(){const a=selectedArray().filter(t=>!state.anchorTracks.has(t));if(a.length)return a;if(state.selectedTrack!=null&&!state.anchorTracks.has(state.selectedTrack))return[state.selectedTrack];return[]}
+function updateSelectionUI(){const sel=selectedArray();if(X.groupBtn){X.groupBtn.hidden=!sel.length;X.groupBtn.textContent=`EDIT ${sel.length}`}for(const row of document.querySelectorAll(".track")){const lab=row.querySelector(".tlabel"),tr=Number(lab?.textContent);row.classList.toggle("selected",state.selectedTracks.has(tr));row.classList.toggle("anchor",state.anchorTracks.has(tr));lab?.classList.toggle("selected",state.selectedTracks.has(tr));lab?.classList.toggle("anchor",state.anchorTracks.has(tr))}if(X.anchorBtn){const all=sel.length&&sel.every(t=>state.anchorTracks.has(t));X.anchorBtn.classList.toggle("on",!!all);X.anchorBtn.textContent=all?"UNLOCK":"INVARIANT"}}
+function toggleTrack(tr){if(state.selectedTracks.has(tr))state.selectedTracks.delete(tr);else state.selectedTracks.add(tr);state.selectedTrack=tr;updateSelectionUI()}
+function openSelectionSheet(focusTrack=null){if(focusTrack!=null){state.selectedTrack=focusTrack;if(!state.selectedTracks.size)state.selectedTracks.add(focusTrack)}const sel=selectedArray(),anchors=[...state.anchorTracks].sort((a,b)=>a-b);E.trackTitle.textContent=sel.length>1?`${sel.length} TRACKS`:sel.length?`${sel[0]} · ${trackName(sel[0])}`:"TRACKS";E.trackMeta.textContent=anchors.length?`invariant ${anchors.map(x=>`T${x}`).join(" ")}`:`${sel.length} selected`;E.trackPrompt.placeholder=sel.length>1?"Reprompt these tracks together…":"Change this track…";E.trackAI.textContent=sel.length>1?`TUNE ${sel.length}`:"TUNE";E.trackReadout.textContent=sel.length?`selected ${sel.map(x=>`T${x} ${trackName(x)}`).join(" · ")}`:"tap track numbers to select";E.trackBack.classList.add("open");updateSelectionUI()}
+X.groupBtn.onclick=()=>openSelectionSheet();
+const openTrackBase=openTrack;openTrack=function(tr){state.selectedTrack=tr;if(!state.selectedTracks.has(tr)){if(!state.selectedTracks.size)state.selectedTracks.add(tr)}openSelectionSheet(tr)};
+const renderTimelineBase=renderTimeline;renderTimeline=function(){renderTimelineBase();for(const row of document.querySelectorAll(".track")){const lab=row.querySelector(".tlabel"),tr=Number(lab?.textContent);if(!Number.isFinite(tr))continue;let sx=0,moved=false;lab.onclick=null;lab.onpointerdown=ev=>{sx=ev.clientX;moved=false;lab.setPointerCapture?.(ev.pointerId)};lab.onpointermove=ev=>{if(Math.abs(ev.clientX-sx)>14)moved=true};lab.onpointerup=ev=>{const dx=ev.clientX-sx;if(Math.abs(dx)>18){const beat=Math.round(dx/45*4)/4;applyPatchBatch([{track:tr,shift:(trackPatch(tr).shift||0)+beat}]).catch(()=>{})}else if(!moved)toggleTrack(tr)};}updateSelectionUI()};
+
+X.anchorBtn.onclick=()=>{const sel=selectedArray();if(!sel.length)return;const all=sel.every(t=>state.anchorTracks.has(t));for(const t of sel){if(all)state.anchorTracks.delete(t);else state.anchorTracks.add(t)}const s=current();if(s)s.anchors=[...state.anchorTracks];updateSelectionUI();openSelectionSheet();setTrace(all?"INVARIANT RELEASED":"INVARIANT",sel.map(x=>`T${x}`).join(" + "),all?"editable again":"will not change during fit")};
+X.selectionClear.onclick=()=>{state.selectedTracks.clear();state.selectedTrack=null;updateSelectionUI();E.trackBack.classList.remove("open")};
+
+function patchLine(lines,tr,patch){const re=new RegExp(`^\\s*track\\(\\s*${tr}\\s*,`),idx=lines.findIndex(x=>re.test(x));let old={};if(idx>=0){try{old=parseVal(splitArgs(lines[idx].match(/^\s*track\((.*)\)\s*$/)[1])[1])||{}}catch(_){old={}}}const merged={...old,...patch};if(merged.delete===false)delete merged.delete;if(merged.mute===false)delete merged.mute;if(merged.query==="")delete merged.query;if(merged.behavior==="")delete merged.behavior;const line=`track(${tr}, ${JSON.stringify(merged)})`;if(idx>=0)lines[idx]=line;else lines.push(line)}
+async function applyPatchBatch(patches){const lines=E.code.value.split("\n");for(const x of patches){const tr=Math.round(+x.track);if(!Number.isFinite(tr)||state.anchorTracks.has(tr))continue;const p={...x};delete p.track;patchLine(lines,tr,p)}E.code.value=lines.join("\n");E.codeState.textContent="changed";state.dirty=true;updateGutter();await run();updateSelectionUI()}
+function nextSwap(tr){const idx=tr-7,p=state.plan?.palette?.[idx];if(!p||!state.catalog?.length)return null;const cur=state.plan?.trackPatches?.[String(tr)]?.soundName||p.sound?.name||"",s=resolveSound(p.role,state.plan?.trackPatches?.[String(tr)]?.query||p.query,state.plan.genre,cur);return s?.name||null}
+document.querySelectorAll("[data-track-op]").forEach(b=>b.onclick=async()=>{const targets=editableSelected();if(!targets.length){E.trackReadout.textContent="selected tracks are invariant";return}const op=b.dataset.trackOp,patches=[];let copyBase=Math.max(...allTracks(),20)+1;for(const tr of targets){const p=trackPatch(tr),x={track:tr};if(op==="left")x.shift=(+p.shift||0)-.25;if(op==="right")x.shift=(+p.shift||0)+.25;if(op==="down")x.transpose=(+p.transpose||0)-1;if(op==="up")x.transpose=(+p.transpose||0)+1;if(op==="octdown")x.transpose=(+p.transpose||0)-12;if(op==="octup")x.transpose=(+p.transpose||0)+12;if(op==="mute")x.mute=!p.mute;if(op==="delete")x.delete=true;if(op==="copy"){x.copyTo=copyBase++;x.copyShift=0;x.copyTranspose=0}if(op==="swap"){const n=nextSwap(tr);if(n)x.soundName=n}patches.push(x)}await applyPatchBatch(patches);openSelectionSheet()});
+
+function multiPatchSchema(){return{type:"object",additionalProperties:false,required:["summary","patches"],properties:{summary:{type:"string",maxLength:140},patches:{type:"array",minItems:1,maxItems:24,items:{type:"object",additionalProperties:false,required:["track","shift","transpose","gain","mute","delete","query","behavior"],properties:{track:{type:"integer",minimum:1,maximum:64},shift:{type:"number",minimum:-16,maximum:16},transpose:{type:"integer",minimum:-24,maximum:24},gain:{type:"number",minimum:.05,maximum:1.5},mute:{type:"boolean"},delete:{type:"boolean"},query:{type:"string",maxLength:60},behavior:{type:"string",enum:["","loop","one_shot","chop","punctuate"]}}}}}}}
+function trackContext(tr){return{track:tr,name:trackName(tr),patch:trackPatch(tr),events:(state.ir?.events||[]).filter(e=>e.track===tr).slice(0,24).map(e=>({type:e.type,start:+e.start.toFixed(3),dur:+e.dur.toFixed(3),note:e.note,vel:+e.vel.toFixed(2),role:e.role,query:e.query,sound:e.sound?.name}))}}
+async function tuneTracks(targets,request,scope="tracks"){targets=[...new Set(targets.map(Number))].filter(t=>Number.isFinite(t)&&!state.anchorTracks.has(t));if(!targets.length){E.trackReadout.textContent="no editable target tracks";return}if(!state.connected){showSheet();return}const anchors=[...state.anchorTracks].filter(t=>allTracks().includes(t)),prompt=request.trim()||"Make these tracks cohere more strongly as an ensemble while preserving their distinctive roles.";E.trackAI.disabled=true;E.trackReadout.textContent=`tuning ${targets.map(x=>`T${x}`).join(" + ")}…`;try{const d=await apiFetch("/responses",{method:"POST",body:JSON.stringify({model:state.model,instructions:"You are editing a multitrack musical arrangement. Tracks listed as INVARIANTS are immutable evidence: do not return patches for them. Modify only TARGET tracks. Coordinate target changes with one another and with the invariant tracks so timing, register, density, timbre and source material hang together. Return small deterministic patches, not a whole new song.",input:[{role:"user",content:[{type:"input_text",text:`SONG ${state.plan?.genre||""} | ${state.plan?.tempo||""} bpm | ${state.plan?.key||""} ${state.plan?.mode||""}\nREQUEST: ${prompt}\nINVARIANTS: ${JSON.stringify(anchors.map(trackContext))}\nTARGETS: ${JSON.stringify(targets.map(trackContext))}\nOTHER TRACKS (context only): ${JSON.stringify(allTracks().filter(t=>!targets.includes(t)&&!anchors.includes(t)).map(trackContext))}`}]}],text:{format:{type:"json_schema",name:"multi_track_patch",strict:true,schema:multiPatchSchema()}}})}),completion=JSON.parse(outputText(d)),valid=completion.patches.filter(x=>targets.includes(Number(x.track))&&!state.anchorTracks.has(Number(x.track)));await applyPatchBatch(valid);const row=recordPair({scope,prompt,targets,anchors,stoneId:current()?.id,completion:{summary:completion.summary,patches:valid}});const s=current();if(s)s.promptLogIds=[...(s.promptLogIds||[]),row.id];E.trackReadout.textContent=completion.summary;E.trackPrompt.value="";openSelectionSheet()}catch(e){E.trackReadout.textContent=e.message;setTrace("FAULT","track prompt preserved",e.message)}finally{E.trackAI.disabled=false}}
+E.trackAI.onclick=()=>tuneTracks(editableSelected(),E.trackPrompt.value,"tracks");
+X.fitOthersBtn.onclick=()=>{const anchors=[...state.anchorTracks];if(!anchors.length){E.trackReadout.textContent="select a track, mark INVARIANT, then FIT OTHERS";return}const targets=allTracks().filter(t=>!state.anchorTracks.has(t));const ask=E.trackPrompt.value.trim()||"Rework every non-invariant track so the arrangement fits the invariant track(s) naturally. Preserve the invariant exactly. Make supporting parts share a coherent pocket, register hierarchy and material world without making them identical.";state.selectedTracks=new Set(targets);updateSelectionUI();tuneTracks(targets,ask,"fit-to-invariant")};
+
+/* KEEP and PROJECT now carry anchors + prompt references */
+const saveCurrentBase=saveCurrent;saveCurrent=function(){const s=current();if(s){s.anchors=[...state.anchorTracks];s.promptLogIds=s.promptLogIds||[]}saveCurrentBase()};E.keepBtn.onclick=saveCurrent;
+const loadStoneBase=loadStone;loadStone=async function(s){await loadStoneBase(s);state.anchorTracks=new Set((s?.anchors||[]).map(Number));state.selectedTracks.clear();state.selectedTrack=null;updateSelectionUI()};
+E.projectExport.onclick=()=>{const s=current();if(!s)return;const ids=new Set(s.promptLogIds||[]),related=logRows().filter(x=>ids.has(x.id)||x.stoneId===s.id),project={version:2,savedAt:new Date().toISOString(),source:E.prompt.value,strokes:state.strokes,stone:{...s,anchors:[...state.anchorTracks]},code:E.code.value,plan:state.plan,invariants:[...state.anchorTracks],promptCompletionLog:related};downloadBlob(new Blob([JSON.stringify(project,null,2)],{type:"application/json"}),`${s.name||"es"}.es-project.json`);setTrace("EXPORT","PROJECT",`${related.length} prompt pairs included`)};
+
+/* init */
+E.sketchWrap.hidden=true;if(mobile())showMobile("source");else setWidths();updateGutter();renderLog();restoreKept();if(!state.stones.length)setTrace("START","describe or draw","MAKE");
+
+
+/* mute is silence, never disappearance */
+const applyPatchesMuteBase=applyPatches;
+applyPatches=function(events,p){
+  const patches=p.trackPatches||{}, muted=new Set(Object.entries(patches).filter(([,x])=>x?.mute&&!x?.delete).map(([k])=>Number(k)));
+  const audiblePatches=Object.fromEntries(Object.entries(patches).map(([k,x])=>[k,{...x,mute:false}]));
+  const out=applyPatchesMuteBase(events,{...p,trackPatches:audiblePatches});
+  for(const e of out)e.muted=muted.has(e.track);
+  return out;
+};
+
+function unmutedIR(ir){return ir?{...ir,events:ir.events.filter(e=>!e.muted)}:ir}
+
+const renderTimelineMuteBase=renderTimeline;
+renderTimeline=function(){
+  renderTimelineMuteBase();
+  for(const row of document.querySelectorAll('.track')){
+    const lab=row.querySelector('.tlabel'),tr=Number(lab?.textContent),muted=Number.isFinite(tr)&&!!trackPatch(tr).mute;
+    row.classList.toggle('muted',muted);
+    row.style.opacity=muted?'.42':'';
+    if(lab){lab.style.textDecoration=muted?'line-through':'';lab.title=`${trackName(tr)}${muted?' · MUTED · tap to edit / unmute':''}`}
+  }
+};
+
+function refreshMuteControl(){
+  const b=document.querySelector('[data-track-op="mute"]');if(!b)return;
+  const targets=editableSelected(),all=targets.length&&targets.every(t=>!!trackPatch(t).mute),some=targets.some(t=>!!trackPatch(t).mute);
+  b.textContent=all?'UNMUTE':some?'MUTE ALL':'MUTE';
+}
+const openSelectionSheetMuteBase=openSelectionSheet;
+openSelectionSheet=function(focusTrack=null){openSelectionSheetMuteBase(focusTrack);refreshMuteControl()};
+const muteControl=document.querySelector('[data-track-op="mute"]');
+if(muteControl)muteControl.onclick=async()=>{
+  const targets=editableSelected();if(!targets.length){E.trackReadout.textContent='selected tracks are invariant';return}
+  const allMuted=targets.every(t=>!!trackPatch(t).mute),patches=targets.map(track=>({track,mute:!allMuted}));
+  await applyPatchBatch(patches);openSelectionSheet();setTrace(allMuted?'UNMUTE':'MUTE',targets.map(t=>`T${t}`).join(' + '),allMuted?'audible again':'still visible / silent');
+};
+
+const runMuteBase=run;
+run=async function(){
+  await runMuteBase();
+  if(state.ir){const mutedTracks=[...new Set(state.ir.events.filter(e=>e.muted).map(e=>e.track))],audible=state.ir.events.filter(e=>!e.muted).length;E.soundState.textContent=`${audible} audible events${mutedTracks.length?` · ${mutedTracks.length} muted`:''}`;E.playBtn.disabled=!audible;renderTimeline()}
+};
+E.runBtn.onclick=run;
+
+const playMuteBase=play;
+play=async function(){
+  if(!state.ir||state.playing)return playMuteBase();
+  const real=state.ir;state.ir=unmutedIR(real);
+  try{return await playMuteBase()}finally{state.ir=real}
+};
+E.playBtn.onclick=play;
+
+const midiBytesMuteBase=midiBytes;
+midiBytes=function(){const real=state.ir;if(!real)return midiBytesMuteBase();state.ir=unmutedIR(real);try{return midiBytesMuteBase()}finally{state.ir=real}};
+
+const exportWavMuteBase=exportWav;
+exportWav=async function(){const real=state.ir;if(!real)return exportWavMuteBase();state.ir=unmutedIR(real);try{return await exportWavMuteBase()}finally{state.ir=real}};
+E.wavExport.onclick=exportWav;
+
+
+/* v9: mixer isolation + deterministic reruns
+   MUTE changes audibility only. It never invokes the arranger.
+   Palette resolution is locked per stone/query so identical code re-runs identically. */
+
+function stablePaletteKey(i,role,query,genre){return `${i}|${role}|${query}|${genre}`}
+resolvePlanPalette=async function(p){
+  await loadCatalog();
+  const stone=current();
+  if(stone&&!stone.soundLocks)stone.soundLocks={};
+  p.palette=p.palette.map((x,i)=>{
+    const patch=p.trackPatches[String(7+i)]||{},query=patch.query||x.query,role=patch.role||x.role,explicit=patch.soundName;
+    const key=stablePaletteKey(i,role,query,p.genre);
+    let sound=null;
+    const locked=stone?.soundLocks?.[key];
+    if(explicit)sound=(state.catalog||[]).find(s=>s.name===explicit)||null;
+    if(!sound&&locked)sound=(state.catalog||[]).find(s=>s.name===locked)||null;
+    if(!sound)sound=resolveSound(role,query,p.genre);
+    if(sound&&stone&&!explicit)stone.soundLocks[key]=sound.name;
+    if(sound)state.usedSounds.add(sound.name);
+    return{...x,query,role,sound};
+  });
+};
+
+function arrangementSeedShape(p){
+  return{
+    genre:p.genre,tempo:p.tempo,key:p.key,mode:p.mode,swing:p.swing,bars:p.bars,groove:p.groove,density:p.density,
+    progression:p.progression,bass:p.bass,lead:p.lead,drawRhythm:p.drawRhythm,drawContour:p.drawContour,
+    drawEnergy:p.drawEnergy,drawBlank:p.drawBlank
+  };
+}
+
+arrange=async function(p){
+  await resolvePlanPalette(p);
+  const events=[],fam=family(p.genre,p.palette),seed=hash(JSON.stringify(arrangementSeedShape(p))),r=seeded(seed),dr=drumPattern(p.groove);
+  const add=(type,track,start,dur,note=0,vel=.7,meta={})=>events.push({id:`e${events.length+1}`,type,track,start,dur,note,vel,...meta});
+  for(let bar=0;bar<p.bars;bar++){
+    const base=bar*4,en=sectionEnergy(p,bar),blank=blankSection(p,bar);if(blank&&bar%2===1)continue;
+    dr[0].forEach(st=>{if(r()<p.density*en*drawingGate(p,st))add('kick',1,base+st/4,.12,36,.8*en)});
+    dr[1].forEach(st=>{if(r()<Math.min(1,.7+p.density*.3))add('snare',2,base+st/4,.1,38,.68*en)});
+    dr[2].forEach(st=>{if(r()<p.density*en*drawingGate(p,st))add('hat',3,base+st/4,.05,42,.3+.3*en)});
+    const deg=p.progression[bar%p.progression.length]||1;
+    add('chord',5,base,.9,degreeMidi(p,deg,4),.36*en,{degree:deg,family:fam});
+    const bm=p.bass.length?p.bass:[0];
+    for(let i=0;i<4;i++){const st=i*4;if(r()<(.55+p.density*.35)*drawingGate(p,st))add('bass',4,base+i,.55,degreeMidi(p,deg,2)+(bm[(bar*2+i)%bm.length]||0),.55*en,{family:fam})}
+    const lm=p.lead.length?p.lead:[0,2,4,5],cont=p.drawContour?.length?p.drawContour:null;
+    for(let i=0;i<4;i++){const st=i*4;if(r()<p.density*.52*en*drawingGate(p,st))add('lead',6,base+i+.25,.35,degreeMidi(p,1,5)+(lm[(bar*3+i)%lm.length]||0)+(cont?cont[(bar+i)%cont.length]:0),.38*en,{family:fam})}
+  }
+  p.palette.forEach((x,idx)=>{
+    const patch=p.trackPatches[String(7+idx)]||{},behavior=patch.behavior||x.behavior,every=behavior==='loop'?4:behavior==='punctuate'?3:behavior==='chop'?2:Math.max(4,p.bars);
+    for(let bar=idx%2;bar<p.bars;bar+=every)add('sample',7+idx,bar*4,behavior==='one_shot'?.8:3.8,0,x.level,{paletteIndex:idx,role:x.role,query:x.query,behavior,sound:x.sound});
+  });
+  if(p.drawRhythm)for(let st=0;st<16;st++)if(p.drawRhythm[st])add('draw',20,st/4,.04,72+(p.drawContour?.[st%8]||0),.22);
+  return{...p,family:fam,events:applyPatches(events,p),length:p.bars*4};
+};
+
+function writeMixerMute(track,muted){
+  const lines=E.code.value.split('\n');
+  patchLine(lines,track,{mute:!!muted});
+  E.code.value=lines.join('\n');
+  if(state.plan){
+    state.plan.trackPatches=state.plan.trackPatches||{};
+    const k=String(track),next={...(state.plan.trackPatches[k]||{})};
+    if(muted)next.mute=true;else delete next.mute;
+    if(Object.keys(next).length)state.plan.trackPatches[k]=next;else delete state.plan.trackPatches[k];
+  }
+  if(state.ir)for(const e of state.ir.events)if(e.track===track)e.muted=!!muted;
+}
+function refreshMixerSurface(){
+  state.dirty=false;E.codeState.textContent='matches sound';updateGutter();
+  if(state.ir){
+    const muted=[...new Set(state.ir.events.filter(e=>e.muted).map(e=>e.track))],audible=state.ir.events.filter(e=>!e.muted).length;
+    E.soundState.textContent=`${audible} audible events${muted.length?` · ${muted.length} muted`:''}`;
+    E.playBtn.disabled=!audible;renderTimeline();drawSpec();
+  }
+  refreshMuteControl();
+}
+const mixerMuteButton=document.querySelector('[data-track-op="mute"]');
+if(mixerMuteButton)mixerMuteButton.onclick=async()=>{
+  const targets=editableSelected();
+  if(!targets.length){E.trackReadout.textContent='selected tracks are invariant';return}
+  const allMuted=targets.every(t=>!!trackPatch(t).mute),next=!allMuted;
+  for(const tr of targets)writeMixerMute(tr,next);
+  refreshMixerSurface();openSelectionSheet();
+  setTrace(next?'MUTE':'UNMUTE',targets.map(t=>`T${t}`).join(' + '),next?'mixer only · arrangement untouched':'mixer only · arrangement untouched');
+};
+
+
+/* v10: selected-track solo / audition monitoring
+   SOLO is monitor state only: no RUN, no code rewrite, no export change. */
+state.soloActive=false;
+
+const soloBtn=document.createElement('button');
+soloBtn.id='soloBtn';soloBtn.textContent='SOLO';
+if(X?.anchorBtn?.parentElement)X.anchorBtn.after(soloBtn);
+
+const auditionBtn=document.createElement('button');
+auditionBtn.id='auditionBtn';auditionBtn.textContent='▶ SEL';
+if(E.trackAI?.parentElement)E.trackAI.after(auditionBtn);
+
+const soloHeadBtn=document.createElement('button');
+soloHeadBtn.id='soloHeadBtn';soloHeadBtn.className='headTool';soloHeadBtn.hidden=true;soloHeadBtn.textContent='SOLO';
+if(X?.groupBtn?.parentElement)X.groupBtn.after(soloHeadBtn);
+
+/* adapt the existing sheet grids without adding permanent surface */
+if(X?.anchorBtn?.parentElement)X.anchorBtn.parentElement.style.gridTemplateColumns='repeat(4,1fr)';
+if(E.trackPrompt?.parentElement)E.trackPrompt.parentElement.style.gridTemplateColumns='1fr 62px 62px';
+
+function soloTargets(){
+  const available=new Set(allTracks());
+  return selectedArray().filter(t=>available.has(t));
+}
+function refreshSoloUI(){
+  const targets=soloTargets(),n=targets.length;
+  soloBtn.disabled=!n;
+  auditionBtn.disabled=!n;
+  soloBtn.textContent=state.soloActive?`UNSOLO ${n||''}`.trim():(n>1?`SOLO ${n}`:'SOLO');
+  auditionBtn.textContent=state.playing&&state.soloActive?'■ STOP':'▶ SEL';
+  soloHeadBtn.hidden=!n;
+  soloHeadBtn.textContent=state.soloActive?(n>1?`SOLO ${n} ON`:'SOLO ON'):(n>1?`SOLO ${n}`:'SOLO');
+  if(!state.playing)E.playBtn.textContent=state.soloActive?'PLAY SOLO':'PLAY';
+  if(E.timeline)E.timeline.classList.toggle('soloMode',state.soloActive);
+  for(const row of document.querySelectorAll('.track')){
+    const lab=row.querySelector('.tlabel'),tr=Number(lab?.textContent),inSolo=targets.includes(tr),muted=Number.isFinite(tr)&&!!trackPatch(tr).mute;
+    row.classList.toggle('soloAudible',state.soloActive&&inSolo);
+    if(state.soloActive)row.style.opacity=inSolo?(muted?'.42':'1'):'.18';
+    else row.style.opacity=muted?'.42':'';
+  }
+}
+function setSolo(on){
+  const targets=soloTargets();
+  if(on&&!targets.length)return false;
+  if(state.playing)stop();
+  state.soloActive=!!on;
+  refreshSoloUI();
+  setTrace(state.soloActive?'SOLO':'MIX',state.soloActive?targets.map(t=>`T${t}`).join(' + '):'all audible tracks',state.soloActive?'monitor only · arrangement untouched':'solo released');
+  return true;
+}
+
+soloBtn.onclick=()=>setSolo(!state.soloActive);
+soloHeadBtn.onclick=()=>setSolo(!state.soloActive);
+auditionBtn.onclick=async()=>{
+  if(state.playing){stop();refreshSoloUI();return}
+  if(!state.soloActive&&!setSolo(true))return;
+  await play();refreshSoloUI();
+};
+
+/* selection drives the audition set while SOLO is active */
+const toggleTrackSoloBase=toggleTrack;
+toggleTrack=function(tr){
+  if(state.playing&&state.soloActive)stop();
+  toggleTrackSoloBase(tr);
+  if(state.soloActive&&!soloTargets().length)state.soloActive=false;
+  refreshSoloUI();
+};
+const updateSelectionUISoloBase=updateSelectionUI;
+updateSelectionUI=function(){updateSelectionUISoloBase();if(state.soloActive&&!soloTargets().length)state.soloActive=false;refreshSoloUI()};
+const openSelectionSheetSoloBase=openSelectionSheet;
+openSelectionSheet=function(focusTrack=null){openSelectionSheetSoloBase(focusTrack);refreshSoloUI()};
+
+/* CLEAR SELECT also leaves monitor solo so PLAY cannot point at an empty set */
+X.selectionClear.onclick=()=>{
+  if(state.playing)stop();
+  state.selectedTracks.clear();state.selectedTrack=null;state.soloActive=false;
+  updateSelectionUI();E.trackBack.classList.remove('open');refreshSoloUI();
+};
+
+/* PLAY hears only the current selected set when SOLO is active.
+   The full IR is restored immediately; MIDI/WAV/PROJECT never inherit monitor solo. */
+const playSoloBase=play;
+play=async function(){
+  if(!state.soloActive)return playSoloBase();
+  if(state.playing)return playSoloBase();
+  const targets=new Set(soloTargets());
+  if(!targets.size){state.soloActive=false;refreshSoloUI();return playSoloBase()}
+  const real=state.ir;
+  if(!real)return;
+  state.ir={...real,events:real.events.filter(e=>targets.has(e.track))};
+  try{return await playSoloBase()}finally{state.ir=real;refreshSoloUI()}
+};
+E.playBtn.onclick=play;
+
+const stopSoloBase=stop;
+stop=function(){stopSoloBase();refreshSoloUI()};
+
+/* keep solo visual state after any legitimate rebuild/tune without making solo part of the build */
+const renderTimelineSoloBase=renderTimeline;
+renderTimeline=function(){renderTimelineSoloBase();refreshSoloUI()};
+
+refreshSoloUI();
+
+
+/* v11: part stones — branch before committing selected-track rewrites
+   TUNE and FIT OTHERS generate four non-destructive candidate patch sets.
+   Tap a stone to solo-audition it. USE commits only the chosen candidate. */
+
+state.partStones=[];
+state.partStoneTargets=[];
+state.partStonePreview=-1;
+state.partStoneChosen=-1;
+state.partStoneBase=null;
+state.partStoneLogId=null;
+
+/* richer local track grammar for part-level alternatives */
+const applyPatchesPartStoneBase=applyPatches;
+applyPatches=function(events,p){
+  const out=applyPatchesPartStoneBase(events,p),next=[];
+  for(const e0 of out){
+    const patch=p.trackPatches?.[String(e0.track)]||{};
+    const density=patch.density==null?1:clamp(+patch.density,.08,1);
+    if(density<.999){
+      const keep=(hash(`${e0.id}|${e0.track}|${e0.start}|part-density`)%10000)/10000;
+      if(keep>density)continue;
+    }
+    const e={...e0};
+    if(patch.durationScale!=null)e.dur=Math.max(.02,e.dur*clamp(+patch.durationScale,.2,3));
+    next.push(e);
+  }
+  return next;
+};
+
+const partStyle=document.createElement('style');
+partStyle.textContent=`
+.partStoneRail{display:none;border-bottom:1px solid var(--line);background:rgba(255,255,255,.32)}
+.partStoneRail.open{display:block}
+.partStoneHead{height:25px;display:flex;align-items:center;padding:0 9px;font:800 8px/1 ui-monospace,monospace;border-bottom:1px solid var(--line)}
+.partStoneHead span:last-child{margin-left:auto;color:var(--muted);font-weight:500}
+.partStoneScroller{display:flex;gap:5px;overflow-x:auto;padding:6px;scrollbar-width:none}
+.partStoneScroller::-webkit-scrollbar{display:none}
+.partStoneChip{flex:0 0 min(178px,43vw);min-width:138px;height:54px;border:1px solid var(--ink);border-radius:3px;background:transparent;padding:6px 7px;text-align:left;display:grid;grid-template-rows:auto 1fr;gap:3px}
+.partStoneChip b{font:900 8px/1.1 ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partStoneChip span{font:500 7px/1.25 ui-monospace,monospace;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.partStoneChip.on{background:var(--ink);color:var(--paper)}
+.partStoneChip.on span{color:#ccc}
+.partStoneChip.used{box-shadow:inset 0 0 0 2px var(--yellow)}
+.partStoneActions{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line)}
+.partStoneActions button{height:34px;border-right:1px solid var(--line);font:800 8px/1 ui-monospace,monospace}
+.partStoneActions button:last-child{border-right:0}
+.partStoneActions .use{background:var(--yellow)}
+`;
+document.head.appendChild(partStyle);
+
+const partRail=document.createElement('div');
+partRail.id='partStoneRail';partRail.className='partStoneRail';
+partRail.innerHTML='<div class="partStoneHead"><span>PART STONES</span><span id="partStoneMeta"></span></div><div id="partStoneScroller" class="partStoneScroller"></div><div class="partStoneActions"><button id="partOriginal">ORIGINAL</button><button id="partAudition">▶ SELECTED</button><button id="partUse" class="use" disabled>USE THIS</button></div>';
+E.trackPrompt.parentElement.after(partRail);
+const PS={rail:partRail,meta:$("partStoneMeta"),scroller:$("partStoneScroller"),original:$("partOriginal"),audition:$("partAudition"),use:$("partUse")};
+
+function cloneValue(x){return x==null?x:structuredClone(x)}
+function partPatchSchema(){
+  return{type:'object',additionalProperties:false,
+    required:['track','shift','transpose','gain','mute','delete','query','behavior','density','durationScale'],
+    properties:{
+      track:{type:'integer',minimum:1,maximum:64},
+      shift:{type:'number',minimum:-16,maximum:16},
+      transpose:{type:'integer',minimum:-24,maximum:24},
+      gain:{type:'number',minimum:.05,maximum:1.5},
+      mute:{type:'boolean'},
+      delete:{type:'boolean'},
+      query:{type:'string',maxLength:60},
+      behavior:{type:'string',enum:['','loop','one_shot','chop','punctuate']},
+      density:{type:'number',minimum:.08,maximum:1},
+      durationScale:{type:'number',minimum:.2,maximum:3}
+    }
+  }
+}
+function partStoneSetSchema(){
+  return{type:'object',additionalProperties:false,required:['stones'],properties:{stones:{
+    type:'array',minItems:4,maxItems:4,items:{type:'object',additionalProperties:false,
+      required:['name','concept','patches'],
+      properties:{
+        name:{type:'string',maxLength:28},
+        concept:{type:'string',maxLength:110},
+        patches:{type:'array',minItems:1,maxItems:24,items:partPatchSchema()}
+      }
+    }
+  }}}
+}
+
+const previewCompletionPartBase=previewCompletion;
+previewCompletion=function(c){
+  if(Array.isArray(c?.partStones))return c.partStones.map((x,i)=>`${i+1} ${x.name}`).join(' · ');
+  return previewCompletionPartBase(c);
+};
+
+function partBaseSnapshot(){
+  return{code:E.code.value,plan:cloneValue(state.plan),ir:cloneValue(state.ir),soloActive:state.soloActive};
+}
+function clearPartStones({restore=false,hide=true}={}){
+  if(restore&&state.partStoneBase)restorePartOriginal(false);
+  state.partStones=[];state.partStoneTargets=[];state.partStonePreview=-1;state.partStoneChosen=-1;state.partStoneBase=null;state.partStoneLogId=null;
+  if(hide)PS.rail.classList.remove('open');
+  PS.scroller.innerHTML='';PS.use.disabled=true;PS.meta.textContent='';
+}
+function renderPartStones(){
+  PS.scroller.innerHTML='';
+  state.partStones.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.className='partStoneChip'+(i===state.partStonePreview?' on':'')+(i===state.partStoneChosen?' used':'');
+    b.innerHTML=`<b>${i+1} · ${esc(s.name)}</b><span>${esc(s.concept)}</span>`;
+    b.onclick=()=>previewPartStone(i,true);
+    PS.scroller.appendChild(b);
+  });
+  PS.meta.textContent=state.partStones.length?`${state.partStones.length} alternatives · ${state.partStoneTargets.map(t=>`T${t}`).join('+')}`:'';
+  PS.use.disabled=state.partStonePreview<0;
+  PS.rail.classList.toggle('open',!!state.partStones.length);
+}
+
+function candidateCode(baseCode,stone){
+  const lines=baseCode.split('\n'),targets=new Set(state.partStoneTargets),anchors=state.anchorTracks;
+  for(const x of stone.patches||[]){
+    const tr=Math.round(+x.track);
+    if(!targets.has(tr)||anchors.has(tr))continue;
+    const patch={...x};delete patch.track;patchLine(lines,tr,patch);
+  }
+  return lines.join('\n');
+}
+async function compilePartStone(stone){
+  if(stone.previewIR&&stone.previewPlan&&stone.previewCode)return stone;
+  const code=candidateCode(state.partStoneBase.code,stone),plan=parseCode(code),ir=await arrange(plan);
+  stone.previewCode=code;stone.previewPlan=cloneValue(plan);stone.previewIR=cloneValue(ir);
+  return stone;
+}
+function showPartPreview(stone,index){
+  state.partStonePreview=index;
+  state.plan=cloneValue(stone.previewPlan);
+  state.ir=cloneValue(stone.previewIR);
+  state.selectedTracks=new Set(state.partStoneTargets);
+  state.selectedTrack=state.partStoneTargets[0]??null;
+  state.soloActive=true;
+  renderTimeline();drawSpec();updateSelectionUI();renderPartStones();refreshSoloUI();
+  E.codeState.textContent='preview · code unchanged';
+  E.trackReadout.textContent=`PREVIEW ${index+1} · ${stone.name} — ${stone.concept}`;
+  setTrace('PART STONE',`${index+1}/4 ${stone.name}`,'preview only · USE to commit');
+}
+async function previewPartStone(index,autoPlay=false){
+  const stone=state.partStones[index];if(!stone||!state.partStoneBase)return;
+  if(state.playing)stop();
+  try{
+    await compilePartStone(stone);showPartPreview(stone,index);
+    if(autoPlay&&state.ir?.events.some(e=>state.partStoneTargets.includes(e.track)&&!e.muted))await play();
+  }catch(e){E.trackReadout.textContent=e.message;setTrace('FAULT','part stone preserved',e.message)}
+}
+function restorePartOriginal(autoPlay=false){
+  const b=state.partStoneBase;if(!b)return;
+  if(state.playing)stop();
+  state.plan=cloneValue(b.plan);state.ir=cloneValue(b.ir);state.partStonePreview=-1;
+  state.selectedTracks=new Set(state.partStoneTargets);
+  state.selectedTrack=state.partStoneTargets[0]??null;
+  state.soloActive=!!state.partStoneTargets.length;
+  renderTimeline();drawSpec();updateSelectionUI();renderPartStones();refreshSoloUI();
+  E.codeState.textContent='matches sound';
+  E.trackReadout.textContent='ORIGINAL · no candidate committed';
+  setTrace('ORIGINAL',state.partStoneTargets.map(t=>`T${t}`).join(' + '),'comparison restored');
+  if(autoPlay&&state.ir?.events.some(e=>state.partStoneTargets.includes(e.track)&&!e.muted))play();
+}
+PS.original.onclick=()=>restorePartOriginal(true);
+PS.audition.onclick=async()=>{
+  if(state.playing){stop();refreshSoloUI();return}
+  if(state.partStonePreview<0){restorePartOriginal(false)}
+  state.soloActive=true;refreshSoloUI();await play();
+};
+
+function updatePartChoiceLog(index,stone){
+  if(!state.partStoneLogId)return;
+  const rows=logRows(),row=rows.find(x=>x.id===state.partStoneLogId);
+  if(!row)return;
+  row.chosen={index,name:stone.name,concept:stone.concept,at:new Date().toISOString()};
+  row.codeAfter=stone.previewCode;
+  writeLog(rows);renderLog();
+}
+PS.use.onclick=async()=>{
+  const i=state.partStonePreview,stone=state.partStones[i];if(i<0||!stone)return;
+  if(state.playing)stop();
+  await compilePartStone(stone);
+  E.code.value=stone.previewCode;state.plan=cloneValue(stone.previewPlan);state.ir=cloneValue(stone.previewIR);
+  state.dirty=false;state.partStoneChosen=i;updateGutter();renderTimeline();drawSpec();updateSelectionUI();renderPartStones();
+  E.codeState.textContent='matches sound';E.soundState.textContent=`${state.ir.events.filter(e=>!e.muted).length} audible events`;
+  const s=current();if(s)s.savedCode=E.code.value;
+  updatePartChoiceLog(i,stone);
+  E.trackReadout.textContent=`USED ${i+1} · ${stone.name}`;
+  setTrace('USE PART STONE',`${i+1}/4 ${stone.name}`,'written to code');
+};
+
+async function generatePartStones(targets,request,scope='part-stones'){
+  targets=[...new Set(targets.map(Number))].filter(t=>Number.isFinite(t)&&!state.anchorTracks.has(t));
+  if(!targets.length){E.trackReadout.textContent='no editable target tracks';return}
+  if(!state.ir){E.trackReadout.textContent='RUN the song first';return}
+  if(!state.connected){showSheet();return}
+  if(state.playing)stop();
+  const anchors=[...state.anchorTracks].filter(t=>allTracks().includes(t));
+  const prompt=request.trim()||'Give me four strong, different ways to improve these selected parts while keeping the rest of the song coherent.';
+  state.partStoneBase=partBaseSnapshot();state.partStoneTargets=targets;state.partStonePreview=-1;state.partStoneChosen=-1;state.partStones=[];
+  E.trackAI.disabled=true;E.trackAI.textContent='CAST 4';E.trackReadout.textContent='casting 4 part stones…';PS.rail.classList.remove('open');
+  try{
+    const d=await apiFetch('/responses',{method:'POST',body:JSON.stringify({
+      model:state.model,
+      instructions:'You are producing four alternative edits for a selected subset of a multitrack arrangement. INVARIANT tracks are immutable and must never be patched. OTHER tracks are context only and must never be patched. Every candidate must patch the TARGET tracks only, and every candidate should be audibly distinct while still satisfying the request. Use timing shift, transpose, gain, density, note duration, sample-material query, and sample behavior as appropriate. Do not make four cosmetic parameter nudges: offer four different musical hypotheses.',
+      input:[{role:'user',content:[{type:'input_text',text:
+`SONG ${state.plan?.genre||''} | ${state.plan?.tempo||''} bpm | ${state.plan?.key||''} ${state.plan?.mode||''}
+REQUEST: ${prompt}
+INVARIANTS: ${JSON.stringify(anchors.map(trackContext))}
+TARGETS: ${JSON.stringify(targets.map(trackContext))}
+OTHER TRACKS (context only): ${JSON.stringify(allTracks().filter(t=>!targets.includes(t)&&!anchors.includes(t)).map(trackContext))}
+Return exactly FOUR named PART STONES. Each stone is one coherent alternative for the same request.`
+      }]}],
+      text:{format:{type:'json_schema',name:'part_stones',strict:true,schema:partStoneSetSchema()}}
+    })});
+    const parsed=JSON.parse(outputText(d)),targetSet=new Set(targets);
+    state.partStones=(parsed.stones||[]).slice(0,4).map((s,i)=>({
+      id:`part_${Date.now().toString(36)}_${i}`,
+      name:s.name,concept:s.concept,
+      patches:(s.patches||[]).filter(x=>targetSet.has(Number(x.track))&&!state.anchorTracks.has(Number(x.track)))
+    })).filter(s=>s.patches.length);
+    if(state.partStones.length!==4)throw Error(`received ${state.partStones.length}/4 usable part stones`);
+    const compact=state.partStones.map(s=>({id:s.id,name:s.name,concept:s.concept,patches:s.patches}));
+    const row=recordPair({scope,prompt,targets,anchors,stoneId:current()?.id,completion:{summary:`4 part stones for ${targets.map(t=>`T${t}`).join('+')}`,partStones:compact}});
+    state.partStoneLogId=row.id;
+    renderPartStones();
+    E.trackReadout.textContent='4 PART STONES · tap one to audition · USE commits only that one';
+    setTrace('4 PART STONES',targets.map(t=>`T${t}`).join(' + '),'tap to audition');
+  }catch(e){
+    restorePartOriginal(false);clearPartStones({restore:false,hide:true});
+    E.trackReadout.textContent=e.message;setTrace('FAULT','part prompt preserved',e.message);
+  }finally{
+    E.trackAI.disabled=false;E.trackAI.textContent=targets.length>1?`TUNE ${targets.length}`:'TUNE';
+  }
+}
+
+/* TUNE and FIT OTHERS now branch instead of immediately committing one completion */
+E.trackAI.onclick=()=>generatePartStones(editableSelected(),E.trackPrompt.value,'part-stones');
+X.fitOthersBtn.onclick=()=>{
+  const anchors=[...state.anchorTracks];
+  if(!anchors.length){E.trackReadout.textContent='select a track, mark INVARIANT, then FIT OTHERS';return}
+  const targets=allTracks().filter(t=>!state.anchorTracks.has(t));
+  state.selectedTracks=new Set(targets);updateSelectionUI();
+  const ask=E.trackPrompt.value.trim()||'Give me four different ensemble solutions for every non-invariant track so the arrangement fits the invariant track(s) naturally. Preserve the invariants exactly. Each solution should have its own pocket, register hierarchy and material strategy.';
+  generatePartStones(targets,ask,'fit-to-invariant-part-stones');
+};
+
+/* Manual edits invalidate a candidate comparison because its base state has changed. */
+const applyPatchBatchPartStoneEditBase=applyPatchBatch;
+applyPatchBatch=async function(patches){
+  if(state.partStonePreview>=0)restorePartOriginal(false);
+  if(state.partStones.length)clearPartStones({restore:false,hide:true});
+  return applyPatchBatchPartStoneEditBase(patches);
+};
+const mixerMutePartStoneBase=mixerMuteButton?.onclick;
+if(mixerMuteButton&&mixerMutePartStoneBase)mixerMuteButton.onclick=async()=>{
+  if(state.partStonePreview>=0)restorePartOriginal(false);
+  if(state.partStones.length)clearPartStones({restore:false,hide:true});
+  return mixerMutePartStoneBase();
+};
+
+/* Leaving the editor never commits a preview. */
+const trackClosePartStoneBase=E.trackClose.onclick;
+E.trackClose.onclick=()=>{
+  if(state.partStonePreview>=0)restorePartOriginal(false);
+  trackClosePartStoneBase?.();
+};
+const trackBackPartStoneBase=E.trackBack.onclick;
+E.trackBack.onclick=e=>{
+  if(e.target===E.trackBack&&state.partStonePreview>=0)restorePartOriginal(false);
+  trackBackPartStoneBase?.(e);
+};
+
+const loadStonePartStoneBase=loadStone;
+loadStone=async function(s){
+  clearPartStones({restore:false,hide:true});
+  return loadStonePartStoneBase(s);
+};
+
+
+/* v12: PART BANK + cross-song fusion
+   Harvest committed audible track state from any song, persist it with provenance,
+   select parents across songs, CAST four fusion stones, audition non-destructively,
+   and USE one to create a new executable fusion stone. */
+const PART_BANK_KEY='es.partbank.v1';
+state.partBankSelected=new Set();
+state.fusionStones=[];
+state.fusionPreview=-1;
+state.fusionBase=null;
+state.fusionLogId=null;
+state.fusionTrackNames={};
+
+function partBankRows(){
+  try{const a=JSON.parse(localStorage.getItem(PART_BANK_KEY)||'[]');return Array.isArray(a)?a:[]}catch(_){return[]}
+}
+function writePartBank(a){
+  try{localStorage.setItem(PART_BANK_KEY,JSON.stringify(a.slice(-32)))}catch(e){setTrace('PART BANK','storage full',e.message)}
+}
+function bankUid(){return `bank_${Date.now().toString(36)}_${Math.floor(Math.random()*1e6).toString(36)}`}
+function compactSound(s){
+  if(!s)return null;
+  return{name:s.name||'',path:s.path||'',tempo:s.tempo??null,key:s.key??null,instrument:s.instrument??'',genre:s.genre??'',artist:s.artist??''};
+}
+function compactEventForBank(e){
+  const x={id:e.id,type:e.type,track:e.track,start:+e.start,dur:+e.dur,note:e.note??0,vel:+e.vel,transpose:+(e.transpose||0),role:e.role||'',query:e.query||'',behavior:e.behavior||'',muted:!!e.muted};
+  if(e.sound)x.sound=compactSound(e.sound);
+  if(e.degree!=null)x.degree=e.degree;
+  if(e.family)x.family=e.family;
+  return x;
+}
+function harvestSelectedParts(){
+  if(!state.ir)return setTrace('HARVEST','RUN first','no audible arrangement');
+  if(state.partStonePreview>=0)return setTrace('HARVEST','preview not committed','USE the part stone first');
+  const tracks=selectedArray();
+  if(!tracks.length)return setTrace('HARVEST','select track numbers','nothing selected');
+  const s=current(),rows=partBankRows(),made=[];
+  for(const tr of tracks){
+    const events=state.ir.events.filter(e=>e.track===tr);
+    if(!events.length)continue;
+    const rec={
+      id:bankUid(),savedAt:new Date().toISOString(),
+      parentStoneId:s?.id||null,parentSong:s?.name||'untitled',parentGenre:s?.genre||state.plan?.genre||'hybrid',
+      parentPrompt:s?.source||E.prompt.value||'',promptLogIds:[...(s?.promptLogIds||[])],
+      sourceTrack:tr,trackName:trackName(tr),tempo:state.ir.tempo||state.plan?.tempo||100,
+      key:state.plan?.key||s?.key||'C',mode:state.plan?.mode||s?.mode||'minor',bars:state.ir.bars||state.plan?.bars||8,
+      family:state.ir.family||family(state.plan?.genre||'',state.plan?.palette||[]),
+      patch:cloneValue(trackPatch(tr)),
+      events:events.map(compactEventForBank)
+    };
+    rows.push(rec);made.push(rec);
+  }
+  writePartBank(rows);
+  for(const r of made)state.partBankSelected.add(r.id);
+  renderPartBank();
+  setTrace('HARVEST',made.map(x=>x.trackName).join(' + '),`${made.length} part${made.length===1?'':'s'} saved from ${s?.name||'song'}`);
+  if(E.trackReadout)E.trackReadout.textContent=`HARVESTED ${made.length} · PARTS bank now has ${partBankRows().length}`;
+}
+
+const fusionStyle=document.createElement('style');
+fusionStyle.textContent=`
+.partBankBack{position:fixed;inset:0;background:rgba(17,17,15,.26);z-index:245;display:none;align-items:flex-end;justify-content:center}.partBankBack.open{display:flex}
+.partBankSheet{width:min(680px,calc(100% - 10px));max-height:88vh;margin:0 5px 5px;background:var(--paper);border:1px solid var(--ink);display:grid;grid-template-rows:34px auto minmax(80px,1fr) auto auto;box-shadow:0 -12px 38px rgba(0,0,0,.12)}
+.partBankPrompt{display:grid;grid-template-columns:1fr 74px;border-bottom:1px solid var(--line)}.partBankPrompt input{min-width:0;height:42px;border:0;border-right:1px solid var(--line);padding:0 9px;background:transparent;font:500 9px/1.2 ui-monospace,monospace}.partBankPrompt button{font:900 9px/1 ui-monospace,monospace}
+.partBankList{overflow:auto}.bankRow{min-height:50px;display:grid;grid-template-columns:34px minmax(0,1fr) 48px;border-bottom:1px solid var(--line);align-items:stretch}.bankPick{font:900 11px/1 ui-monospace,monospace;border-right:1px solid var(--line)}.bankPick.on{background:var(--ink);color:var(--paper)}.bankInfo{min-width:0;padding:6px 8px;display:grid;gap:3px}.bankInfo b{font:900 8px/1 ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bankInfo span{font:500 7px/1.2 ui-monospace,monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bankDelete{color:#9b2f18;font:800 8px/1 ui-monospace,monospace;border-left:1px solid var(--line)}
+.fusionRail{display:none;border-top:1px solid var(--line);background:rgba(255,255,255,.38)}.fusionRail.open{display:block}.fusionScroller{display:flex;gap:5px;overflow-x:auto;padding:6px}.fusionChip{flex:0 0 min(190px,46vw);min-width:145px;height:58px;border:1px solid var(--ink);padding:6px;text-align:left;display:grid;grid-template-rows:auto 1fr;gap:3px}.fusionChip b{font:900 8px/1 ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fusionChip span{font:500 7px/1.25 ui-monospace,monospace;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.fusionChip.on{background:var(--ink);color:var(--paper)}.fusionChip.on span{color:#ccc}
+.fusionActions{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line)}.fusionActions button{height:36px;border-right:1px solid var(--line);font:900 8px/1 ui-monospace,monospace}.fusionActions button:last-child{border-right:0}.fusionActions .use{background:var(--yellow)}
+.partBankFooter{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}.partBankFooter button{height:38px;border-right:1px solid var(--line);font:900 8px/1 ui-monospace,monospace}.partBankFooter button:last-child{border-right:0}
+`;
+document.head.appendChild(fusionStyle);
+
+const partsBtn=document.createElement('button');
+partsBtn.id='partsBtn';partsBtn.className='toolBtn';partsBtn.textContent='PARTS 0';
+E.keepBtn.after(partsBtn);
+const harvestBtn=document.createElement('button');
+harvestBtn.id='harvestBtn';harvestBtn.textContent='HARVEST';
+if(auditionBtn?.parentElement)auditionBtn.after(harvestBtn);else if(E.trackAI?.parentElement)E.trackAI.after(harvestBtn);
+if(E.trackPrompt?.parentElement)E.trackPrompt.parentElement.style.gridTemplateColumns='1fr 58px 58px 68px';
+
+const bankBack=document.createElement('div');bankBack.className='partBankBack';bankBack.id='partBankBack';
+bankBack.innerHTML=`<div class="partBankSheet"><div class="trackHead"><span>PART BANK</span><span id="partBankMeta"></span></div><div class="partBankPrompt"><input id="fusionPrompt" placeholder="Optional fusion instruction… e.g. bass is spine, keep vocal phrasing"><button id="fusionCast">CAST 4</button></div><div id="partBankList" class="partBankList"></div><div id="fusionRail" class="fusionRail"><div id="fusionScroller" class="fusionScroller"></div><div class="fusionActions"><button id="fusionOriginal">BACK</button><button id="fusionAudition">▶ FUSION</button><button id="fusionUse" class="use" disabled>USE FUSION</button></div></div><div class="partBankFooter"><button id="partBankClearSel">CLEAR SELECT</button><button id="partBankClose">CLOSE</button></div></div>`;
+document.body.appendChild(bankBack);
+const FB={back:bankBack,meta:$("partBankMeta"),list:$("partBankList"),prompt:$("fusionPrompt"),cast:$("fusionCast"),rail:$("fusionRail"),scroller:$("fusionScroller"),original:$("fusionOriginal"),audition:$("fusionAudition"),use:$("fusionUse"),clear:$("partBankClearSel"),close:$("partBankClose")};
+
+function selectedBankRows(){const ids=state.partBankSelected;return partBankRows().filter(x=>ids.has(x.id))}
+function renderPartBank(){
+  const rows=partBankRows(),valid=new Set(rows.map(x=>x.id));for(const id of [...state.partBankSelected])if(!valid.has(id))state.partBankSelected.delete(id);
+  partsBtn.textContent=`PARTS ${rows.length}`;FB.meta.textContent=`${state.partBankSelected.size} selected · ${new Set(selectedBankRows().map(x=>x.parentSong)).size} songs`;
+  FB.list.innerHTML='';
+  if(!rows.length){FB.list.innerHTML='<div class="logEmpty">Harvest a track from any song, switch songs, harvest another, then fuse them here.</div>';FB.cast.disabled=true;return}
+  for(const r of [...rows].reverse()){
+    const row=document.createElement('div');row.className='bankRow';
+    const pick=document.createElement('button');pick.className='bankPick'+(state.partBankSelected.has(r.id)?' on':'');pick.textContent=state.partBankSelected.has(r.id)?'✓':'+';pick.onclick=()=>{if(state.partBankSelected.has(r.id))state.partBankSelected.delete(r.id);else state.partBankSelected.add(r.id);renderPartBank()};
+    const info=document.createElement('div');info.className='bankInfo';info.innerHTML=`<b>${esc(r.trackName)} · ${esc(r.parentSong)}</b><span>${esc(r.parentGenre)} · ${r.tempo} bpm · ${esc(r.key)} ${esc(r.mode)} · ${r.events.length} events</span>`;
+    const del=document.createElement('button');del.className='bankDelete';del.textContent='DEL';del.onclick=()=>{const next=partBankRows().filter(x=>x.id!==r.id);writePartBank(next);state.partBankSelected.delete(r.id);renderPartBank()};
+    row.append(pick,info,del);FB.list.appendChild(row);
+  }
+  FB.cast.disabled=state.partBankSelected.size<2;
+}
+partsBtn.onclick=()=>{renderPartBank();FB.back.classList.add('open')};
+FB.close.onclick=()=>{restoreFusionBase(false);FB.back.classList.remove('open')};
+FB.back.onclick=e=>{if(e.target===FB.back){restoreFusionBase(false);FB.back.classList.remove('open')}};
+FB.clear.onclick=()=>{state.partBankSelected.clear();clearFusionCandidates();renderPartBank()};
+harvestBtn.onclick=harvestSelectedParts;
+
+function fusionTransformSchema(){return{type:'object',additionalProperties:false,required:['partId','transpose','shift','gain','density','durationScale'],properties:{partId:{type:'string',maxLength:80},transpose:{type:'integer',minimum:-24,maximum:24},shift:{type:'number',minimum:-16,maximum:16},gain:{type:'number',minimum:.1,maximum:1.5},density:{type:'number',minimum:.15,maximum:1},durationScale:{type:'number',minimum:.35,maximum:2.5}}}}
+function fusionSchema(){return{type:'object',additionalProperties:false,required:['stones'],properties:{stones:{type:'array',minItems:4,maxItems:4,items:{type:'object',additionalProperties:false,required:['name','concept','tempo','key','mode','bars','transforms'],properties:{name:{type:'string',maxLength:28},concept:{type:'string',maxLength:120},tempo:{type:'integer',minimum:45,maximum:190},key:{type:'string',enum:Object.keys(ROOTS)},mode:{type:'string',enum:Object.keys(MODES)},bars:{type:'integer',enum:[4,8,12,16,24]},transforms:{type:'array',minItems:2,maxItems:12,items:fusionTransformSchema()}}}}}}}
+function bankContext(r){return{id:r.id,parentSong:r.parentSong,parentGenre:r.parentGenre,track:r.trackName,tempo:r.tempo,key:r.key,mode:r.mode,bars:r.bars,eventCount:r.events.length,types:[...new Set(r.events.map(e=>e.type))],sampleNames:[...new Set(r.events.map(e=>e.sound?.name).filter(Boolean))].slice(0,6)}}
+
+function fusionBaseSnapshot(){return{stoneIndex:state.stoneIndex,code:E.code.value,plan:cloneValue(state.plan),ir:cloneValue(state.ir),selected:new Set(state.selectedTracks),selectedTrack:state.selectedTrack,soloActive:state.soloActive,fusionTrackNames:{...state.fusionTrackNames}}}
+function clearFusionCandidates(){state.fusionStones=[];state.fusionPreview=-1;state.fusionLogId=null;FB.scroller.innerHTML='';FB.rail.classList.remove('open');FB.use.disabled=true}
+function restoreFusionBase(render=true){
+  const b=state.fusionBase;if(!b)return;
+  if(state.playing)stop();
+  state.stoneIndex=b.stoneIndex;E.code.value=b.code;state.plan=cloneValue(b.plan);state.ir=cloneValue(b.ir);state.selectedTracks=new Set(b.selected);state.selectedTrack=b.selectedTrack;state.soloActive=b.soloActive;state.fusionTrackNames={...b.fusionTrackNames};
+  state.fusionPreview=-1;
+  if(render&&state.ir){renderTimeline();drawSpec();updateSelectionUI();refreshSoloUI();updateGutter()}
+  renderFusionCandidates();
+}
+function transformedFusionEvents(parent,tf,newTrack,targetTempo,targetBars,index){
+  const out=[],sourceTempo=Math.max(1,+parent.tempo||targetTempo),tempoScale=targetTempo/sourceTempo,maxBeat=targetBars*4;
+  for(const e0 of parent.events){
+    const density=clamp(+tf.density||1,.15,1),keep=(hash(`${parent.id}|${e0.id}|${index}|fusion-density`)%10000)/10000;if(keep>density)continue;
+    const start=((+e0.start||0)*tempoScale+(+tf.shift||0));if(start<0||start>=maxBeat)continue;
+    const e={...cloneValue(e0),id:`f${index}_${e0.id}_${out.length}`,track:newTrack,start,dur:Math.max(.02,(+e0.dur||.1)*tempoScale*clamp(+tf.durationScale||1,.35,2.5)),vel:clamp((+e0.vel||.5)*clamp(+tf.gain||1,.1,1.5),.01,1),muted:false};
+    const trans=+tf.transpose||0;
+    if(Number.isFinite(+e.note)&&e.type!=='kick'&&e.type!=='snare'&&e.type!=='hat')e.note=+e.note+trans;
+    if(e.type==='sample')e.transpose=(+e.transpose||0)+trans;
+    out.push(e);
+  }
+  return out;
+}
+function compileFusionStone(stone,parents){
+  const byId=new Map(parents.map(x=>[x.id,x])),events=[],names={},used=[];
+  let nextTrack=21,index=0;
+  for(const tf of stone.transforms){
+    const parent=byId.get(tf.partId);if(!parent)continue;
+    const tr=nextTrack++;names[tr]=`${parent.trackName} ← ${parent.parentSong}`;used.push(parent.id);
+    events.push(...transformedFusionEvents(parent,tf,tr,stone.tempo,stone.bars,index++));
+  }
+  if(used.length<2)throw Error('fusion stone did not preserve at least two parents');
+  events.sort((a,b)=>a.start-b.start||a.track-b.track);
+  const plan={genre:'fusion',tempo:stone.tempo,key:stone.key,mode:stone.mode,bars:stone.bars,swing:0,groove:'free_pulse',density:1,palette:[],progression:[1],bass:[0],lead:[0],surprise:stone.concept,trackPatches:{},fusionMode:true,fusionTransforms:cloneValue(stone.transforms)};
+  return{plan,ir:{...plan,family:'fusion',events,length:stone.bars*4},names};
+}
+function fusionCode(stone){
+  const lines=[`# ES+ FUSION ${stone.name}`,`# ${stone.concept}`,`fusionMode(true)`,`tempo(${stone.tempo})`,`key(${JSON.stringify(stone.key)}, ${JSON.stringify(stone.mode)})`,`bars(${stone.bars})`];
+  for(const tf of stone.transforms)lines.push(`fusionPart(${JSON.stringify(tf.partId)}, ${JSON.stringify({transpose:tf.transpose,shift:tf.shift,gain:tf.gain,density:tf.density,durationScale:tf.durationScale})})`);
+  return lines.join('\n');
+}
+
+/* fusion DSL: ordinary songs still use the existing parser/arranger. */
+const parseCodeFusionBase=parseCode;
+parseCode=function(src){
+  const parts=[],clean=[];let fusionMode=false;
+  for(const line0 of src.split('\n')){
+    const line=line0.replace(/#.*$/,'').trim();
+    if(!line){clean.push(line0);continue}
+    let m=line.match(/^fusionMode\((.*)\)$/);if(m){fusionMode=String(m[1]).trim()!=='false';continue}
+    m=line.match(/^fusionPart\((.*)\)$/);if(m){const a=splitArgs(m[1]).map(parseVal);parts.push({partId:String(a[0]),...(typeof a[1]==='object'?a[1]:{})});continue}
+    clean.push(line0);
+  }
+  const p=parseCodeFusionBase(clean.join('\n'));p.fusionMode=fusionMode;p.fusionParts=parts;return p;
+};
+const arrangeFusionBase=arrange;
+arrange=async function(p){
+  if(!p.fusionMode)return arrangeFusionBase(p);
+  const stone=current(),embedded=stone?.fusionSources||[],bank=partBankRows(),all=[...embedded,...bank],seen=new Map();for(const x of all)seen.set(x.id,x);const parents=[...seen.values()];
+  const spec={tempo:p.tempo,key:p.key,mode:p.mode,bars:p.bars,transforms:p.fusionParts||[],name:stone?.name||'Fusion',concept:stone?.hook||stone?.fusionConcept||''};
+  const built=compileFusionStone(spec,parents);state.fusionTrackNames=built.names;return built.ir;
+};
+const trackNameFusionBase=trackName;
+trackName=function(tr){return state.fusionTrackNames?.[tr]||trackNameFusionBase(tr)};
+
+function renderFusionCandidates(){
+  FB.scroller.innerHTML='';
+  state.fusionStones.forEach((s,i)=>{const b=document.createElement('button');b.className='fusionChip'+(i===state.fusionPreview?' on':'');b.innerHTML=`<b>${i+1} · ${esc(s.name)}</b><span>${esc(s.concept)}</span>`;b.onclick=()=>previewFusion(i,true);FB.scroller.appendChild(b)});
+  FB.rail.classList.toggle('open',!!state.fusionStones.length);FB.use.disabled=state.fusionPreview<0;
+}
+async function previewFusion(i,autoPlay=false){
+  const s=state.fusionStones[i];if(!s)return;if(state.playing)stop();
+  try{
+    const built=compileFusionStone(s,selectedBankRows());state.fusionPreview=i;state.plan=cloneValue(built.plan);state.ir=cloneValue(built.ir);state.fusionTrackNames=built.names;state.selectedTracks=new Set(Object.keys(built.names).map(Number));state.selectedTrack=null;state.soloActive=false;
+    renderTimeline();drawSpec();updateSelectionUI();refreshSoloUI();renderFusionCandidates();
+    setTrace('FUSION STONE',`${i+1}/4 ${s.name}`,'parents preserved · preview only');
+    if(autoPlay&&state.ir.events.length)await play();
+  }catch(e){setTrace('FAULT','fusion preview',e.message)}
+}
+FB.original.onclick=()=>{restoreFusionBase(true);setTrace('BACK','source song restored','fusion candidates preserved')};
+FB.audition.onclick=async()=>{if(state.playing){stop();return}if(state.fusionPreview<0)return;await play()};
+
+function updateFusionLogChosen(i,stone,newStone){if(!state.fusionLogId)return;const rows=logRows(),row=rows.find(x=>x.id===state.fusionLogId);if(!row)return;row.chosen={index:i,name:stone.name,at:new Date().toISOString(),newStoneId:newStone.id};row.codeAfter=newStone.savedCode;writeLog(rows);renderLog()}
+FB.use.onclick=async()=>{
+  const i=state.fusionPreview,spec=state.fusionStones[i];if(i<0||!spec)return;
+  if(state.playing)stop();
+  const parents=selectedBankRows(),built=compileFusionStone(spec,parents),id=`fusion_${Date.now().toString(36)}_${Math.floor(Math.random()*1e5).toString(36)}`;
+  const newStone={id,name:spec.name,genre:'Fusion',lineage:parents.map(x=>`${x.trackName} ← ${x.parentSong}`).join(' × '),hook:spec.concept,tempo:spec.tempo,key:spec.key,mode:spec.mode,swing:0,bars:spec.bars,groove:'free_pulse',palette:[],progression:[1],bassMotif:[0],leadMotif:[0],density:1,drawingUse:'orchestration',surprise:'cross-song fusion',kept:false,source:FB.prompt.value||'cross-song fusion',strokes:[],savedCode:fusionCode(spec),fusion:true,fusionConcept:spec.concept,fusionSources:cloneValue(parents),fusionTransforms:cloneValue(spec.transforms),promptLogIds:state.fusionLogId?[state.fusionLogId]:[]};
+  restoreFusionBase(false);state.stones.push(newStone);state.stoneIndex=state.stones.length-1;state.plan=cloneValue(built.plan);state.ir=cloneValue(built.ir);state.fusionTrackNames=built.names;E.prompt.value=newStone.source;E.code.value=newStone.savedCode;state.selectedTracks.clear();state.selectedTrack=null;state.soloActive=false;renderStones();updateGutter();renderTimeline();drawSpec();updateSelectionUI();refreshSoloUI();E.codeState.textContent='matches sound';E.soundState.textContent=`${state.ir.events.length} fused events`;E.playBtn.disabled=!state.ir.events.length;E.mobileCode.disabled=false;E.mobileSound.disabled=false;E.keepBtn.disabled=false;E.exportBtn.disabled=false;
+  updateFusionLogChosen(i,spec,newStone);clearFusionCandidates();state.fusionBase=null;FB.back.classList.remove('open');setTrace('FUSION USED',newStone.name,`${parents.length} parents → new stone`);if(mobile())showMobile('sound');
+};
+
+FB.cast.onclick=async()=>{
+  const parents=selectedBankRows();if(parents.length<2)return setTrace('FUSE','select at least 2 parts','PART BANK');
+  if(!state.connected){showSheet();return}
+  if(state.playing)stop();
+  const prompt=FB.prompt.value.trim()||'Fuse these parent parts into a coherent new piece without erasing what makes each parent recognizable.';
+  state.fusionBase=fusionBaseSnapshot();clearFusionCandidates();FB.cast.disabled=true;FB.cast.textContent='CASTING';
+  try{
+    const d=await apiFetch('/responses',{method:'POST',body:JSON.stringify({model:state.model,
+      instructions:'You are crossing harvested musical parts from different parent songs. Produce FOUR distinct fusion hypotheses. Preserve the identity of every supplied parent: do not replace parts with generic genre equivalents. Reconcile them through target tempo/key and per-parent transpose, phase/shift, gain, density, and duration. Avoid averaging them into blandness. Each stone must include every parent part exactly once in transforms.',
+      input:[{role:'user',content:[{type:'input_text',text:`REQUEST: ${prompt}\nPARENTS: ${JSON.stringify(parents.map(bankContext))}\nReturn exactly four fusion stones. Each transform partId must be one of the supplied ids, and each stone must contain all supplied ids exactly once.`}]}],
+      text:{format:{type:'json_schema',name:'fusion_stones',strict:true,schema:fusionSchema()}}
+    })});
+    const parsed=JSON.parse(outputText(d)),ids=new Set(parents.map(x=>x.id));
+    state.fusionStones=(parsed.stones||[]).slice(0,4).map((s,idx)=>{const seen=new Set(),transforms=[];for(const tf of s.transforms||[]){if(ids.has(tf.partId)&&!seen.has(tf.partId)){seen.add(tf.partId);transforms.push(tf)}}return{id:`fusion_candidate_${Date.now().toString(36)}_${idx}`,...s,transforms}}).filter(s=>s.transforms.length===parents.length);
+    if(state.fusionStones.length!==4)throw Error(`received ${state.fusionStones.length}/4 complete fusion stones`);
+    const row=recordPair({scope:'cross-song-fusion',prompt,targets:parents.map(x=>x.id),parents:parents.map(bankContext),completion:{summary:`4 fusion stones from ${parents.length} harvested parts`,fusionStones:state.fusionStones.map(x=>({name:x.name,concept:x.concept,tempo:x.tempo,key:x.key,mode:x.mode,bars:x.bars,transforms:x.transforms}))}});state.fusionLogId=row.id;
+    renderFusionCandidates();setTrace('4 FUSION STONES',`${parents.length} parts · ${new Set(parents.map(x=>x.parentSong)).size} songs`,'tap one to audition');
+  }catch(e){restoreFusionBase(true);clearFusionCandidates();setTrace('FAULT','fusion parents preserved',e.message)}finally{FB.cast.disabled=state.partBankSelected.size<2;FB.cast.textContent='CAST 4'}
+};
+
+/* Persist fused parents inside KEEP/PROJECT through the normal stone snapshot. */
+const loadStoneFusionBase=loadStone;
+loadStone=async function(s){state.fusionTrackNames={};await loadStoneFusionBase(s)};
+
+renderPartBank();
+
+/* v13: region-scoped editing + multimodal image texture prompting
+   - Draw/circle on the lower vertical-film canvas to create a time region.
+   - Region edits are local: track(s) × [startBeat,endBeat), never outside.
+   - Region TUNE branches into four REGION STONES and commits only on USE.
+   - Images are resized locally, analyzed into executable texture profiles, and
+     also passed as real multimodal image inputs to every AI composition/edit call. */
+state.regionSelection=null;
+state.regionGesture=[];
+state.regionStones=[];
+state.regionStonePreview=-1;
+state.regionStoneBase=null;
+state.regionStoneTargets=[];
+state.regionStoneLogId=null;
+state.imagePrompts=[];
+
+/* ---------- multimodal image prompting ---------- */
+function imageDescriptor(p){
+  const tone=p.brightness<.34?'dark':p.brightness>.7?'luminous':'mid-tone';
+  const contrast=p.contrast>.48?'high-contrast':p.contrast<.2?'soft-contrast':'moderate-contrast';
+  const grain=p.edgeDensity>.34?'jagged / granular':p.edgeDensity<.14?'smooth / broad':'textured';
+  const chroma=p.saturation>.5?'saturated':p.saturation<.18?'muted':'moderately chromatic';
+  const temp=p.warmth>.57?'warm':p.warmth<.43?'cool':'balanced-color';
+  const orient=p.verticality>.59?'vertical / rising gesture':p.verticality<.41?'horizontal / layered gesture':'mixed-direction gesture';
+  return `${tone}, ${contrast}, ${grain}, ${chroma}, ${temp}, ${orient}`;
+}
+function imageMusicBias(p){
+  const density=clamp(.26+p.edgeDensity*.55+p.contrast*.28,.18,1);
+  const duration=clamp(1.65-p.edgeDensity*.9-p.contrast*.25,.35,1.7);
+  const space=clamp(.72-p.edgeDensity*.42-p.saturation*.18+(p.brightness<.35?.12:0),.08,.9);
+  const brightness=clamp(.25+p.brightness*.55+p.contrast*.2,.1,1);
+  return{density:+density.toFixed(2),duration:+duration.toFixed(2),space:+space.toFixed(2),brightness:+brightness.toFixed(2)};
+}
+function imagePromptText(){
+  if(!state.imagePrompts.length)return'';
+  return state.imagePrompts.map((x,i)=>{
+    const b=imageMusicBias(x.profile);
+    return `IMAGE ${i+1} \"${x.name}\": ${imageDescriptor(x.profile)}. Numeric texture: brightness ${x.profile.brightness.toFixed(2)}, contrast ${x.profile.contrast.toFixed(2)}, saturation ${x.profile.saturation.toFixed(2)}, edge density ${x.profile.edgeDensity.toFixed(2)}, verticality ${x.profile.verticality.toFixed(2)}. Musical bias: density ${b.density}, duration ${b.duration}, space ${b.space}, spectral brightness ${b.brightness}. Treat the IMAGE ITSELF as executable musical texture: map surface, gesture, color, contrast, repetition and empty space into instrumentation, rhythm, register, sample-material search, articulation and silence. Do not merely caption or describe the image.`;
+  }).join('\n');
+}
+async function imageSource(file){
+  const url=URL.createObjectURL(file);let img=null;
+  try{
+    if(window.createImageBitmap){try{img=await createImageBitmap(file)}catch(_){}}
+    if(!img)img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=url});
+    const w=img.width||img.naturalWidth||1,h=img.height||img.naturalHeight||1,scale=Math.min(1,512/Math.max(w,h));
+    const cw=Math.max(1,Math.round(w*scale)),ch=Math.max(1,Math.round(h*scale)),c=document.createElement('canvas');c.width=cw;c.height=ch;
+    const g=c.getContext('2d',{willReadFrequently:true});g.fillStyle='#fff';g.fillRect(0,0,cw,ch);g.drawImage(img,0,0,cw,ch);
+    const sw=Math.min(96,cw),sh=Math.min(96,ch),s=document.createElement('canvas');s.width=sw;s.height=sh;const sg=s.getContext('2d',{willReadFrequently:true});sg.drawImage(c,0,0,sw,sh);
+    const d=sg.getImageData(0,0,sw,sh).data,luma=new Float32Array(sw*sh);let sum=0,sum2=0,sat=0,warm=0,dx=0,dy=0,edges=0,n=0;
+    for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){
+      const i=(y*sw+x)*4,r=d[i],gg=d[i+1],b=d[i+2],L=.2126*r+.7152*gg+.0722*b;luma[y*sw+x]=L;sum+=L;sum2+=L*L;sat+=(Math.max(r,gg,b)-Math.min(r,gg,b))/255;warm+=(r-b+255)/510;n++;
+    }
+    for(let y=0;y<sh;y++)for(let x=0;x<sw;x++){
+      const L=luma[y*sw+x];if(x+1<sw)dx+=Math.abs(L-luma[y*sw+x+1]);if(y+1<sh)dy+=Math.abs(L-luma[(y+1)*sw+x]);
+    }
+    const gradCount=Math.max(1,(sw-1)*sh+(sh-1)*sw),edgeMean=(dx+dy)/gradCount/255;
+    edges=clamp(edgeMean*3.1,0,1);
+    const mean=sum/n,varL=Math.max(0,sum2/n-mean*mean),contrast=clamp(Math.sqrt(varL)/96,0,1),verticality=(dx+dy)>1?dx/(dx+dy):.5;
+    const profile={width:w,height:h,brightness:clamp(mean/255,0,1),contrast,saturation:clamp(sat/n,0,1),warmth:clamp(warm/n,0,1),edgeDensity:edges,verticality:clamp(verticality,0,1)};
+    return{name:file.name||'image',type:file.type||'image',profile,dataUrl:c.toDataURL('image/jpeg',.8)};
+  }finally{URL.revokeObjectURL(url);if(img?.close)try{img.close()}catch(_){}}
+}
+const imageInput=document.createElement('input');imageInput.type='file';imageInput.accept='image/*';imageInput.multiple=true;imageInput.hidden=true;document.body.appendChild(imageInput);
+const imageSourceBtn=document.createElement('button');imageSourceBtn.textContent='IMAGE';imageSourceBtn.title='Add image texture prompt';
+E.clearBtn.parentElement.insertBefore(imageSourceBtn,E.clearBtn);
+const imageTrackBtn=document.createElement('button');imageTrackBtn.textContent='IMAGE';imageTrackBtn.title='Add image texture prompt to this edit';
+const selectOpsEl=X?.anchorBtn?.parentElement;if(selectOpsEl){selectOpsEl.appendChild(imageTrackBtn);selectOpsEl.style.gridTemplateColumns='repeat(5,1fr)'}
+function refreshImageButtons(){
+  const n=state.imagePrompts.length,txt=n?`IMAGE ${n}`:'IMAGE';imageSourceBtn.textContent=txt;imageTrackBtn.textContent=txt;
+  imageSourceBtn.classList.toggle('on',!!n);imageTrackBtn.classList.toggle('on',!!n);
+  const title=n?state.imagePrompts.map(x=>`${x.name}: ${imageDescriptor(x.profile)}`).join(' | '):'Add image texture prompt';imageSourceBtn.title=title;imageTrackBtn.title=title;
+}
+imageSourceBtn.onclick=imageTrackBtn.onclick=()=>imageInput.click();
+imageInput.onchange=async()=>{
+  const files=[...imageInput.files].slice(0,4);if(!files.length)return;
+  setTrace('IMAGE',`${files.length} file${files.length===1?'':'s'}`,'extracting texture…');
+  try{state.imagePrompts=[];for(const f of files)state.imagePrompts.push(await imageSource(f));refreshImageButtons();const d=state.imagePrompts.map(x=>imageDescriptor(x.profile)).join(' + ');setTrace('IMAGE TEXTURE',d,'active for next prompt');if(E.trackReadout&&E.trackBack.classList.contains('open'))E.trackReadout.textContent=`IMAGE ACTIVE · ${d}`}
+  catch(e){setTrace('FAULT','image preserved',e.message)}finally{imageInput.value=''}
+};
+function clearImages(){state.imagePrompts=[];refreshImageButtons()}
+const clearImageBase=E.clearBtn.onclick;E.clearBtn.onclick=()=>{clearImages();if(clearImageBase)clearImageBase()};
+
+/* Inject the actual images + deterministic local texture description into every model call. */
+const apiFetchImageBase=apiFetch;
+apiFetch=async function(path,opt={}){
+  if(path!=='/responses'||!state.imagePrompts.length||!opt.body)return apiFetchImageBase(path,opt);
+  try{
+    const original=typeof opt.body==='string'?JSON.parse(opt.body):cloneValue(opt.body),textOnly=cloneValue(original),vision=cloneValue(original);
+    const textUser=[...(textOnly.input||[])].reverse().find(x=>x?.role==='user'&&Array.isArray(x.content)),visionUser=[...(vision.input||[])].reverse().find(x=>x?.role==='user'&&Array.isArray(x.content));
+    const texture={type:'input_text',text:`\nACTIVE MULTIMODAL TEXTURE INPUT\n${imagePromptText()}`};
+    if(textUser)textUser.content.push(texture);
+    if(visionUser){visionUser.content.push(texture);for(const x of state.imagePrompts)visionUser.content.push({type:'input_image',image_url:x.dataUrl})}
+    try{return await apiFetchImageBase(path,{...opt,body:JSON.stringify(vision)})}
+    catch(e){
+      if(/image|input_image|vision|content.?type|unsupported/i.test(String(e?.message||e)))return apiFetchImageBase(path,{...opt,body:JSON.stringify(textOnly)});
+      throw e;
+    }
+  }catch(e){if(/JSON|clone/i.test(String(e?.message||e)))return apiFetchImageBase(path,opt);throw e}
+};
+const recordPairImageBase=recordPair;
+recordPair=function(entry){return recordPairImageBase({...entry,imageTextures:state.imagePrompts.map(x=>({name:x.name,profile:cloneValue(x.profile),descriptor:imageDescriptor(x.profile)}))})};
+const saveCurrentImageBase=saveCurrent;
+saveCurrent=function(){const s=current();if(s)s.imageTextures=state.imagePrompts.map(x=>({name:x.name,profile:cloneValue(x.profile),descriptor:imageDescriptor(x.profile)}));return saveCurrentImageBase()};
+E.keepBtn.onclick=saveCurrent;
+
+
+/* ---------- region selection on the vertical film ---------- */
+const regionHeadBtn=document.createElement('button');regionHeadBtn.id='regionHeadBtn';regionHeadBtn.className='headTool';regionHeadBtn.hidden=true;regionHeadBtn.textContent='REGION';
+if(soloHeadBtn?.parentElement)soloHeadBtn.after(regionHeadBtn);else if(X?.groupBtn?.parentElement)X.groupBtn.after(regionHeadBtn);
+const specLabel=document.querySelector('.specLabel');if(specLabel)specLabel.textContent='result · circle / drag film to select time · tap track numbers to select channels';
+E.spec.style.touchAction='none';E.spec.style.cursor='crosshair';
+
+function snapBeat(x){return Math.round(x*4)/4}
+function regionFromGesture(path){
+  if(!state.ir||!path?.length)return null;const r=E.spec.getBoundingClientRect(),xs=path.map(p=>p.x),min=Math.min(...xs),max=Math.max(...xs);if(max-min<10)return null;
+  let start=snapBeat(clamp(min/r.width*state.ir.length,0,state.ir.length)),end=snapBeat(clamp(max/r.width*state.ir.length,0,state.ir.length));
+  if(end-start<.5)end=Math.min(state.ir.length,start+.5);return{start:+start.toFixed(2),end:+end.toFixed(2),label:'REGION',energy:[]};
+}
+function regionEnergy(selection=state.regionSelection,ir=state.ir){
+  if(!selection||!ir)return{label:'REGION',bins:[0,0,0,0]};const bins=[0,0,0,0],span=Math.max(.001,selection.end-selection.start);
+  for(const e of ir.events){if(e.muted||e.start<selection.start||e.start>=selection.end)continue;const i=clamp(Math.floor((e.start-selection.start)/span*4),0,3);bins[i]+=(e.vel||.5)*Math.min(1,Math.max(.2,e.dur||.1))}
+  const mx=Math.max(.001,...bins),n=bins.map(x=>x/mx),first=(n[0]+n[1])*.5,last=(n[2]+n[3])*.5,mid=(n[1]+n[2])*.5,edges=(n[0]+n[3])*.5;let label='HOLD';
+  if(last>first+.28)label='RISE';else if(first>last+.28)label='DROP';else if(mid<edges-.3)label='BREAK';else if(Math.max(...n)-Math.min(...n)>.35)label='ENERGY';
+  return{label,bins:n.map(x=>+x.toFixed(2))};
+}
+function regionText(r=state.regionSelection){if(!r)return'';return `${r.label} ${r.start.toFixed(2)}–${r.end.toFixed(2)}b`}
+function refreshRegionUI(){
+  const r=state.regionSelection;regionHeadBtn.hidden=!r;if(r)regionHeadBtn.textContent=regionText(r);
+  if(regionOps)regionOps.hidden=!r;
+  if(E.trackBack.classList.contains('open')){
+    if(r){const targets=regionTargets();E.trackMeta.textContent=`${regionText(r)} · ${targets.length?targets.map(t=>`T${t}`).join('+'):'all tracks'}`;E.trackAI.textContent='CAST 4'}
+  }
+  drawRegionOverlay();
+}
+function clearRegion({restorePreview=true}={}){
+  if(restorePreview&&state.regionStonePreview>=0&&state.regionStoneBase)restoreRegionOriginal(false);
+  state.regionSelection=null;state.regionGesture=[];clearRegionStones(false);refreshRegionUI();setTrace('REGION','cleared','whole song active');
+}
+function drawRegionOverlay(){
+  if(!state.ir)return;const c=E.spec.getContext('2d'),r=E.spec.getBoundingClientRect();if(r.width<1||r.height<1)return;const orange=getComputedStyle(document.documentElement).getPropertyValue('--orange').trim()||'#d85e25';
+  if(state.regionSelection){const x=state.regionSelection.start/state.ir.length*r.width,w=(state.regionSelection.end-state.regionSelection.start)/state.ir.length*r.width;c.save();c.fillStyle='rgba(216,94,37,.12)';c.fillRect(x,0,w,r.height);c.strokeStyle=orange;c.lineWidth=2;c.strokeRect(x+1,1,Math.max(1,w-2),Math.max(1,r.height-2));c.fillStyle=orange;c.font='700 9px ui-monospace,monospace';c.fillText(regionText(),x+5,16);c.restore()}
+  if(state.regionGesture.length>1){c.save();c.strokeStyle=orange;c.lineWidth=2;c.beginPath();c.moveTo(state.regionGesture[0].x,state.regionGesture[0].y);for(const p of state.regionGesture.slice(1))c.lineTo(p.x,p.y);c.stroke();c.restore()}
+}
+const drawSpecRegionBase=drawSpec;
+drawSpec=function(){drawSpecRegionBase();drawRegionOverlay()};
+let regionPointer=null;
+E.spec.onpointerdown=e=>{if(!state.ir)return;regionPointer=e.pointerId;E.spec.setPointerCapture?.(e.pointerId);const r=E.spec.getBoundingClientRect();state.regionGesture=[{x:e.clientX-r.left,y:e.clientY-r.top}];drawSpec()};
+E.spec.onpointermove=e=>{if(e.pointerId!==regionPointer)return;const r=E.spec.getBoundingClientRect();state.regionGesture.push({x:clamp(e.clientX-r.left,0,r.width),y:clamp(e.clientY-r.top,0,r.height)});if(state.regionGesture.length%2===0)drawSpec()};
+E.spec.onpointerup=E.spec.onpointercancel=e=>{if(e.pointerId!==regionPointer)return;regionPointer=null;const r=regionFromGesture(state.regionGesture);state.regionGesture=[];if(!r){drawSpec();return}const en=regionEnergy(r);r.label=en.label;r.energy=en.bins;state.regionSelection=r;clearRegionStones(false);refreshRegionUI();setTrace(r.label,`${r.start.toFixed(2)}–${r.end.toFixed(2)} beats`,`select tracks or edit whole region`)};
+
+function regionTargets(){const selected=selectedArray().filter(t=>!state.anchorTracks.has(t));return selected.length?selected:allTracks().filter(t=>!state.anchorTracks.has(t))}
+function openRegionEditor(){if(!state.regionSelection)return;openSelectionSheet();E.trackTitle.textContent=`${state.regionSelection.label} REGION`;E.trackMeta.textContent=`${state.regionSelection.start.toFixed(2)}–${state.regionSelection.end.toFixed(2)}b · ${regionTargets().length} target tracks`;E.trackPrompt.placeholder='Change only this time-region…';E.trackAI.textContent='CAST 4';refreshRegionUI()}
+regionHeadBtn.onclick=openRegionEditor;
+
+/* Region-only controls appear only when a region exists. */
+const regionOps=document.createElement('div');regionOps.className='selectOps';regionOps.hidden=true;regionOps.style.gridTemplateColumns='repeat(3,1fr)';
+regionOps.innerHTML='<button id="regionAudition">▶ REGION</button><button id="regionAllTracks">ALL TRACKS</button><button id="regionClear">CLEAR REGION</button>';
+selectOpsEl.after(regionOps);
+const regionAuditionBtn=$('regionAudition'),regionAllTracksBtn=$('regionAllTracks'),regionClearBtn=$('regionClear');
+regionAllTracksBtn.onclick=()=>{state.selectedTracks=new Set(allTracks().filter(t=>!state.anchorTracks.has(t)));state.selectedTrack=selectedArray()[0]??null;updateSelectionUI();openRegionEditor()};
+regionClearBtn.onclick=()=>{clearRegion();E.trackBack.classList.remove('open')};
+
+
+/* ---------- executable region code ---------- */
+const parseCodeRegionBase=parseCode;
+parseCode=function(src){
+  const base=[],regions=[];
+  for(const raw of src.split('\n')){
+    const line=raw.replace(/#.*$/,'').trim(),m=line.match(/^regionTrack\((.*)\)$/);
+    if(!m){base.push(raw);continue}
+    const a=splitArgs(m[1]).map(parseVal),track=Math.round(+a[0]),start=+a[1],end=+a[2],patch=typeof a[3]==='object'&&a[3]?a[3]:{};
+    if(Number.isFinite(track)&&Number.isFinite(start)&&Number.isFinite(end)&&end>start)regions.push({track,start,end,...patch});
+  }
+  const p=parseCodeRegionBase(base.join('\n'));p.regionPatches=regions;return p;
+};
+function regionPatchFactor(p,t){const gs=Number(p.gainStart??1),ge=Number(p.gainEnd??gs),ds=Number(p.densityStart??1),de=Number(p.densityEnd??ds),gain=gs+(ge-gs)*t,density=ds+(de-ds)*t;return{gain:clamp(gain,0,1.6),density:clamp(density,.02,1)}}
+const applyPatchesRegionBase=applyPatches;
+applyPatches=function(events,p){
+  const out=applyPatchesRegionBase(events,p),regions=p.regionPatches||[];if(!regions.length)return out;const next=[];
+  for(const e0 of out){let e={...e0},keep=true;
+    for(const rp of regions){if(rp.track!==e.track||e.start<rp.start||e.start>=rp.end)continue;const t=clamp((e.start-rp.start)/Math.max(.001,rp.end-rp.start),0,1),f=regionPatchFactor(rp,t),coin=(hash(`${e.id}|${rp.track}|${rp.start}|${rp.end}|region-density`)%10000)/10000;if(coin>f.density){keep=false;break}e.vel=clamp(e.vel*f.gain,0,1);e.dur=Math.max(.02,e.dur*clamp(+(rp.durationScale??1),.15,4));e.start=Math.max(0,e.start+(+rp.shift||0));const trans=+rp.transpose||0;if(e.note&&e.type!=='kick'&&e.type!=='snare'&&e.type!=='hat')e.note+=trans;if(e.type==='sample'){e.transpose=(+e.transpose||0)+trans;if(rp.query){e.query=String(rp.query);const s=resolveSound(e.role||trackName(e.track),e.query,p.genre,e.sound?.name||'');if(s)e.sound=s}}e.regionApplied={start:rp.start,end:rp.end}}
+    if(keep)next.push(e)
+  }
+  next.sort((a,b)=>a.start-b.start||a.track-b.track);return next;
+};
+function findRegionLine(lines,tr,start,end){
+  return lines.findIndex(line=>{const m=line.trim().match(/^regionTrack\((.*)\)$/);if(!m)return false;try{const a=splitArgs(m[1]).map(parseVal);return Math.round(+a[0])===tr&&Math.abs(+a[1]-start)<.001&&Math.abs(+a[2]-end)<.001}catch(_){return false}})
+}
+function regionCandidateCode(baseCode,stone){
+  const lines=baseCode.split('\n'),r=state.regionSelection;if(!r)return baseCode;
+  for(const x of stone.patches||[]){const tr=Math.round(+x.track);if(!state.regionStoneTargets.includes(tr)||state.anchorTracks.has(tr))continue;const patch={...x};delete patch.track;const line=`regionTrack(${tr}, ${r.start}, ${r.end}, ${JSON.stringify(patch)})`,idx=findRegionLine(lines,tr,r.start,r.end);if(idx>=0)lines[idx]=line;else lines.push(line)}
+  return lines.join('\n');
+}
+
+/* ---------- region audition ---------- */
+async function auditionRegion(){
+  const r=state.regionSelection,real=state.ir;if(!r||!real)return;if(state.playing)stop();const targets=new Set(regionTargets()),events=[];
+  for(const e0 of real.events){if(e0.muted||!targets.has(e0.track))continue;const a=Math.max(r.start,e0.start),b=Math.min(r.end,e0.start+Math.max(.02,e0.dur));if(b<=a)continue;events.push({...e0,start:a-r.start,dur:b-a})}
+  if(!events.length){setTrace('REGION','silent selection','no audible events');return}
+  const temp={...real,events,length:r.end-r.start},prevSolo=state.soloActive;state.ir=temp;state.soloActive=false;
+  try{await play()}finally{state.ir=real;state.soloActive=prevSolo;refreshSoloUI();drawSpec()}
+}
+regionAuditionBtn.onclick=auditionRegion;
+
+
+/* ---------- four non-destructive REGION STONES ---------- */
+const regionRail=document.createElement('div');regionRail.className='partStoneRail';regionRail.id='regionStoneRail';
+regionRail.innerHTML='<div class="partStoneHead"><span>REGION STONES</span><span id="regionStoneMeta"></span></div><div id="regionStoneScroller" class="partStoneScroller"></div><div class="partStoneActions"><button id="regionOriginal">ORIGINAL</button><button id="regionPreviewPlay">▶ REGION</button><button id="regionUse" class="use" disabled>USE THIS</button></div>';
+if(PS?.rail?.parentElement)PS.rail.parentElement.insertBefore(regionRail,PS.rail);else E.trackPrompt.parentElement.after(regionRail);
+const RS={rail:regionRail,meta:$("regionStoneMeta"),scroller:$("regionStoneScroller"),original:$("regionOriginal"),play:$("regionPreviewPlay"),use:$("regionUse")};
+function clearRegionStones(restore=false){if(restore&&state.regionStonePreview>=0&&state.regionStoneBase)restoreRegionOriginal(false);state.regionStones=[];state.regionStonePreview=-1;state.regionStoneBase=null;state.regionStoneTargets=[];state.regionStoneLogId=null;if(RS){RS.scroller.innerHTML='';RS.rail.classList.remove('open');RS.use.disabled=true;RS.meta.textContent=''}}
+function renderRegionStones(){
+  RS.scroller.innerHTML='';for(const [i,s] of state.regionStones.entries()){const b=document.createElement('button');b.className='partStoneChip'+(i===state.regionStonePreview?' on':'');b.innerHTML=`<b>${i+1} · ${esc(s.name)}</b><span>${esc(s.concept)}</span>`;b.onclick=()=>previewRegionStone(i,true);RS.scroller.appendChild(b)}
+  RS.meta.textContent=state.regionStones.length?`${regionText()} · ${state.regionStoneTargets.map(t=>`T${t}`).join('+')}`:'';RS.rail.classList.toggle('open',!!state.regionStones.length);RS.use.disabled=state.regionStonePreview<0;
+}
+function regionPatchSchema(){return{type:'object',additionalProperties:false,required:['track','gainStart','gainEnd','densityStart','densityEnd','durationScale','transpose','shift','query'],properties:{track:{type:'integer',minimum:1,maximum:96},gainStart:{type:'number',minimum:0,maximum:1.6},gainEnd:{type:'number',minimum:0,maximum:1.6},densityStart:{type:'number',minimum:.02,maximum:1},densityEnd:{type:'number',minimum:.02,maximum:1},durationScale:{type:'number',minimum:.15,maximum:4},transpose:{type:'integer',minimum:-24,maximum:24},shift:{type:'number',minimum:-4,maximum:4},query:{type:'string',maxLength:70}}}}
+function regionStoneSchema(){return{type:'object',additionalProperties:false,required:['stones'],properties:{stones:{type:'array',minItems:4,maxItems:4,items:{type:'object',additionalProperties:false,required:['name','concept','patches'],properties:{name:{type:'string',maxLength:28},concept:{type:'string',maxLength:120},patches:{type:'array',minItems:1,maxItems:36,items:regionPatchSchema()}}}}}}}
+function regionBaseSnapshot(){return{code:E.code.value,plan:cloneValue(state.plan),ir:cloneValue(state.ir),selected:new Set(state.selectedTracks),selectedTrack:state.selectedTrack,soloActive:state.soloActive}}
+async function compileRegionStone(stone){if(stone.previewIR&&stone.previewPlan&&stone.previewCode)return stone;const code=regionCandidateCode(state.regionStoneBase.code,stone),plan=parseCode(code),ir=await arrange(plan);stone.previewCode=code;stone.previewPlan=cloneValue(plan);stone.previewIR=cloneValue(ir);return stone}
+function showRegionPreview(stone,index){state.regionStonePreview=index;state.plan=cloneValue(stone.previewPlan);state.ir=cloneValue(stone.previewIR);state.selectedTracks=new Set(state.regionStoneTargets);state.selectedTrack=state.regionStoneTargets[0]??null;renderTimeline();drawSpec();updateSelectionUI();renderRegionStones();refreshRegionUI();E.codeState.textContent='region preview · code unchanged';E.trackReadout.textContent=`PREVIEW ${index+1} · ${stone.name} — ${stone.concept}`;setTrace('REGION STONE',`${index+1}/4 ${stone.name}`,'preview only · USE to commit')}
+async function previewRegionStone(index,autoPlay=false){const s=state.regionStones[index];if(!s||!state.regionStoneBase)return;if(state.playing)stop();try{await compileRegionStone(s);showRegionPreview(s,index);if(autoPlay)await auditionRegion()}catch(e){E.trackReadout.textContent=e.message;setTrace('FAULT','region stone preserved',e.message)}}
+function restoreRegionOriginal(autoPlay=false){const b=state.regionStoneBase;if(!b)return;if(state.playing)stop();E.code.value=b.code;state.plan=cloneValue(b.plan);state.ir=cloneValue(b.ir);state.selectedTracks=new Set(b.selected);state.selectedTrack=b.selectedTrack;state.soloActive=b.soloActive;state.regionStonePreview=-1;renderTimeline();drawSpec();updateSelectionUI();renderRegionStones();refreshRegionUI();updateGutter();E.codeState.textContent='matches sound';E.trackReadout.textContent='ORIGINAL REGION · no candidate committed';if(autoPlay)auditionRegion()}
+RS.original.onclick=()=>restoreRegionOriginal(true);RS.play.onclick=auditionRegion;
+function updateRegionChoiceLog(i,s){if(!state.regionStoneLogId)return;const rows=logRows(),row=rows.find(x=>x.id===state.regionStoneLogId);if(!row)return;row.chosen={index:i,name:s.name,concept:s.concept,at:new Date().toISOString()};row.codeAfter=s.previewCode;writeLog(rows);renderLog()}
+RS.use.onclick=async()=>{const i=state.regionStonePreview,s=state.regionStones[i];if(i<0||!s)return;if(state.playing)stop();await compileRegionStone(s);E.code.value=s.previewCode;state.plan=cloneValue(s.previewPlan);state.ir=cloneValue(s.previewIR);state.dirty=false;updateGutter();renderTimeline();drawSpec();updateSelectionUI();renderRegionStones();refreshRegionUI();E.codeState.textContent='matches sound';E.soundState.textContent=`${state.ir.events.filter(e=>!e.muted).length} audible events`;const cur=current();if(cur)cur.savedCode=E.code.value;updateRegionChoiceLog(i,s);E.trackReadout.textContent=`USED REGION STONE ${i+1} · ${s.name}`;setTrace('USE REGION STONE',`${i+1}/4 ${s.name}`,`${regionText()} written to code`)};
+
+async function generateRegionStones(request=''){
+  const r=state.regionSelection;if(!r)return;const targets=regionTargets();if(!targets.length){E.trackReadout.textContent='no editable target tracks';return}if(!state.connected){showSheet();return}if(state.playing)stop();
+  if(state.partStones?.length)clearPartStones({restore:false,hide:true});clearRegionStones(false);state.regionStoneBase=regionBaseSnapshot();state.regionStoneTargets=[...targets];
+  const prompt=request.trim()||`Give me four strong alternatives for this ${r.label.toLowerCase()} without changing anything outside the circled region.`;const anchors=[...state.anchorTracks].filter(t=>allTracks().includes(t)),inside=targets.map(tr=>({track:tr,name:trackName(tr),events:(state.ir.events||[]).filter(e=>e.track===tr&&e.start>=r.start&&e.start<r.end).slice(0,36).map(e=>({type:e.type,start:+e.start.toFixed(2),dur:+e.dur.toFixed(2),note:e.note,vel:+e.vel.toFixed(2),role:e.role,query:e.query,sound:e.sound?.name}))}));
+  E.trackAI.disabled=true;E.trackAI.textContent='CASTING';E.trackReadout.textContent='casting 4 region stones…';
+  try{
+    const d=await apiFetch('/responses',{method:'POST',body:JSON.stringify({model:state.model,instructions:'You are editing a circled TIME REGION of a multitrack musical arrangement. Return exactly four audibly distinct REGION STONES. You may modify TARGET tracks only, and only inside the supplied [start,end) region. INVARIANT tracks and all music outside the region are immutable evidence. Shape rises/drops/breaks through gain and event-density ramps, timing, note duration, transposition, and sample-material query. Preserve continuity at the boundaries unless the request explicitly wants rupture. Do not make four cosmetic nudges; make four different formal hypotheses.',input:[{role:'user',content:[{type:'input_text',text:`SONG ${state.plan?.genre||''} | ${state.plan?.tempo||''} bpm | ${state.plan?.key||''} ${state.plan?.mode||''}\nREGION ${JSON.stringify({start:r.start,end:r.end,label:r.label,energy:r.energy})}\nREQUEST ${prompt}\nTARGETS ${JSON.stringify(inside)}\nINVARIANTS ${JSON.stringify(anchors.map(trackContext))}\nOUTSIDE REGION: immutable. Return exactly FOUR region stones.`}]}],text:{format:{type:'json_schema',name:'region_stones',strict:true,schema:regionStoneSchema()}}})});
+    const parsed=JSON.parse(outputText(d)),targetSet=new Set(targets);state.regionStones=(parsed.stones||[]).slice(0,4).map((s,i)=>({id:`region_${Date.now().toString(36)}_${i}`,name:s.name,concept:s.concept,patches:(s.patches||[]).filter(x=>targetSet.has(Number(x.track))&&!state.anchorTracks.has(Number(x.track)))})).filter(s=>s.patches.length);if(state.regionStones.length!==4)throw Error(`received ${state.regionStones.length}/4 usable region stones`);
+    const row=recordPair({scope:'region-stones',prompt,targets,anchors,region:cloneValue(r),stoneId:current()?.id,completion:{summary:`4 region stones for ${regionText(r)}`,regionStones:state.regionStones.map(s=>({id:s.id,name:s.name,concept:s.concept,patches:s.patches}))}});state.regionStoneLogId=row.id;renderRegionStones();E.trackReadout.textContent='4 REGION STONES · tap to audition · USE commits only that region';setTrace('4 REGION STONES',regionText(r),'tap to audition')
+  }catch(e){restoreRegionOriginal(false);clearRegionStones(false);E.trackReadout.textContent=e.message;setTrace('FAULT','region prompt preserved',e.message)}finally{E.trackAI.disabled=false;E.trackAI.textContent='CAST 4'}
+}
+
+/* Region scope takes precedence over ordinary whole-track TUNE. */
+const trackAIRegionFallback=E.trackAI.onclick;
+E.trackAI.onclick=()=>state.regionSelection?generateRegionStones(E.trackPrompt.value):trackAIRegionFallback?.();
+const openSelectionRegionBase=openSelectionSheet;
+openSelectionSheet=function(focusTrack=null){openSelectionRegionBase(focusTrack);if(state.regionSelection){E.trackTitle.textContent=selectedArray().length?`${selectedArray().length} TRACK${selectedArray().length===1?'':'S'} · ${state.regionSelection.label}`:`${state.regionSelection.label} REGION`;E.trackMeta.textContent=`${state.regionSelection.start.toFixed(2)}–${state.regionSelection.end.toFixed(2)}b · outside locked`;E.trackPrompt.placeholder='Change only this circled region…';E.trackAI.textContent='CAST 4'}refreshRegionUI()};
+
+/* A new RUN invalidates preview caches but preserves the explicit region selection. */
+const runRegionBase=run;
+run=async function(){if(state.regionStonePreview>=0&&state.regionStoneBase)restoreRegionOriginal(false);clearRegionStones(false);await runRegionBase();if(state.regionSelection&&state.ir){state.regionSelection.start=clamp(state.regionSelection.start,0,state.ir.length);state.regionSelection.end=clamp(state.regionSelection.end,state.regionSelection.start+.25,state.ir.length);const en=regionEnergy();state.regionSelection.label=en.label;state.regionSelection.energy=en.bins}refreshRegionUI()};E.runBtn.onclick=run;
+
+refreshImageButtons();refreshRegionUI();
+
+
+window.workshopBridge={
+ stop:()=>stop(),
+ receive:brief=>{stop(); E.prompt.value=brief; E.sourceState.textContent='lyrics received'; if(mobile())showMobile('source');else expandAll(); setTrace('LYRICS RECEIVED','review source','MAKE');},
+ snapshot:()=>({source:E.prompt.value,code:E.code.value,stone:current()?snapshotStone(current()):null,invariants:[...state.anchorTracks]}),
+ guide:async function(tempo,lyrics){
+ stop();
+ const motif=lyrics.replace(/\[[^\]]*\]/g,'').split(/[\s/]+/).filter(Boolean).slice(0,8).map(w=>(w.length%7));
+ const s=normalize({name:'Lyric rhythm guide',genre:'synth sketch',lineage:'Deterministic word-length motif',hook:'Eight-bar instrumental guide, no sung vocals',tempo,key:'C',mode:'minor',swing:0,bars:8,groove:'backbeat',palette:[{role:'DRUMS',query:'',behavior:'one_shot',level:.5},{role:'BASS',query:'',behavior:'one_shot',level:.4},{role:'KEYS',query:'',behavior:'one_shot',level:.35},{role:'SYNTH',query:'',behavior:'one_shot',level:.3}],progression:[1,6,4,5],bassMotif:[0,0,4,2],leadMotif:motif.length?motif:[0,2,4,6],density:.5,drawingUse:'rhythm',surprise:'Word lengths set the melody'});
+ state.stones.push(s);state.stoneIndex=state.stones.length-1; renderStones();await loadStone(s);expandAll();await run();setTrace('RHYTHM GUIDE','8 bars · instrumental','PLAY');
+ }
+};
+
+const lyricUI=document.createElement('aside');lyricUI.id='lyricsPanel';lyricUI.hidden=true;
+lyricUI.innerHTML=`<div class="lyricHead"><b>LYRICS</b><button id="closeLyrics" aria-label="Close lyrics">×</button></div>
+<label for="lyricBrief">DIRECTION</label><textarea id="lyricBrief" placeholder="What is the song about? Voice, language, images, rhyme, structure…"></textarea>
+<div class="lyricActions"><button id="generateLyrics">GENERATE LYRICS</button></div>
+<div id="lyricStatus" role="status">Uses your source and current arrangement. Configure the ES+ API to generate.</div>
+<label for="lyricDraft">DRAFT</label><textarea id="lyricDraft" placeholder="Write here, or generate lyrics from your musical direction." spellcheck="true"></textarea>
+<div class="lyricActions"><button id="undoLyrics" disabled>UNDO</button><button id="copyLyrics">COPY</button><button id="useLyrics">USE IN MUSIC</button><button id="saveLyrics">SAVE</button></div>`;
+E.sourcePane.append(lyricUI);
+const L=id=>document.getElementById(id);let lyricHistory=[],lyricBusy=false;
+const lyricToggle=document.createElement('button');lyricToggle.className='cmd';lyricToggle.id='lyricsBtn';lyricToggle.textContent='LYRICS';lyricToggle.setAttribute('aria-expanded','false');E.runBtn.before(lyricToggle);
+function openLyrics(open=true){lyricUI.hidden=!open;document.body.classList.toggle('lyricsOpen',open);lyricToggle.setAttribute('aria-expanded',String(open));if(open&&mobile())showMobile('source');window.dispatchEvent(new Event('resize'));}
+lyricToggle.onclick=()=>openLyrics(lyricUI.hidden);L('closeLyrics').onclick=()=>openLyrics(false);
+function lyricStatus(s){L('lyricStatus').textContent=s;}
+function saveLyricDraft(){try{localStorage.setItem('polliwog.es.lyrics',JSON.stringify({brief:L('lyricBrief').value,draft:L('lyricDraft').value}));}catch{}}
+try{const saved=JSON.parse(localStorage.getItem('polliwog.es.lyrics')||'{}');L('lyricBrief').value=saved.brief||'';L('lyricDraft').value=saved.draft||'';}catch{}
+L('lyricBrief').oninput=saveLyricDraft;L('lyricDraft').oninput=saveLyricDraft;
+function replaceLyrics(text){lyricHistory.push(L('lyricDraft').value);lyricHistory=lyricHistory.slice(-20);L('undoLyrics').disabled=false;L('lyricDraft').value=text;saveLyricDraft();}
+L('undoLyrics').onclick=()=>{if(!lyricHistory.length)return;L('lyricDraft').value=lyricHistory.pop();L('undoLyrics').disabled=!lyricHistory.length;saveLyricDraft();lyricStatus('Previous draft restored.');};
+L('generateLyrics').onclick=async()=>{
+ if(lyricBusy)return;
+ if(!state.key){showSheet();lyricStatus('Connect your ES+ API, then press GENERATE LYRICS.');return;}
+ const brief=L('lyricBrief').value.trim(),draft=L('lyricDraft').value,source=E.prompt.value.trim(),code=E.code.value;
+ if(!brief&&!source&&!draft){lyricStatus('Add a direction or musical source first.');L('lyricBrief').focus();return;}
+ lyricBusy=true;L('generateLyrics').disabled=true;L('generateLyrics').textContent='WRITING…';L('lyricDraft').readOnly=true;lyricStatus('Writing from your direction, source and arrangement…');
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),90000);
+ try{
+ const result=await apiFetch('/responses',{method:'POST',signal:controller.signal,body:JSON.stringify({model:state.model,instructions:'Write original song lyrics. Follow the requested language, imagery, voice and section structure. Use the musical source and arrangement tempo, groove and phrase length as constraints. If a draft is supplied, revise it according to the direction. Return only lyrics with section labels, no commentary. Do not claim audio or vocals have been generated.',input:[{role:'user',content:[{type:'input_text',text:`DIRECTION:\n${brief}\n\nMUSICAL SOURCE:\n${source}\n\nCURRENT ARRANGEMENT CODE:\n${code||'(not arranged yet)'}\n\nEXISTING DRAFT:\n${draft||'(write a new song)'}`}]}]})});
+ const text=outputText(result).trim();if(!text)throw Error('The model returned no lyrics. Try again.');replaceLyrics(text);lyricStatus('Lyrics ready. Edit the draft, or USE IN MUSIC to update the musical source.');
+ }catch(e){lyricStatus(e.name==='AbortError'?'Request timed out. Your draft is preserved.':e.message);}
+ finally{clearTimeout(timer);lyricBusy=false;L('generateLyrics').disabled=false;L('generateLyrics').textContent='GENERATE LYRICS';L('lyricDraft').readOnly=false;}
+};
+L('copyLyrics').onclick=async()=>{try{await navigator.clipboard.writeText(L('lyricDraft').value);lyricStatus('Lyrics copied.');}catch{L('lyricDraft').focus();L('lyricDraft').select();lyricStatus('Select and copy the draft.');}};
+L('useLyrics').onclick=()=>{const text=L('lyricDraft').value.trim();if(!text){lyricStatus('Write or generate lyrics first.');return;}const original=E.prompt.value.replace(/\n?\[LYRICS\][\s\S]*?\[\/LYRICS\]/g,'').trim();E.prompt.value=original+'\n\n[LYRICS]\n'+text+'\n[/LYRICS]';setTrace('LYRICS ADDED','source updated','MAKE to arrange');lyricStatus('Lyrics added to SOURCE. Existing music stays available. MAKE creates new arrangements.');};
+L('saveLyrics').onclick=()=>{const payload={format:'es-plus-song',version:1,lyrics:L('lyricDraft').value,direction:L('lyricBrief').value,...window.workshopBridge.snapshot()};downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),'es-plus-song.json');lyricStatus('Song saved with lyrics, source, arrangement code and invariants.');};
+
+(async()=>{
+ if(!current()){
+  await window.workshopBridge.guide(96,'steady warm syncopated spacious bright low soft resolve');
+  const s=current();if(s){s.name='Starter · 96 BPM';s.hook='Eight-bar instrumental starter';s.savedCode=E.code.value.replace('Lyric rhythm guide','Starter arrangement').replace('Deterministic word-length motif','Editable synth arrangement').replace('Word lengths set the melody','Edit notes or describe a new direction');E.code.value=s.savedCode;renderStones();updateGutter();}
+  setTrace('STARTER','8 bars · 96 BPM','PLAY or describe your music');
+ }
+ state.widths=[24,30,46];expandAll();if(mobile())showMobile('sound');
+})().catch(e=>setTrace('FAULT',e.message));
+})();</script>
+</body></html>
